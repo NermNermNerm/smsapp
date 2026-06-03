@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
+    qmlRegisterType<SmsBackend>("Sms", 1, 0, "SmsBackend");
     SmsBackend backend;
 
     QQmlApplicationEngine engine;
