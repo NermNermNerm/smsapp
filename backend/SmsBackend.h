@@ -58,6 +58,7 @@ private:
     QString m_lastSender;
     QString m_lastMessage;
 
-    QTimer m_pollTimer;
     QDBusInterface *m_smsIface = nullptr;
+
+    static constexpr int PollIntervalInMs = 2000;
 };

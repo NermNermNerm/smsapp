@@ -1,4 +1,5 @@
 #include "SmsBackend.h"
+#include "kdeconnect_proxy.h"
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
@@ -8,8 +9,7 @@
 SmsBackend::SmsBackend(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_pollTimer, &QTimer::timeout, this, &SmsBackend::poll);
-    m_pollTimer.start(2000);
+    QTimer::singleShot(0, this, &SmsBackend::poll);
 
     // Load persisted deviceId here (TODO: settings integration)
     // m_deviceId = loadFromSettings();
@@ -24,11 +24,12 @@ void SmsBackend::poll()
     if (!QDBusConnection::sessionBus().interface()
              ->isServiceRegistered("org.kde.kdeconnect")) {
         setStatus(Status::DaemonUnavailable);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return;
     }
 
     // 2. If we have a primary device, validate it
-    if (!m_deviceId.isEmpty()) {
+    if (m_deviceId.isEmpty()) {
         discoverNewDevice();
     }
     else
@@ -42,60 +43,58 @@ void SmsBackend::poll()
 // ------------------------------------------------------------
 bool SmsBackend::validateExistingDevice()
 {
-    QDBusInterface dev(
+    org::kde::kdeconnect::device dev(
         "org.kde.kdeconnect",
         "/modules/kdeconnect/devices/" + m_deviceId,
-        "org.kde.kdeconnect.device",
-        QDBusConnection::sessionBus()
+        QDBusConnection::sessionBus(),
+        this
         );
 
-
-    QVariant reachableVar = dev.property("isReachable");
-
-    // Device removed?
-    if (!reachableVar.isValid()) {
-        // This is probably an incorrect reading.  I think this is only true if the interface has changed,
-        //  thus it's more of a "there's a bug in this program" indicator.
+    if (!dev.isValid()) {
         setStatus(Status::DeviceRemoved);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
     }
 
-    // Unreachable?
-    if (!reachableVar.toBool()) {
+    if (!dev.isReachable()) {
         setStatus(Status::DeviceUnreachable);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
+    }
+
+    auto name = dev.name();
+    if (name != m_deviceName)
+    {
+        m_deviceName = name;
+        emit deviceNameChanged();
     }
 
     // SMS plugin?
-    QDBusReply<bool> hasSms = dev.call("hasPlugin", "kdeconnect_sms");
+    QDBusReply<bool> hasSms = dev.hasPlugin("kdeconnect_sms");
     if (!hasSms.isValid() || !hasSms.value()) {
         setStatus(Status::SmsPluginUnavailable);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
     }
 
-    // SMS interface valid?
-    QDBusInterface smsIface(
+    org::kde::kdeconnect::sms sms(
         "org.kde.kdeconnect",
         "/modules/kdeconnect/devices/" + m_deviceId + "/sms",
-        "org.kde.kdeconnect.device.sms",
-        QDBusConnection::sessionBus()
+        QDBusConnection::sessionBus(),
+        this
         );
 
-    if (!smsIface.isValid()) {
+    if (!sms.isValid())
+    {
         setStatus(Status::SmsInterfaceInvalid);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
     }
 
-    // Update name if needed.
-    QVariant nameVar = dev.property("name");
-    QString deviceName = nameVar.isValid() ? nameVar.toString()
-                                           : QStringLiteral("Unknown device");
-
-    // All good
-    if (!m_smsIface)
-        attachToSmsInterface();
+    attachToSmsInterface();
 
     setStatus(Status::Ok);
+    QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
     return true;
 }
 
@@ -104,49 +103,54 @@ bool SmsBackend::validateExistingDevice()
 // ------------------------------------------------------------
 void SmsBackend::discoverNewDevice()
 {
-    QDBusInterface daemon(
+    org::kde::kdeconnect::daemon daemon(
         "org.kde.kdeconnect",
         "/modules/kdeconnect",
-        "org.kde.kdeconnect.daemon",
         QDBusConnection::sessionBus()
         );
 
-    QDBusReply<QStringList> reply = daemon.call("devices");
-    if (!reply.isValid()) {
+    if (!daemon.isValid()) {
         setStatus(Status::DaemonUnavailable);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return;
     }
 
-    for (const QString &id : reply.value()) {
-        QDBusInterface dev(
+    for (const QString &id : daemon.devices().value()) {
+        org::kde::kdeconnect::device dev(
             "org.kde.kdeconnect",
             "/modules/kdeconnect/devices/" + id,
-            "org.kde.kdeconnect.device",
-            QDBusConnection::sessionBus()
+            QDBusConnection::sessionBus(),
+            this
             );
 
-        QVariant reachableVar = dev.property("isReachable");
-        bool reachable = reachableVar.isValid() && reachableVar.toBool();
+        // TODO: create some kind of status line for each failed device.
+        if (!dev.isValid()) {
+            continue;
+        }
 
-        QDBusReply<bool> hasSms = dev.call("hasPlugin", "kdeconnect_sms");
-        QVariant nameVar = dev.property("name");
-        QString deviceName = nameVar.isValid() ? nameVar.toString()
-                                               : QStringLiteral("Unknown device");
+        if (!dev.isReachable()) {
+            continue;
+        }
 
-        if (reachable &&
-            hasSms.isValid() && hasSms.value()) {
+        if (!dev.hasPlugin("kdeconnect_sms")) {
+            continue;
+        }
 
+        if (dev.hasPlugin("kdeconnect_sms"))
+        {
             m_deviceId = id;
-            m_deviceName = deviceName;
+            m_deviceName = dev.name();
             emit deviceNameChanged();
 
             attachToSmsInterface();
             setStatus(Status::Ok);
+            QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
             return;
         }
     }
 
     setStatus(Status::NoPrimaryDevice);
+    QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
 }
 
 // ------------------------------------------------------------
@@ -154,24 +158,7 @@ void SmsBackend::discoverNewDevice()
 // ------------------------------------------------------------
 void SmsBackend::attachToSmsInterface()
 {
-    delete m_smsIface;
-
-    m_smsIface = new QDBusInterface(
-        "org.kde.kdeconnect",
-        "/modules/kdeconnect/devices/" + m_deviceId + "/sms",
-        "org.kde.kdeconnect.device.sms",
-        QDBusConnection::sessionBus(),
-        this
-        );
-
-    QDBusConnection::sessionBus().connect(
-        "org.kde.kdeconnect",
-        "/modules/kdeconnect/devices/" + m_deviceId + "/sms",
-        "org.kde.kdeconnect.device.sms",
-        "messageReceived",
-        this,
-        SLOT(onMessageReceived(QString, QString))
-        );
+    // TODO
 }
 
 // ------------------------------------------------------------

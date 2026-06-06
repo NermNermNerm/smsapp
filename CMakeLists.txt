@@ -18,6 +18,9 @@ qt_add_qml_module(appsmsapp
     QML_FILES
         Main.qml
         SOURCES backend/SmsBackend.h backend/SmsBackend.cpp
+        SOURCES kdeconnect_proxy.h
+        RESOURCES make-proxy.py
+        SOURCES kdeconnect_proxy.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
