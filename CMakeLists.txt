@@ -11,16 +11,20 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(appsmsapp
     main.cpp
+    backend/SmsBackend.cpp
+    kdeconnect_proxy.cpp
 )
 
 qt_add_qml_module(appsmsapp
     URI smsapp
+    VERSION 1.0
     QML_FILES
         Main.qml
-        SOURCES backend/SmsBackend.h backend/SmsBackend.cpp
-        SOURCES kdeconnect_proxy.h
-        RESOURCES make-proxy.py
-        SOURCES kdeconnect_proxy.cpp
+)
+
+# Just to make it visible in the ide
+add_custom_target(make_proxy_script
+    SOURCES make-proxy.py
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -33,6 +37,8 @@ set_target_properties(appsmsapp PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+target_include_directories(appsmsapp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(appsmsapp
     PRIVATE Qt6::Quick Qt6::DBus
