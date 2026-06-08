@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "backend/SmsBackend.h"
+#include "TrayIconController.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,6 +10,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<SmsBackend>("Sms", 1, 0, "SmsBackend");
     SmsBackend backend;
+    TrayIconController tray(backend);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("smsBackend", &backend);
