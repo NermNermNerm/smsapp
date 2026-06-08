@@ -29,16 +29,19 @@ public:
     Q_ENUM(Status)
 
     QString deviceStatus() const { return m_deviceStatus; }
+    Status rawDeviceStatus() const { return m_rawDeviceStatus; }
     QString extendedStatus() const { return m_extendedStatus; }
     QString deviceName() const { return m_deviceName; }
     QString lastSender() const { return m_lastSender; }
     QString lastMessage() const { return m_lastMessage; }
+    int unreadMessageCount() const { return 0; } // TODO:
 
 signals:
     void deviceStatusChanged();
     void extendedStatusChanged();
     void deviceNameChanged();
     void lastMessageChanged();
+    void unreadMessageCountChanged();
 
 private slots:
     void poll();
@@ -52,6 +55,7 @@ private:
 
     QString m_deviceId;       // persisted primary device
     QString m_deviceName;
+    Status m_rawDeviceStatus;
     QString m_deviceStatus;
     QString m_extendedStatus;
 

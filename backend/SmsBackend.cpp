@@ -3,6 +3,8 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
+static const QString orgKdeConnect = "org.fake.kdeconnect"; // "org.kde.kdeconnect";
+
 // ------------------------------------------------------------
 // Constructor
 // ------------------------------------------------------------
@@ -22,7 +24,7 @@ void SmsBackend::poll()
 {
     // 1. KDE Connect daemon available?
     if (!QDBusConnection::sessionBus().interface()
-             ->isServiceRegistered("org.kde.kdeconnect")) {
+             ->isServiceRegistered(orgKdeConnect)) {
         setStatus(Status::DaemonUnavailable);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return;
@@ -44,7 +46,7 @@ void SmsBackend::poll()
 bool SmsBackend::validateExistingDevice()
 {
     org::kde::kdeconnect::device dev(
-        "org.kde.kdeconnect",
+        orgKdeConnect,
         "/modules/kdeconnect/devices/" + m_deviceId,
         QDBusConnection::sessionBus(),
         this
@@ -78,7 +80,7 @@ bool SmsBackend::validateExistingDevice()
     }
 
     org::kde::kdeconnect::sms sms(
-        "org.kde.kdeconnect",
+        orgKdeConnect,
         "/modules/kdeconnect/devices/" + m_deviceId + "/sms",
         QDBusConnection::sessionBus(),
         this
@@ -104,7 +106,7 @@ bool SmsBackend::validateExistingDevice()
 void SmsBackend::discoverNewDevice()
 {
     org::kde::kdeconnect::daemon daemon(
-        "org.kde.kdeconnect",
+        orgKdeConnect,
         "/modules/kdeconnect",
         QDBusConnection::sessionBus()
         );
@@ -117,7 +119,7 @@ void SmsBackend::discoverNewDevice()
 
     for (const QString &id : daemon.devices().value()) {
         org::kde::kdeconnect::device dev(
-            "org.kde.kdeconnect",
+            orgKdeConnect,
             "/modules/kdeconnect/devices/" + id,
             QDBusConnection::sessionBus(),
             this
@@ -136,17 +138,13 @@ void SmsBackend::discoverNewDevice()
             continue;
         }
 
-        if (dev.hasPlugin("kdeconnect_sms"))
-        {
-            m_deviceId = id;
-            m_deviceName = dev.name();
-            emit deviceNameChanged();
+        m_deviceId = id;
+        m_deviceName = dev.name();
+        emit deviceNameChanged();
 
-            attachToSmsInterface();
-            setStatus(Status::Ok);
-            QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
-            return;
-        }
+        attachToSmsInterface();
+        setStatus(Status::Ok);
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
     }
 
     setStatus(Status::NoPrimaryDevice);
@@ -213,6 +211,7 @@ void SmsBackend::setStatus(Status s)
          "No primary phone is selected. Pair your phone with KDE Connect, then choose it as your SMS device." }
     };
 
+    m_rawDeviceStatus = s;
     m_deviceStatus = shortMap.value(s);
     m_extendedStatus = longMap.value(s);
 
