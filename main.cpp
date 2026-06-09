@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QIcon>
 #include "backend/SmsBackend.h"
+#include "TrayIconController.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
@@ -127,6 +128,7 @@ Terminal=false
 
     qmlRegisterType<SmsBackend>("Sms", 1, 0, "SmsBackend");
     SmsBackend backend;
+    TrayIconController tray(backend);
 
     QQmlApplicationEngine *global_engine = new QQmlApplicationEngine();
     global_engine->rootContext()->setContextProperty("smsBackend", &backend);

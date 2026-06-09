@@ -5,7 +5,7 @@ project(smsapp VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick DBus)
+find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -20,6 +20,8 @@ qt_add_qml_module(appsmsapp
     VERSION 1.0
     QML_FILES
         Main.qml
+        SOURCES TrayIconController.h
+        SOURCES TrayIconController.cpp
 )
 
 # Just to make it visible in the ide
@@ -41,7 +43,11 @@ set_target_properties(appsmsapp PROPERTIES
 target_include_directories(appsmsapp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(appsmsapp
-    PRIVATE Qt6::Quick Qt6::DBus
+    PRIVATE
+        Qt6::Quick
+        Qt6::DBus
+        Qt6::Widgets
+        Qt6::Gui
 )
 
 install(TARGETS appsmsapp
