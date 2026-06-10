@@ -24,6 +24,18 @@ qt_add_qml_module(appsmsapp
         SOURCES TrayIconController.cpp
 )
 
+# Add general Qt resources *after* the QML module
+qt_add_resources(appsmsapp "app_resources"
+    PREFIX "/"
+    FILES
+        icons/tray_connected_msgs.svg
+        icons/tray_disconnected_msgs.svg
+        icons/tray_error_msgs.svg
+        icons/tray_connected_nomsgs.svg
+        icons/tray_disconnected_nomsgs.svg
+        icons/tray_error_nomsgs.svg
+)
+
 # Just to make it visible in the ide
 add_custom_target(make_proxy_script
     SOURCES make-proxy.py
