@@ -3,7 +3,7 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
-static const QString orgKdeConnect = "org.fake.kdeconnect"; // "org.kde.kdeconnect";
+static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 
 // ------------------------------------------------------------
 // Constructor
