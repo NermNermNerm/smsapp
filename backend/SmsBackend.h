@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QDBusInterface>
 #include <QDBusReply>
+#include "kdeconnect_proxy.h"
 
 class SmsBackend : public QObject {
     Q_OBJECT
@@ -62,7 +63,10 @@ private:
     QString m_lastSender;
     QString m_lastMessage;
 
-    QDBusInterface *m_smsIface = nullptr;
+    org::kde::kdeconnect::daemon m_daemon;
+    org::kde::kdeconnect::device *m_device;
+    // org::kde::kdeconnect::sms *m_sms;
+    org::kde::kdeconnect::conversations *m_conversations;
 
     static constexpr int PollIntervalInMs = 2000;
 };

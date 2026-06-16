@@ -8,10 +8,8 @@ Window {
     height: 480
     visible: true
     title: qsTr("Hello World")
-    // Backend instance
-    SmsBackend {
-        id: backend
-    }
+    // Bind the C++ instance to a typed QML property
+    property SmsBackend backend: smsBackend
 
     ColumnLayout {
         anchors.fill: parent

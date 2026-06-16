@@ -9,8 +9,9 @@ static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconne
 // Constructor
 // ------------------------------------------------------------
 SmsBackend::SmsBackend(QObject *parent)
-    : QObject(parent)
+    : QObject(parent), m_daemon(orgKdeConnect, "/modules/kdeconnect", QDBusConnection::sessionBus())
 {
+    qDebug() << "In constructor";
     QTimer::singleShot(0, this, &SmsBackend::poll);
 
     // Load persisted deviceId here (TODO: settings integration)
@@ -45,26 +46,19 @@ void SmsBackend::poll()
 // ------------------------------------------------------------
 bool SmsBackend::validateExistingDevice()
 {
-    org::kde::kdeconnect::device dev(
-        orgKdeConnect,
-        "/modules/kdeconnect/devices/" + m_deviceId,
-        QDBusConnection::sessionBus(),
-        this
-        );
-
-    if (!dev.isValid()) {
+    if (!m_device->isValid()) {
         setStatus(Status::DeviceRemoved);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
     }
 
-    if (!dev.isReachable()) {
+    if (!m_device->isReachable()) {
         setStatus(Status::DeviceUnreachable);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return false;
     }
 
-    auto name = dev.name();
+    auto name = m_device->name();
     if (name != m_deviceName)
     {
         m_deviceName = name;
@@ -72,7 +66,7 @@ bool SmsBackend::validateExistingDevice()
     }
 
     // SMS plugin?
-    QDBusReply<bool> hasSms = dev.hasPlugin("kdeconnect_sms");
+    QDBusReply<bool> hasSms = m_device->hasPlugin("kdeconnect_sms");
     if (!hasSms.isValid() || !hasSms.value()) {
         setStatus(Status::SmsPluginUnavailable);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
@@ -93,8 +87,6 @@ bool SmsBackend::validateExistingDevice()
         return false;
     }
 
-    attachToSmsInterface();
-
     setStatus(Status::Ok);
     QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
     return true;
@@ -105,19 +97,13 @@ bool SmsBackend::validateExistingDevice()
 // ------------------------------------------------------------
 void SmsBackend::discoverNewDevice()
 {
-    org::kde::kdeconnect::daemon daemon(
-        orgKdeConnect,
-        "/modules/kdeconnect",
-        QDBusConnection::sessionBus()
-        );
-
-    if (!daemon.isValid()) {
+    if (!m_daemon.isValid()) {
         setStatus(Status::DaemonUnavailable);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
         return;
     }
 
-    for (const QString &id : daemon.devices().value()) {
+    for (const QString &id : m_daemon.devices().value()) {
         org::kde::kdeconnect::device dev(
             orgKdeConnect,
             "/modules/kdeconnect/devices/" + id,
@@ -138,6 +124,21 @@ void SmsBackend::discoverNewDevice()
             continue;
         }
 
+        // Create all interfaces
+        m_device = new org::kde::kdeconnect::device(
+            orgKdeConnect,
+            "/modules/kdeconnect/devices/" + id,
+            QDBusConnection::sessionBus(),
+            this
+            );
+
+        m_conversations = new org::kde::kdeconnect::conversations(
+            orgKdeConnect,
+            "/modules/kdeconnect/devices/" + id,
+            QDBusConnection::sessionBus(),
+            this
+            );
+
         m_deviceId = id;
         m_deviceName = dev.name();
         emit deviceNameChanged();
@@ -145,6 +146,7 @@ void SmsBackend::discoverNewDevice()
         attachToSmsInterface();
         setStatus(Status::Ok);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
+        return;
     }
 
     setStatus(Status::NoPrimaryDevice);
@@ -156,6 +158,15 @@ void SmsBackend::discoverNewDevice()
 // ------------------------------------------------------------
 void SmsBackend::attachToSmsInterface()
 {
+    // Handle the "conversationLoaded" signal
+    QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
+            this,
+            [this](qint64 threadId, quint64 messageCount) {
+                // Your handler logic here
+                qDebug() << "Thread" << threadId << "has" << messageCount << "messages";
+            });
+
+    m_conversations->requestAllConversationThreads();
     // TODO
 }
 

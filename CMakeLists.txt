@@ -22,6 +22,7 @@ qt_add_qml_module(appsmsapp
         Main.qml
         SOURCES TrayIconController.h
         SOURCES TrayIconController.cpp
+        SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
 )
 
 # Add general Qt resources *after* the QML module
