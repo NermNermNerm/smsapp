@@ -20,7 +20,7 @@ Window {
         // 1. If we have NO primary device and status is NoPrimaryDevice:
         //    Show a placeholder + (later) a list of devices + reasons.
         // ------------------------------------------------------------
-        Item {
+        ColumnLayout {
             visible: backend.deviceName === "" &&
                      backend.deviceStatus === "No primary device"
 
@@ -55,7 +55,7 @@ Window {
         // ------------------------------------------------------------
         // 2. If we HAVE a deviceName, show device info + status
         // ------------------------------------------------------------
-        Item {
+        ColumnLayout {
             visible: backend.deviceName !== ""
 
             ColumnLayout {
@@ -80,30 +80,64 @@ Window {
         }
 
         // ------------------------------------------------------------
-        // 3. Last message section
+        // 3. Conversation list
         // ------------------------------------------------------------
         Rectangle {
             Layout.fillWidth: true
-            height: 120
+            Layout.fillHeight: true
             radius: 8
-            color: "#eeeeee"
+            color: "#f5f5f5"
 
-            Column {
+            ListView {
+                id: conversationList
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
+                anchors.margins: 8
+                model: backend.conversationList
+                clip: true
 
-                Label {
-                    text: backend.lastSender !== "" ?
-                          "Last message from " + backend.lastSender :
-                          "No messages yet"
-                    font.pixelSize: 16
-                }
+                delegate: Item {
+                    width: ListView.view.width
+                    height: content.implicitHeight + 12
 
-                Label {
-                    text: backend.lastMessage
-                    wrapMode: Text.WordWrap
-                    visible: backend.lastMessage !== ""
+                    ColumnLayout {
+                        id: content
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            margins: 6
+                        }
+
+                        // Participants
+                        Text {
+                            text: object.participants
+                            font.bold: true
+                            font.pointSize: 14
+                            elide: Text.ElideRight
+                        }
+
+                        // Latest message
+                        Text {
+                            text: object.latestMessageBody
+                            color: "#666"
+                            font.pointSize: 12
+                            elide: Text.ElideRight
+                        }
+
+                        // Timestamp
+                        Text {
+                            text: Qt.formatDateTime(object.date, "yyyy-MM-dd hh:mm")
+                            color: "#999"
+                            font.pointSize: 10
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            console.log("Clicked conversation thread:", object.threadID)
+                            // Later: navigate to message view
+                        }
+                    }
                 }
             }
         }

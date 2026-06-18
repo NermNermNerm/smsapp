@@ -77,6 +77,19 @@ OrgKdeKdeconnectDeviceInterface::~OrgKdeKdeconnectDeviceInterface()
 }
 
 /*
+ * Implementation of interface class OrgKdeKdeconnectDeviceContactsInterface
+ */
+
+OrgKdeKdeconnectDeviceContactsInterface::OrgKdeKdeconnectDeviceContactsInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
+    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
+{
+}
+
+OrgKdeKdeconnectDeviceContactsInterface::~OrgKdeKdeconnectDeviceContactsInterface()
+{
+}
+
+/*
  * Implementation of interface class OrgKdeKdeconnectDeviceConversationsInterface
  */
 

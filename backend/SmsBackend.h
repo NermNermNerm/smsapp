@@ -5,6 +5,7 @@
 #include <QDBusInterface>
 #include <QDBusReply>
 #include "kdeconnect_proxy.h"
+#include "conversationlistmodel.h"
 
 class SmsBackend : public QObject {
     Q_OBJECT
@@ -12,8 +13,7 @@ class SmsBackend : public QObject {
     Q_PROPERTY(QString deviceStatus READ deviceStatus NOTIFY deviceStatusChanged)
     Q_PROPERTY(QString extendedStatus READ extendedStatus NOTIFY extendedStatusChanged)
     Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
-    Q_PROPERTY(QString lastSender READ lastSender NOTIFY lastMessageChanged)
-    Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY lastMessageChanged)
+    Q_PROPERTY(ConversationListModel *conversationList READ conversationList CONSTANT)
 
 public:
     explicit SmsBackend(QObject *parent = nullptr);
@@ -33,20 +33,17 @@ public:
     Status rawDeviceStatus() const { return m_rawDeviceStatus; }
     QString extendedStatus() const { return m_extendedStatus; }
     QString deviceName() const { return m_deviceName; }
-    QString lastSender() const { return m_lastSender; }
-    QString lastMessage() const { return m_lastMessage; }
+    ConversationListModel *conversationList() { return &m_conversationList; }
     int unreadMessageCount() const { return 0; } // TODO:
 
 signals:
     void deviceStatusChanged();
     void extendedStatusChanged();
     void deviceNameChanged();
-    void lastMessageChanged();
     void unreadMessageCountChanged();
 
 private slots:
     void poll();
-    void onMessageReceived(QString sender, QString message);
 
 private:
     void setStatus(Status s);
@@ -54,19 +51,23 @@ private:
     bool validateExistingDevice();
     void discoverNewDevice();
 
+    void handleConversationUpdate(const QDBusVariant &msg);
+    void handleConversationCreated(const QDBusVariant &msg);
+
     QString m_deviceId;       // persisted primary device
     QString m_deviceName;
     Status m_rawDeviceStatus;
     QString m_deviceStatus;
     QString m_extendedStatus;
 
-    QString m_lastSender;
-    QString m_lastMessage;
+    ConversationListModel m_conversationList{this};
 
     org::kde::kdeconnect::daemon m_daemon;
-    org::kde::kdeconnect::device *m_device;
+
+    // These are initialized once the device is identified.
+    org::kde::kdeconnect::device *m_device = nullptr;
+    org::kde::kdeconnect::conversations *m_conversations = nullptr;
     // org::kde::kdeconnect::sms *m_sms;
-    org::kde::kdeconnect::conversations *m_conversations;
 
     static constexpr int PollIntervalInMs = 2000;
 };

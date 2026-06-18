@@ -23,6 +23,13 @@ qt_add_qml_module(appsmsapp
         SOURCES TrayIconController.h
         SOURCES TrayIconController.cpp
         SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
+        SOURCES backend/smsconversation.h backend/smsconversation.cpp
+        SOURCES
+        SOURCES backend/conversationlistmodel.h backend/conversationlistmodel.cpp
+        SOURCES backend/SmsBackend.h
+        SOURCES backend/smsmessageitemlist.h backend/smsmessageitemlist.cpp
+        SOURCES backend/smsmessageitem.h backend/smsmessageitem.cpp
+        SOURCES backend/nameresolver.h backend/nameresolver.cpp
 )
 
 # Add general Qt resources *after* the QML module

@@ -2,6 +2,7 @@
 #include "kdeconnect_proxy.h"
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#include "kdeconnect_interfaces/conversationmessage.h"
 
 static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 
@@ -97,6 +98,10 @@ bool SmsBackend::validateExistingDevice()
 // ------------------------------------------------------------
 void SmsBackend::discoverNewDevice()
 {
+    // TODO: m_daemon.isValid seems to always be true, even if the daemon isn't running.
+    //   What we need to od is look at the error codes from m_daemon.devices(), rather than
+    //   trusting it to be working.
+
     if (!m_daemon.isValid()) {
         setStatus(Status::DaemonUnavailable);
         QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
@@ -162,22 +167,25 @@ void SmsBackend::attachToSmsInterface()
     QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
             this,
             [this](qint64 threadId, quint64 messageCount) {
+                m_conversations->requestConversation(threadId, 1, 1);
                 // Your handler logic here
                 qDebug() << "Thread" << threadId << "has" << messageCount << "messages";
             });
 
+    QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
+                     this,
+                     [this](qint64 threadId, quint64 messageCount) {
+                         m_conversations->requestConversation(threadId, 1, 1);
+                         // Your handler logic here
+                         qDebug() << "Thread" << threadId << "has" << messageCount << "messages";
+                     });
+    QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationCreated,
+                     this, &SmsBackend::handleConversationCreated);
+    QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationUpdated,
+                     this, &SmsBackend::handleConversationUpdate);
+
     m_conversations->requestAllConversationThreads();
     // TODO
-}
-
-// ------------------------------------------------------------
-// Incoming message
-// ------------------------------------------------------------
-void SmsBackend::onMessageReceived(QString sender, QString message)
-{
-    m_lastSender = sender;
-    m_lastMessage = message;
-    emit lastMessageChanged();
 }
 
 // ------------------------------------------------------------
@@ -229,3 +237,19 @@ void SmsBackend::setStatus(Status s)
     emit deviceStatusChanged();
     emit extendedStatusChanged();
 }
+
+
+void SmsBackend::handleConversationUpdate(const QDBusVariant &msg)
+{
+    int lengthBefore = m_conversationList.rowCount();
+    ConversationMessage message = ConversationMessage::fromDBus(msg);
+    m_conversationList.addOrUpdateConversation(message);
+}
+
+void SmsBackend::handleConversationCreated(const QDBusVariant &msg)
+{
+    int lengthBefore = m_conversationList.rowCount();
+    ConversationMessage message = ConversationMessage::fromDBus(msg);
+    m_conversationList.addOrUpdateConversation(message);
+}
+

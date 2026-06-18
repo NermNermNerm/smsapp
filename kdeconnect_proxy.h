@@ -405,6 +405,32 @@ Q_SIGNALS: // SIGNALS
 };
 
 /*
+ * Proxy class for interface org.kde.kdeconnect.device.contacts
+ */
+class OrgKdeKdeconnectDeviceContactsInterface: public QDBusAbstractInterface
+{
+    Q_OBJECT
+public:
+    static inline const char *staticInterfaceName()
+    { return "org.kde.kdeconnect.device.contacts"; }
+
+public:
+    OrgKdeKdeconnectDeviceContactsInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = nullptr);
+
+    ~OrgKdeKdeconnectDeviceContactsInterface();
+
+public Q_SLOTS: // METHODS
+    inline QDBusPendingReply<> synchronizeRemoteWithLocal()
+    {
+        QList<QVariant> argumentList;
+        return asyncCallWithArgumentList(QStringLiteral("synchronizeRemoteWithLocal"), argumentList);
+    }
+
+Q_SIGNALS: // SIGNALS
+    void localCacheSynchronized(const QStringList &newContacts);
+};
+
+/*
  * Proxy class for interface org.kde.kdeconnect.device.conversations
  */
 class OrgKdeKdeconnectDeviceConversationsInterface: public QDBusAbstractInterface
@@ -581,6 +607,7 @@ namespace org {
       using daemon = ::OrgKdeKdeconnectDaemonInterface;
       using device = ::OrgKdeKdeconnectDeviceInterface;
 //       namespace device {
+        using contacts = ::OrgKdeKdeconnectDeviceContactsInterface;
         using conversations = ::OrgKdeKdeconnectDeviceConversationsInterface;
         using sms = ::OrgKdeKdeconnectDeviceSmsInterface;
         using telephony = ::OrgKdeKdeconnectDeviceTelephonyInterface;
