@@ -24,6 +24,12 @@ SmsBackend::SmsBackend(QObject *parent)
 // ------------------------------------------------------------
 void SmsBackend::poll()
 {
+    if (QDateTime::currentMSecsSinceEpoch() - m_lastMessageFromDaemonRecievedTime < SilentTimeInMsBeforePoll) {
+        // Skip the poll - we seem to be getting good signal.
+        QTimer::singleShot(SmsBackend::PollIntervalInMs, this, &SmsBackend::poll);
+        return;
+    }
+
     // 1. KDE Connect daemon available?
     if (!QDBusConnection::sessionBus().interface()
              ->isServiceRegistered(orgKdeConnect)) {
@@ -163,29 +169,16 @@ void SmsBackend::discoverNewDevice()
 // ------------------------------------------------------------
 void SmsBackend::attachToSmsInterface()
 {
-    // Handle the "conversationLoaded" signal
     QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
-            this,
-            [this](qint64 threadId, quint64 messageCount) {
-                m_conversations->requestConversation(threadId, 1, 1);
-                // Your handler logic here
-                qDebug() << "Thread" << threadId << "has" << messageCount << "messages";
-            });
-
-    QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
-                     this,
-                     [this](qint64 threadId, quint64 messageCount) {
-                         m_conversations->requestConversation(threadId, 1, 1);
-                         // Your handler logic here
-                         qDebug() << "Thread" << threadId << "has" << messageCount << "messages";
-                     });
+                     this, &SmsBackend::handleConversationLoaded);
     QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationCreated,
                      this, &SmsBackend::handleConversationCreated);
     QObject::connect(m_conversations, &org::kde::kdeconnect::conversations::conversationUpdated,
                      this, &SmsBackend::handleConversationUpdate);
 
     m_conversations->requestAllConversationThreads();
-    // TODO
+
+    m_lastMessageFromDaemonRecievedTime = QDateTime::currentMSecsSinceEpoch();
 }
 
 // ------------------------------------------------------------
@@ -238,18 +231,29 @@ void SmsBackend::setStatus(Status s)
     emit extendedStatusChanged();
 }
 
+void SmsBackend::handleConversationLoaded(qint64 threadID, qint64 messageCount)
+{
+    m_lastMessageFromDaemonRecievedTime = QDateTime::currentMSecsSinceEpoch();
+    qDebug() << "handleConversationLoaded(" << threadID << ")\n";
+    if (!m_conversationList.isConversationLoaded(threadID))
+    {
+        m_conversations->requestConversation(threadID, 1, 1);
+    }
+}
 
 void SmsBackend::handleConversationUpdate(const QDBusVariant &msg)
 {
-    int lengthBefore = m_conversationList.rowCount();
+    m_lastMessageFromDaemonRecievedTime = QDateTime::currentMSecsSinceEpoch();
     ConversationMessage message = ConversationMessage::fromDBus(msg);
+    qDebug() << "handleConversationUpdate(" << message.threadID() << ", '" << message.body() << "')\n";
     m_conversationList.addOrUpdateConversation(message);
 }
 
 void SmsBackend::handleConversationCreated(const QDBusVariant &msg)
 {
-    int lengthBefore = m_conversationList.rowCount();
+    m_lastMessageFromDaemonRecievedTime = QDateTime::currentMSecsSinceEpoch();
     ConversationMessage message = ConversationMessage::fromDBus(msg);
+    qDebug() << "handleConversationCreated(" << message.threadID() << ", '" << message.body() << "')\n";
     m_conversationList.addOrUpdateConversation(message);
 }
 

@@ -20,8 +20,8 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // API for SmsBackend
     void addOrUpdateConversation(const ConversationMessage &message);
+    bool isConversationLoaded(qint64 threadId);
 
 private:
     QVector<SmsConversation*> m_list;

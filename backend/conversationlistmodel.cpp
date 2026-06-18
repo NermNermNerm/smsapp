@@ -22,6 +22,12 @@ QVariant ConversationListModel::data(const QModelIndex &index, int role) const
     return {};
 }
 
+bool ConversationListModel::isConversationLoaded(qint64 threadId)
+{
+    return m_index.contains(threadId);
+}
+
+
 QHash<int, QByteArray> ConversationListModel::roleNames() const
 {
     return {

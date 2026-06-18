@@ -51,6 +51,7 @@ private:
     bool validateExistingDevice();
     void discoverNewDevice();
 
+    void handleConversationLoaded(qint64 threadId, qint64 messageCount);
     void handleConversationUpdate(const QDBusVariant &msg);
     void handleConversationCreated(const QDBusVariant &msg);
 
@@ -69,5 +70,8 @@ private:
     org::kde::kdeconnect::conversations *m_conversations = nullptr;
     // org::kde::kdeconnect::sms *m_sms;
 
+    qint64 m_lastMessageFromDaemonRecievedTime = 0;
+
     static constexpr int PollIntervalInMs = 2000;
+    static constexpr int SilentTimeInMsBeforePoll = 2000;
 };
