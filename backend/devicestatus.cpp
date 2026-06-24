@@ -13,7 +13,6 @@ DeviceStatus::DeviceStatus(QObject *parent)
 {
     // Timer for polling
     auto timer = new QTimer(this);
-    timer->start(PollIntervalWhenActiveInMs);
 
     // Switch polling interval based on app state
     connect(qApp, &QGuiApplication::applicationStateChanged, this,
@@ -25,6 +24,8 @@ DeviceStatus::DeviceStatus(QObject *parent)
                     timer->start(PollIntervalInBackgroundPoll);
                 }
             });
+
+    connect(timer, &QTimer::timeout, this, &DeviceStatus::poll);
 
     // Listen for device list changes from KDE Connect daemon
     connect(&dbus::daemon(), &org::kde::kdeconnect::daemon::deviceAdded, this, &DeviceStatus::onDeviceListChanged);
@@ -187,6 +188,8 @@ void DeviceStatus::updateHandler()
         m_handler = new MessagesHandler(preferredDevice(), this);
         setStatus(dbus::device(preferredDevice()).isReachable() ? Status::DeviceReady : Status::DeviceUnreachable);
     }
+    qDebug() << "MessagesHandler:" << (m_handler ? m_handler->deviceID() : "null");
+
     emit handlerChanged();
 }
 
@@ -194,6 +197,8 @@ void DeviceStatus::setPreferredDevice(const QString &deviceID)
 {
     if (deviceID == settings().preferredDeviceId())
         return;
+
+    qDebug() << "Preferred Device:" << deviceID;
 
     settings().setPreferredDeviceId(deviceID);
     emit preferredDeviceChanged();
@@ -205,6 +210,8 @@ void DeviceStatus::setPreferredDeviceName(const QString &deviceName)
 {
     if (deviceName == m_preferredDeviceName)
         return;
+
+    qDebug() << "Preferred Device Name:" << deviceName;
 
     m_preferredDeviceName = deviceName;
     emit preferredDeviceNameChanged();
@@ -223,6 +230,8 @@ void DeviceStatus::setStatus(Status status)
 {
     if (m_status == status)
         return;
+
+    qDebug() << "Status:" << status;
 
     m_status = status;
     emit statusChanged();

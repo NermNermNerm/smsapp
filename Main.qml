@@ -12,6 +12,11 @@ Window {
     // property DeviceStatus deviceStatus: deviceStatus
     // property ConversationListModel conversations: conversations
 
+    Component.onCompleted: {
+        console.log("status =", deviceStatus.status)
+        console.log("enum =", DeviceStatus.NoSmsDevice)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
@@ -21,9 +26,11 @@ Window {
             visible: deviceStatus.status === DeviceStatus.DaemonNotRunning
 
             Layout.fillWidth: true
-            color: "red"
-            radius: 4
-            height: implicitHeight
+            Layout.preferredHeight: row.implicitHeight + 16   // padding top+bottom
+            color: "salmon"
+            border.color: "red"
+            border.width: 2
+            radius: 6
 
             Label {
                 text: "KDE Connect is not installed or running"
@@ -39,14 +46,25 @@ Window {
             visible: deviceStatus.status === DeviceStatus.DaemonHung
 
             Layout.fillWidth: true
-            color: "red"
-            radius: 4
+            Layout.preferredHeight: row.implicitHeight + 16   // padding top+bottom
+            color: "salmon"
+            border.color: "red"
+            border.width: 2
+            radius: 6
 
             RowLayout {
                 id: row
                 anchors.fill: parent
                 anchors.margins: 8
                 spacing: 12
+
+
+                Rectangle {
+                    color: "red"
+                    width: 14
+                    height: 14
+                    radius: 7
+                }
 
                 Label {
                     text: "KDE Connect daemon is not responsive"
@@ -64,19 +82,30 @@ Window {
 
         Rectangle {
             visible: deviceStatus.status === DeviceStatus.NoSmsDevice
-
             Layout.fillWidth: true
-            color: "red"
-            radius: 4
-            height: implicitHeight
+            Layout.preferredHeight: row.implicitHeight + 16   // padding top+bottom
+            color: "salmon"
+            border.color: "red"
+            border.width: 2
+            radius: 6
 
-            Label {
-                text: "No phone is connected with KDE Connect"
-                color: "white"
-                padding: 8
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+            RowLayout {
+                spacing: 2
                 anchors.fill: parent
+                anchors.margins: 8
+
+                Rectangle {
+                    color: "red"
+                    width: 14
+                    height: 14
+                    radius: 7
+                }
+
+                Label {
+                    text: "No phone is connected with KDE Connect"
+                    color: "black"
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
         }
 
