@@ -32,7 +32,7 @@ DeviceStatus::DeviceStatus(QObject *parent)
     connect(&dbus::daemon(), &org::kde::kdeconnect::daemon::deviceRemoved, this, &DeviceStatus::onDeviceListChanged);
 
     // Initial poll
-    poll();
+    QTimer::singleShot(0, this, &DeviceStatus::poll);
 }
 
 void DeviceStatus::poll()
@@ -73,7 +73,12 @@ void DeviceStatus::poll()
 
         if (!m_lastWakeAttempt.isValid() || m_lastWakeAttempt.secsTo(now) > 30) {
             qDebug() << "Device unreachable; nudging KDE Connect daemon";
-            dbus::daemon().forceOnNetworkChange();
+
+            // Allegedly, this could force the kdeconnect daemon to talk to the phone and wake it.
+            dbus::device(preferredDevice()).hasPlugin("kdeconnect_telephony");
+
+            // Also allegedly, this would be a more forceful way to do that.
+            // dbus::daemon().forceOnNetworkChange();
             m_lastWakeAttempt = now;
         }
     }
@@ -201,6 +206,7 @@ void DeviceStatus::updateHandler()
     if (!preferredDevice().isEmpty()) {
         m_handler = new MessagesHandler(preferredDevice(), this);
         setStatus(dbus::device(preferredDevice()).isReachable() ? Status::DeviceReady : Status::DeviceUnreachable);
+        m_handler->startListening();
     }
     qDebug() << "MessagesHandler:" << (m_handler ? m_handler->deviceID() : "null");
 

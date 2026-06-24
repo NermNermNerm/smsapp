@@ -28,11 +28,42 @@ void MessagesHandler::startListening()
     QObject::connect(&m_conversations, &org::kde::kdeconnect::conversations::conversationUpdated,
                      this, &MessagesHandler::onConversationUpdated);
 
-    m_conversations.requestAllConversationThreads();
+    m_retryTimer.setInterval(1000);   // 1 second
+    m_retryTimer.setSingleShot(true);
+
+    connect(&m_retryTimer, &QTimer::timeout,
+            this, &MessagesHandler::attemptRequestAllThreads);
+    attemptRequestAllThreads();
 
     // We're setting this now to avoid giving a down reading when we can be pretty sure things
     // are in a good state since we got a positive signal on device reachability to get here.
     noteDaemonActivity();
+}
+
+void MessagesHandler::attemptRequestAllThreads()
+{
+    QDBusPendingReply<> reply = m_conversations.requestAllConversationThreads();
+
+    auto *watcher = new QDBusPendingCallWatcher(reply, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished,
+            this, &MessagesHandler::onRequestAllThreadsFinished);
+}
+
+
+void MessagesHandler::onRequestAllThreadsFinished(QDBusPendingCallWatcher *watcher)
+{
+    QDBusPendingReply<> reply = *watcher;
+    watcher->deleteLater();
+
+    if (reply.isError()) {
+        qWarning() << "requestAllConversationThreads failed:" << reply.error().message();
+
+        // Try again in 1 second
+        m_retryTimer.start();
+    }
+    else {
+        qDebug() << "requestAllConversationThreads succeeded";
+    }
 }
 
 void MessagesHandler::requestConversationItems(

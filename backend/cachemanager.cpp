@@ -238,7 +238,7 @@ bool CacheManager::tryGetMessage(qint64 threadID, int index,
         return false;
 
     const ThreadData &td = it.value();
-    if (index < 0 || index >= td.messageCount)
+    if (index < 1 || index > td.messageCount)
         return false;
 
     auto mit = td.messages.constFind(index);

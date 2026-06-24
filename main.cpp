@@ -38,25 +38,26 @@ Terminal=false
     qmlRegisterType<DeviceStatus>("Sms", 1, 0, "DeviceStatus");
     qmlRegisterType<ConversationListModel>("Sms", 1, 0, "ConversationListModel");
 
-    QQmlApplicationEngine *global_engine = new QQmlApplicationEngine();
     DeviceStatus deviceStatus;
     ConversationListModel conversations;
 
     QObject::connect(&deviceStatus, &DeviceStatus::handlerChanged,
-                     &conversations, [&]() { conversations.setDevice(deviceStatus.handler()); });
+                     &conversations, [&]() {
+        conversations.setDevice(deviceStatus.handler());
+    });
 
     TrayIconController tray(deviceStatus);
 
-
-    global_engine->rootContext()->setContextProperty("deviceStatus", &deviceStatus);
-    global_engine->rootContext()->setContextProperty("conversations", &conversations);
+    QQmlApplicationEngine global_engine;
+    global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
+    global_engine.rootContext()->setContextProperty("conversations", &conversations);
     QObject::connect(
-        global_engine,
+        &global_engine,
         &QQmlApplicationEngine::objectCreationFailed,
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    global_engine->loadFromModule("smsapp", "Main");
+    global_engine.loadFromModule("smsapp", "Main");
 
     return QGuiApplication::exec();
 }

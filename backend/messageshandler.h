@@ -50,6 +50,9 @@ private:
     void onConversationUpdated(const QDBusVariant &msg);
     void onConversationCreated(const QDBusVariant &msg);
 
+    void attemptRequestAllThreads();
+    void onRequestAllThreadsFinished(QDBusPendingCallWatcher *watcher);
+
     void noteDaemonActivity() { m_lastActivity = QDateTime::currentDateTimeUtc(); }
 
     struct PendingRequest {
@@ -64,6 +67,7 @@ private:
 
     QDateTime m_lastActivity;
     QString m_deviceID;
+    QTimer m_retryTimer;
 
     // If m_pendingRequests is empty, that means no requests have been sent out on dbus.
     //  Otherwise, the entry at the tip of the queue is the one we're waiting for dbus to respond to.
