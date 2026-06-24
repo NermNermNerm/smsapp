@@ -65,6 +65,18 @@ void DeviceStatus::poll()
     else {
         setStatus(Status::DeviceUnreachable);
     }
+
+    if (qApp->applicationState() == Qt::ApplicationActive
+        && status() == Status::DeviceUnreachable)
+    {
+        const auto now = QDateTime::currentDateTimeUtc();
+
+        if (!m_lastWakeAttempt.isValid() || m_lastWakeAttempt.secsTo(now) > 30) {
+            qDebug() << "Device unreachable; nudging KDE Connect daemon";
+            dbus::daemon().forceOnNetworkChange();
+            m_lastWakeAttempt = now;
+        }
+    }
 }
 
 // DBus signal handler for when a new device might be available.
@@ -77,7 +89,7 @@ void DeviceStatus::onDeviceListChanged()
 bool DeviceStatus::tryRefreshDeviceList()
 {
     auto &daemon = dbus::daemon();
-    QDBusPendingReply<QStringList> reply = daemon.devices(true, true);
+    QDBusPendingReply<QStringList> reply = daemon.devices(/* onlyReachable */ false, /* onlyPaired = */ true);
     reply.waitForFinished();
     if (reply.isError())
         return false;
@@ -104,7 +116,7 @@ bool DeviceStatus::tryRefreshDeviceList()
             continue;
 
         QStringList plugins = dev.loadedPlugins();
-        if (!plugins.contains("sms"))
+        if (!plugins.contains("kdeconnect_sms"))
             continue;
 
         // Check if already present
@@ -168,6 +180,8 @@ void DeviceStatus::trySetupPreferredDevice()
         // Else the old device is there -- make sure its name is current.
         setPreferredDeviceName(preferredDeviceIt->name);
     }
+
+    updateHandler();
 }
 
 void DeviceStatus::updateHandler()

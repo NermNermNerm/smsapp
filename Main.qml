@@ -111,10 +111,12 @@ Window {
 
         Rectangle {
             visible: deviceStatus.status === DeviceStatus.DeviceUnreachable || deviceStatus.status === DeviceStatus.DeviceReady
-            Layout.fillWidth: true
-            color: "#333333"
             radius: 4
-            height: implicitHeight
+            color: "#333333"
+            Layout.fillWidth: true
+            Layout.preferredHeight: row.implicitHeight + 16   // padding top+bottom
+            border.color: "black"
+            border.width: 2
 
             RowLayout {
                 anchors.fill: parent

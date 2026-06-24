@@ -90,6 +90,7 @@ private:
     QTimer m_pollTimer;
     Settings *m_settings = nullptr;
     QString m_preferredDeviceName;
+    QDateTime m_lastWakeAttempt;
 
 
     // Check device status using this as the rough interval - note that if the MessagesHandler has had
