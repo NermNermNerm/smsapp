@@ -6,12 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets)
+find_library(PHONENUMBER_LIB phonenumber)
+message(STATUS "PHONENUMBER_LIB = ${PHONENUMBER_LIB}")
 
 qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(appsmsapp
     main.cpp
-    backend/SmsBackend.cpp
+
     kdeconnect_proxy.cpp
 )
 
@@ -23,13 +25,19 @@ qt_add_qml_module(appsmsapp
         SOURCES TrayIconController.h
         SOURCES TrayIconController.cpp
         SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
-        SOURCES backend/smsconversation.h backend/smsconversation.cpp
+        SOURCES backend/conversationheader.h backend/conversationheader.cpp
         SOURCES
         SOURCES backend/conversationlistmodel.h backend/conversationlistmodel.cpp
-        SOURCES backend/SmsBackend.h
+        SOURCES
         SOURCES backend/smsmessageitemlist.h backend/smsmessageitemlist.cpp
         SOURCES backend/smsmessageitem.h backend/smsmessageitem.cpp
         SOURCES backend/nameresolver.h backend/nameresolver.cpp
+        SOURCES backend/cachemanager.h backend/cachemanager.cpp
+        SOURCES kdeconnect_interfaces/conversationmessage_ext.h kdeconnect_interfaces/conversationmessage_ext.cpp
+        SOURCES backend/messageshandler.h backend/messageshandler.cpp
+        SOURCES backend/devicestatus.h backend/devicestatus.cpp
+        SOURCES dbus.h
+        SOURCES settings.h settings.cpp
 )
 
 # Add general Qt resources *after* the QML module
@@ -68,6 +76,7 @@ target_link_libraries(appsmsapp
         Qt6::DBus
         Qt6::Widgets
         Qt6::Gui
+        ${PHONENUMBER_LIB}
 )
 
 install(TARGETS appsmsapp

@@ -1,5 +1,7 @@
 #include <QObject>
 #include "TrayIconController.h"
+#include "backend/messageshandler.h"
+#include "backend/devicestatus.h"
 #include <QPixmap>
 #include <QRandomGenerator>
 #include <QIcon>
@@ -7,12 +9,12 @@
 #include <QAction>
 #include <QDir>
 
-TrayIconController::TrayIconController(SmsBackend &backend, QObject *parent)
-    : QObject(parent), m_backEnd(backend)
+TrayIconController::TrayIconController(DeviceStatus &deviceStatus, QObject *parent)
+    : QObject(parent), m_deviceStatus(deviceStatus)
 {
-    QObject::connect(&backend, &SmsBackend::deviceStatusChanged,
+    QObject::connect(&m_deviceStatus, &DeviceStatus::statusChanged,
                      this, &TrayIconController::refreshIcon);
-    QObject::connect(&backend, &SmsBackend::unreadMessageCountChanged,
+    QObject::connect(&m_deviceStatus, &DeviceStatus::handlerChanged,
                      this, &TrayIconController::refreshIcon);
 
     refreshIcon();
@@ -22,12 +24,12 @@ TrayIconController::TrayIconController(SmsBackend &backend, QObject *parent)
 void TrayIconController::refreshIcon()
 {
     QString path = ":/icons/tray_";
-    switch (m_backEnd.rawDeviceStatus())
+    switch (m_deviceStatus.status())
     {
-    case SmsBackend::Status::Ok:
+    case DeviceStatus::Status::DeviceReady:
         path += "connected";
         break;
-    case SmsBackend::Status::DeviceUnreachable:
+    case DeviceStatus::Status::DeviceUnreachable:
         path += "disconnected";
         break;
     default:
@@ -35,8 +37,9 @@ void TrayIconController::refreshIcon()
         break;
     }
 
+    int unreadCount = m_deviceStatus.handler() ? m_deviceStatus.handler()->unreadMessageCount() : 0;
     path += "_";
-    path += m_backEnd.unreadMessageCount() > 0 ? "msgs" : "nomsgs";
+    path += unreadCount > 0 ? "msgs" : "nomsgs";
     path += ".svg";
     QIcon icon(path);
     m_tray.setToolTip("zomg the tooltip works");

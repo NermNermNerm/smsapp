@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QRegularExpression>
+#include <phonenumbers/phonenumberutil.h>
 
 QHash<QString, QString> NameResolver::s_canonicalPhoneNumberToNameMap;
 
@@ -119,12 +120,37 @@ void NameResolver::load()
 // ---------------------------------------------------------------
 QString NameResolver::phoneNumberToName(const QString &phoneNumber)
 {
-    const QString canon = canonicalize(phoneNumber);
+    QString canon = canonicalize(phoneNumber);
+    using namespace i18n::phonenumbers;
 
     if (auto it = s_canonicalPhoneNumberToNameMap.find(canon);
         it != s_canonicalPhoneNumberToNameMap.end()) {
         return *it;
     }
 
+    // If it starts with "+", try stripping the country code
+    if (phoneNumber.startsWith("+")) {
+        using namespace i18n::phonenumbers;
+
+        PhoneNumberUtil *util = PhoneNumberUtil::GetInstance();
+        PhoneNumber parsed;
+
+        // Parse WITHOUT assuming a region
+        // Region "ZZ" = unknown region (libphonenumber special case)
+        PhoneNumberUtil::ErrorType err =
+            util->Parse(phoneNumber.toStdString(), "ZZ", &parsed);
+
+        if (err == PhoneNumberUtil::NO_PARSING_ERROR) {
+            int cc = parsed.country_code();          // e.g. 1, 44, 351
+            QString ccStr = QString::number(cc);
+
+            // Strip "+<cc>"
+            canon.remove(0, ccStr.length());
+            if (auto it = s_canonicalPhoneNumberToNameMap.find(canon);
+                it != s_canonicalPhoneNumberToNameMap.end()) {
+                return *it;
+            }
+        }
+    }
     return phoneNumber;
 }

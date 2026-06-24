@@ -2,8 +2,9 @@
 #include <QAbstractListModel>
 #include <QObject>
 
-class SmsConversation;
+class ConversationHeader;
 class ConversationMessage;
+class MessagesHandler;
 
 class ConversationListModel : public QAbstractListModel
 {
@@ -20,10 +21,12 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addOrUpdateConversation(const ConversationMessage &message);
-    bool isConversationLoaded(qint64 threadId);
+    void setDevice(MessagesHandler *messageHandlerForNewDevice);
 
 private:
-    QVector<SmsConversation*> m_list;
-    QHash<qint64, SmsConversation*> m_index;
+    void onConversationMessageCountChanged(qint64 conversationID, int messageCount);
+
+    QVector<ConversationHeader*> m_list;
+    QHash<qint64, ConversationHeader*> m_index;
+    MessagesHandler *m_messagesHandler = nullptr;
 };
