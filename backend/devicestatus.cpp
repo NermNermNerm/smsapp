@@ -27,23 +27,8 @@ DeviceStatus::DeviceStatus(QObject *parent)
             });
 
     // Listen for device list changes from KDE Connect daemon
-    QDBusConnection::sessionBus().connect(
-        dbus::serviceName,
-        dbus::daemonPath,
-        dbus::daemon().staticInterfaceName(),
-        "deviceAdded",
-        this,
-        SLOT(onDeviceListChanged())
-        );
-
-    QDBusConnection::sessionBus().connect(
-        dbus::serviceName,
-        dbus::daemonPath,
-        dbus::daemon().staticInterfaceName(),
-        "deviceRemoved",
-        this,
-        SLOT(onDeviceListChanged())
-        );
+    connect(&dbus::daemon(), &org::kde::kdeconnect::daemon::deviceAdded, this, &DeviceStatus::onDeviceListChanged);
+    connect(&dbus::daemon(), &org::kde::kdeconnect::daemon::deviceRemoved, this, &DeviceStatus::onDeviceListChanged);
 
     // Initial poll
     poll();
@@ -172,10 +157,15 @@ void DeviceStatus::trySetupPreferredDevice()
         if (reachableDeviceIt != m_validDevices.end())
         {
             setPreferredDevice(reachableDeviceIt->id);
+            setPreferredDeviceName(reachableDeviceIt->name);
             return;
         }
 
-        // no reachable devices to switch to...
+        // else no reachable devices to switch to...
+    }
+    else {
+        // Else the old device is there -- make sure its name is current.
+        setPreferredDeviceName(preferredDeviceIt->name);
     }
 }
 
@@ -209,6 +199,15 @@ void DeviceStatus::setPreferredDevice(const QString &deviceID)
     emit preferredDeviceChanged();
 
     updateHandler();
+}
+
+void DeviceStatus::setPreferredDeviceName(const QString &deviceName)
+{
+    if (deviceName == m_preferredDeviceName)
+        return;
+
+    m_preferredDeviceName = deviceName;
+    emit preferredDeviceNameChanged();
 }
 
 void DeviceStatus::setAutoFixDaemon(bool enabled)

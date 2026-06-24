@@ -35,6 +35,8 @@ public:
 
     Q_PROPERTY(QString preferredDevice READ preferredDevice
                    WRITE setPreferredDevice NOTIFY preferredDeviceChanged)
+    Q_PROPERTY(QString preferredDeviceName READ preferredDeviceName
+                   NOTIFY preferredDeviceNameChanged)
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
@@ -47,14 +49,14 @@ public:
     // Accessors
     QList<DeviceInfo> validDevices() const { return m_validDevices; }
     QString preferredDevice() const { return settings().preferredDeviceId(); }
+    QString preferredDeviceName() const { return m_preferredDeviceName; }
     Status status() const { return m_status; }
     MessagesHandler* handler() const { return m_handler; }
     bool autoFixDaemon() const {  return settings().autoFixDaemon(); }
 
     // Mutators
-    void setPreferredDevice(const QString &id);
     void setAutoFixDaemon(bool enabled);
-    void setStatus(Status status);
+    void setPreferredDevice(const QString &id);
 
     // User-triggered action
     Q_INVOKABLE void rebootDaemon();
@@ -65,12 +67,16 @@ signals:
     void statusChanged();
     void handlerChanged();
     void autoFixDaemonChanged();
+    void preferredDeviceNameChanged();
 
 private:
     void poll();
     void onDeviceListChanged();
     bool tryRefreshDeviceList();
     void trySetupPreferredDevice();
+
+    void setPreferredDeviceName(const QString &name);
+    void setStatus(Status status);
 
     // Ensures that m_handler matches what's in preferredDevice() and changes it if needed.
     void updateHandler();
@@ -83,6 +89,7 @@ private:
     QPointer<MessagesHandler> m_handler;
     QTimer m_pollTimer;
     Settings *m_settings = nullptr;
+    QString m_preferredDeviceName;
 
 
     // Check device status using this as the rough interval - note that if the MessagesHandler has had

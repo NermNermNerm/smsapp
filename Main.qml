@@ -9,78 +9,117 @@ Window {
     visible: true
     title: qsTr("Hello World")
     // Bind the C++ instance to a typed QML property
-    property SmsBackend backend: smsBackend
+    // property DeviceStatus deviceStatus: deviceStatus
+    // property ConversationListModel conversations: conversations
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
         spacing: 12
 
-        // ------------------------------------------------------------
-        // 1. If we have NO primary device and status is NoPrimaryDevice:
-        //    Show a placeholder + (later) a list of devices + reasons.
-        // ------------------------------------------------------------
-        ColumnLayout {
-            visible: backend.deviceName === "" &&
-                     backend.deviceStatus === "No primary device"
+        Rectangle {
+            visible: deviceStatus.status === DeviceStatus.DaemonNotRunning
 
-            ColumnLayout {
-                spacing: 6
+            Layout.fillWidth: true
+            color: "red"
+            radius: 4
+            height: implicitHeight
+
+            Label {
+                text: "KDE Connect is not installed or running"
+                color: "white"
+                padding: 8
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                anchors.fill: parent
+            }
+        }
+
+        Rectangle {
+            visible: deviceStatus.status === DeviceStatus.DaemonHung
+
+            Layout.fillWidth: true
+            color: "red"
+            radius: 4
+
+            RowLayout {
+                id: row
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 12
 
                 Label {
-                    text: "No primary phone selected"
-                    font.pixelSize: 20
+                    text: "KDE Connect daemon is not responsive"
+                    color: "white"
+                    Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
                 }
 
-                Label {
-                    text: backend.extendedStatus
-                    wrapMode: Text.WordWrap
+                Button {
+                    text: "Reset KDE"
+                    onClicked: deviceStatus.rebootDaemon()
                 }
+            }
+        }
 
-                // Placeholder for future device list
+        Rectangle {
+            visible: deviceStatus.status === DeviceStatus.NoSmsDevice
+
+            Layout.fillWidth: true
+            color: "red"
+            radius: 4
+            height: implicitHeight
+
+            Label {
+                text: "No phone is connected with KDE Connect"
+                color: "white"
+                padding: 8
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                anchors.fill: parent
+            }
+        }
+
+        Rectangle {
+            visible: deviceStatus.status === DeviceStatus.DeviceUnreachable || deviceStatus.status === DeviceStatus.DeviceReady
+            Layout.fillWidth: true
+            color: "#333333"
+            radius: 4
+            height: implicitHeight
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 10
+
                 Rectangle {
-                    width: parent.width
-                    height: 80
-                    color: "#33333333"
-                    radius: 6
+                    width: 14
+                    height: 14
+                    radius: 7
+                    color: deviceStatus.status === DeviceStatus.DeviceReady
+                           ? "#00c853"
+                           : "#ffca28"
 
                     Label {
+                        visible: deviceStatus.status === DeviceStatus.DeviceUnreachable
+                        text: "!"
                         anchors.centerIn: parent
-                        text: "Device list goes here"
+                        font.pixelSize: 10
+                        color: "black"
                     }
                 }
-            }
-        }
-
-        // ------------------------------------------------------------
-        // 2. If we HAVE a deviceName, show device info + status
-        // ------------------------------------------------------------
-        ColumnLayout {
-            visible: backend.deviceName !== ""
-
-            ColumnLayout {
-                spacing: 6
 
                 Label {
-                    text: backend.deviceName
-                    font.pixelSize: 22
-                }
-
-                Label {
-                    text: backend.deviceStatus
-                    font.pixelSize: 16
-                }
-
-                Label {
-                    text: backend.extendedStatus
-                    wrapMode: Text.WordWrap
-                    color: "#666"
+                    text: deviceStatus.preferredDeviceName
+                    color: "white"
+                    font.pixelSize: 18
+                    Layout.fillWidth: true
                 }
             }
         }
 
         // ------------------------------------------------------------
-        // 3. Conversation list
+        // Conversation list
         // ------------------------------------------------------------
         Rectangle {
             Layout.fillWidth: true
@@ -92,7 +131,7 @@ Window {
                 id: conversationList
                 anchors.fill: parent
                 anchors.margins: 8
-                model: backend.conversationList
+                model: conversations
                 clip: true
 
                 delegate: Item {
