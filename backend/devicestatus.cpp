@@ -75,10 +75,10 @@ void DeviceStatus::poll()
             qDebug() << "Device unreachable; nudging KDE Connect daemon";
 
             // Allegedly, this could force the kdeconnect daemon to talk to the phone and wake it.
-            dbus::device(preferredDevice()).hasPlugin("kdeconnect_telephony");
+            // dbus::device(preferredDevice()).hasPlugin("kdeconnect_telephony");
 
             // Also allegedly, this would be a more forceful way to do that.
-            // dbus::daemon().forceOnNetworkChange();
+            dbus::daemon().forceOnNetworkChange();
             m_lastWakeAttempt = now;
         }
     }

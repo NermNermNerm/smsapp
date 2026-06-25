@@ -38,6 +38,7 @@ qt_add_qml_module(appsmsapp
         SOURCES backend/devicestatus.h backend/devicestatus.cpp
         SOURCES dbus.h
         SOURCES settings.h settings.cpp
+        RESOURCES todo.md
 )
 
 # Add general Qt resources *after* the QML module
