@@ -24,7 +24,7 @@ public:
     QString body() const { return m_rawData.body(); }
     QString participants() const;
 
-    qint32 threadID() const { return m_rawData.threadID(); }
+    qint64 threadID() const { return m_rawData.threadID(); }
     qint32 uID() const { return m_rawData.uID(); }
     qint32 subID() const { return m_rawData.subID(); }
 

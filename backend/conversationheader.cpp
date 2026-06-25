@@ -1,5 +1,6 @@
 #include "conversationheader.h"
 #include "nameresolver.h"
+#include <QDateTime>
 
 static QString computeParticipants(const ConversationMessage &latestMessage)
 {
@@ -27,10 +28,48 @@ static QString computeParticipants(const ConversationMessage &latestMessage)
     return names.join(", ") + ", and " + last;
 }
 
+static QString shortFriendlyDate(const QDateTime &dt)
+{
+    QDateTime now = QDateTime::currentDateTime();
+    qint64 secs = dt.secsTo(now);
+
+    if (secs < 60 * 60) {
+        // Under 1 hour → Xm
+        int minutes = secs / 60;
+        return QStringLiteral("%1m").arg(minutes);
+    }
+
+    if (secs < 60 * 60 * 4) {
+        // Under 4 hours → Xhr
+        int hours = secs / 3600;
+        return QStringLiteral("%1hr").arg(hours);
+    }
+
+    if (dt.date() == now.date()) {
+        // Today → 8:15 AM
+        return dt.toString("h:mm AP");
+    }
+
+    if (dt.daysTo(now) < 7) {
+        // Within last 7 days → Sun
+        return dt.toString("ddd");
+    }
+
+    if (dt.date().year() == now.date().year()) {
+        // This year → Jun 15
+        return dt.toString("MMM d");
+    }
+
+    // Older → 8/25/21
+    return dt.toString("M/d/yy");
+}
+
+
 ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage, QObject *parent)
     : QObject{parent}
     , m_latestMessage(latestMessage)
     , m_participants(computeParticipants(latestMessage))
+    , m_shortFriendlyDate(::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(latestMessage.date())))
 {
 }
 
@@ -57,6 +96,7 @@ qint64 ConversationHeader::threadID() const
 void ConversationHeader::update(const ConversationMessage &message)
 {
     m_latestMessage = message;
+    m_shortFriendlyDate = ::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(message.date()));
     emit latestMessageBodyChanged();
     emit dateChanged();
 }

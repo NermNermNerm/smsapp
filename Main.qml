@@ -173,6 +173,15 @@ Window {
                         width: ListView.view.width
                         height: content.implicitHeight + 12
 
+
+                        MouseArea {
+                            hoverEnabled: true
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("Clicked conversation thread:", object.latestMessageBody)
+                                // Later: navigate to message view
+                            }
+                        }
                         ColumnLayout {
                             id: content
                             anchors {
@@ -182,34 +191,47 @@ Window {
                             }
 
                             // Participants
-                            Text {
+                            Label {
+                                Layout.fillWidth: true
                                 text: object.participants
                                 font.bold: true
                                 font.pointSize: 14
                                 elide: Text.ElideRight
+
+                                HoverHandler {
+                                    id: hh2
+                                }
+                                ToolTip.visible: hh2.hovered && truncated
+                                ToolTip.text: object.participants
                             }
 
                             // Latest message
-                            Text {
+                            Label {
+                                Layout.fillWidth: true
                                 text: object.latestMessageBody
                                 color: "#666"
                                 font.pointSize: 12
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
                                 elide: Text.ElideRight
+
+                                HoverHandler {
+                                    id: hh
+                                }
+                                ToolTip.visible: hh.hovered && truncated
+                                ToolTip.text: object.latestMessageBody
                             }
 
                             // Timestamp
                             Text {
-                                text: Qt.formatDateTime(object.date, "yyyy-MM-dd hh:mm")
+                                text: object.shortFriendlyDate
                                 color: "#999"
                                 font.pointSize: 10
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("Clicked conversation thread:", object.threadID)
-                                // Later: navigate to message view
+                                HoverHandler {
+                                    id: hhdate
+                                }
+                                ToolTip.visible: hhdate.hovered
+                                ToolTip.text: Qt.formatDateTime(object.date, Qt.DefaultLocaleLongDate)
                             }
                         }
                     }
