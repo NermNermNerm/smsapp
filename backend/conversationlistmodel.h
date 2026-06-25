@@ -25,6 +25,7 @@ public:
 
 private:
     void onConversationMessageCountChanged(qint64 conversationID, int messageCount);
+    int findInsertPosition(const QDateTime &date) const;
 
     QVector<ConversationHeader*> m_list;
     QHash<qint64, ConversationHeader*> m_index;

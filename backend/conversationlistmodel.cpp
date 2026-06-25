@@ -49,6 +49,15 @@ QHash<int, QByteArray> ConversationListModel::roleNames() const
     };
 }
 
+int ConversationListModel::findInsertPosition(const QDateTime &date) const
+{
+    for (int i = 0; i < m_list.size(); ++i) {
+        if (date > m_list[i]->date())   // newest first
+            return i;
+    }
+    return m_list.size(); // goes at end
+}
+
 void ConversationListModel::onConversationMessageCountChanged(qint64 conversationID, int messageCount)
 {
     m_messagesHandler->requestConversationItem(
@@ -57,13 +66,32 @@ void ConversationListModel::onConversationMessageCountChanged(qint64 conversatio
         [this](int index, const ConversationMessage &message) {
             auto *c = m_index.value(message.threadID());
             if (c) {
-                c->update(message);
+                int oldRow = m_list.indexOf(c);
+                if (oldRow == 0) {
+                    // Guaranteed since this class only deals with the most recent message in the conversation.
+                    Q_ASSERT(message.date() > m_list[0]->date().toMSecsSinceEpoch());
+                    c->update(message);
+                }
+                else {
+                    beginRemoveRows(QModelIndex(), oldRow, oldRow);
+                    m_list.removeAt(oldRow);
+                    endRemoveRows();
+
+                    c->update(message);
+
+                    int newRow = findInsertPosition(c->date());
+                    beginInsertRows(QModelIndex(), newRow, newRow);
+                    m_list.insert(newRow, c);
+                    endInsertRows();
+                }
             }
             else {
                 auto *newConversation = new ConversationHeader(message, this);
-                beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
-                m_list.append(newConversation);
+                int pos = findInsertPosition(newConversation->date());
+                beginInsertRows(QModelIndex(), pos, pos);
+                m_list.insert(pos, newConversation);
                 endInsertRows();
+
                 m_index.insert(message.threadID(), newConversation);
             }
         });
