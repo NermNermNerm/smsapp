@@ -60,6 +60,8 @@ int ConversationListModel::findInsertPosition(const QDateTime &date) const
 
 void ConversationListModel::onConversationMessageCountChanged(qint64 conversationID, int messageCount)
 {
+    // NOTE!  If it's ever necessary to store messageCount, check the new messageCount against that,
+    //  and if it's the same, skip doing the rest of this.
     m_messagesHandler->requestConversationItem(
         conversationID,
         1,
@@ -67,23 +69,26 @@ void ConversationListModel::onConversationMessageCountChanged(qint64 conversatio
             auto *c = m_index.value(message.threadID());
             if (c) {
                 int oldRow = m_list.indexOf(c);
-                if (oldRow == 0) {
-                    // Guaranteed since this class only deals with the most recent message in the conversation.
-                    Q_ASSERT(message.date() > m_list[0]->date().toMSecsSinceEpoch());
-                    c->update(message);
-                }
-                else {
-                    beginRemoveRows(QModelIndex(), oldRow, oldRow);
-                    m_list.removeAt(oldRow);
-                    endRemoveRows();
+                QDateTime newDate = QDateTime::fromMSecsSinceEpoch(message.date());
 
-                    c->update(message);
+                // Compute where it *should* go
+                int newRow = findInsertPosition(newDate);
 
-                    int newRow = findInsertPosition(c->date());
-                    beginInsertRows(QModelIndex(), newRow, newRow);
-                    m_list.insert(newRow, c);
-                    endInsertRows();
+                // Adjust for downward moves
+                if (newRow > oldRow)
+                    newRow--;
+
+                bool needsMove = (newRow != oldRow);
+
+                if (needsMove) {
+                    beginMoveRows(QModelIndex(), oldRow, oldRow,
+                                  QModelIndex(), newRow);
+                    m_list.move(oldRow, newRow);
+                    endMoveRows();
                 }
+
+                // Update after the move
+                c->update(message);
             }
             else {
                 auto *newConversation = new ConversationHeader(message, this);

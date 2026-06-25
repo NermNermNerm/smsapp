@@ -158,54 +158,59 @@ Window {
             radius: 8
             color: "#f5f5f5"
 
-            ListView {
-                id: conversationList
+            ScrollView {
                 anchors.fill: parent
-                anchors.margins: 8
-                model: conversations
                 clip: true
 
-                delegate: Item {
-                    width: ListView.view.width
-                    height: content.implicitHeight + 12
+                ListView {
+                    id: conversationList
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    model: conversations
+                    clip: true
 
-                    ColumnLayout {
-                        id: content
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            margins: 6
+                    delegate: Item {
+                        width: ListView.view.width
+                        height: content.implicitHeight + 12
+
+                        ColumnLayout {
+                            id: content
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                margins: 6
+                            }
+
+                            // Participants
+                            Text {
+                                text: object.participants
+                                font.bold: true
+                                font.pointSize: 14
+                                elide: Text.ElideRight
+                            }
+
+                            // Latest message
+                            Text {
+                                text: object.latestMessageBody
+                                color: "#666"
+                                font.pointSize: 12
+                                elide: Text.ElideRight
+                            }
+
+                            // Timestamp
+                            Text {
+                                text: Qt.formatDateTime(object.date, "yyyy-MM-dd hh:mm")
+                                color: "#999"
+                                font.pointSize: 10
+                            }
                         }
 
-                        // Participants
-                        Text {
-                            text: object.participants
-                            font.bold: true
-                            font.pointSize: 14
-                            elide: Text.ElideRight
-                        }
-
-                        // Latest message
-                        Text {
-                            text: object.latestMessageBody
-                            color: "#666"
-                            font.pointSize: 12
-                            elide: Text.ElideRight
-                        }
-
-                        // Timestamp
-                        Text {
-                            text: Qt.formatDateTime(object.date, "yyyy-MM-dd hh:mm")
-                            color: "#999"
-                            font.pointSize: 10
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            console.log("Clicked conversation thread:", object.threadID)
-                            // Later: navigate to message view
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("Clicked conversation thread:", object.threadID)
+                                // Later: navigate to message view
+                            }
                         }
                     }
                 }
