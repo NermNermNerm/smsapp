@@ -8,12 +8,17 @@
 #include "backend/nameresolver.h"
 #include "backend/devicestatus.h"
 #include "backend/conversationlistmodel.h"
+#include "dbus.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
 
 int main(int argc, char *argv[])
 {
+    // Do this first because we want it done before accessing any settings -- which settings we load
+    // depends on whether we're using the fake or real back-end.
+    dbus::init();
+
     QGuiApplication app(argc, argv);
 
     // Force the Linux Window Manager to register this exact string as the WM_CLASS

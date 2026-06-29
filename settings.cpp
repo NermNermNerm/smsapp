@@ -1,13 +1,14 @@
 #include "settings.h"
+#include "dbus.h"
 
 Settings& Settings::instance()
 {
-    static Settings s;
+    static Settings s(dbus::isUsingFakeDBus());
     return s;
 }
 
-Settings::Settings()
-    : m_settings("NermNermNerm", "SmsApp")
+Settings::Settings(bool isUsingFakeDBus)
+    : m_settings("NermNermNerm", isUsingFakeDBus ? "SmsAppFake" : "SmsApp")
 {
 }
 

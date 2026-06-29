@@ -13,7 +13,7 @@ KDE Plugin Asks
 - It looks like when a new message count comes along and
   overrides the cache, it reorders the conversation hash incorrectly
 - When it requests a missing conversation message item,
-  it either shows up.
+  it never shows up.
 
 ## Get the status nice
 - Better state icons
@@ -22,6 +22,9 @@ KDE Plugin Asks
 - Put the date to the right
 
 ## Get Messages working
+- Write the code to manage the list of messages.
+- Attachments
+- Send
 
 ## Test infrastructure
 - Full implementation of used API's

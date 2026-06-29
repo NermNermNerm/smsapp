@@ -15,6 +15,6 @@ public:
     void setAutoFixDaemon(bool enabled);
 
 private:
-    Settings();
+    Settings(bool isUsingFakeDBus);
     QSettings m_settings;
 };

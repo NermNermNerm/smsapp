@@ -120,8 +120,7 @@ bool DeviceStatus::tryRefreshDeviceList()
         if (name.isEmpty())
             continue;
 
-        QStringList plugins = dev.loadedPlugins();
-        if (!plugins.contains("kdeconnect_sms"))
+        if (!dev.hasPlugin("kdeconnect_sms"))
             continue;
 
         // Check if already present

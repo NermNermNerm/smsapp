@@ -12,11 +12,32 @@ namespace dbus {
 // Global configuration
 //
 inline QString serviceName = "org.kde.kdeconnect";
-// For testing:
-// inline QString serviceName = "org.fake.kdeconnect";
 
 inline const QString daemonPath = "/modules/kdeconnect";
 inline const QString deviceBasePath = "/modules/kdeconnect/devices/";
+inline bool isUsingFakeDBus() { return serviceName != "org.kde.kdeconnect"; }
+
+inline void init()
+{
+    // Build a raw DBus call to the fake daemon
+    QDBusMessage msg = QDBusMessage::createMethodCall(
+        "org.fake.kdeconnect",        // service
+        daemonPath,                   // object path
+        OrgKdeKdeconnectDaemonInterface::staticInterfaceName(),  // interface
+        "reset"                       // method
+        );
+
+    QDBusMessage reply = QDBusConnection::sessionBus().call(msg, QDBus::Block);
+
+    if (reply.type() == QDBusMessage::ReplyMessage) {
+        qDebug() << "Fake daemon responded to reset(); switching serviceName.";
+        dbus::serviceName = "org.fake.kdeconnect";
+    } else {
+        qDebug() << "Fake daemon not available:"
+                 << reply.errorName()
+                 << reply.errorMessage();
+    }
+}
 
 inline QDBusConnection bus()
 {
@@ -65,7 +86,7 @@ inline org::kde::kdeconnect::conversations& conversations(const QString &id)
     if (!cache.contains(id)) {
         cache[id] = new org::kde::kdeconnect::conversations(
             serviceName,
-            deviceBasePath + id + "/conversations",
+            deviceBasePath + id,
             bus(),
             nullptr
             );
@@ -83,7 +104,7 @@ inline org::kde::kdeconnect::sms& sms(const QString &id)
     if (!cache.contains(id)) {
         cache[id] = new org::kde::kdeconnect::sms(
             serviceName,
-            deviceBasePath + id + "/sms",
+            deviceBasePath + id,
             bus(),
             nullptr
             );
@@ -101,7 +122,7 @@ inline org::kde::kdeconnect::telephony& telephony(const QString &id)
     if (!cache.contains(id)) {
         cache[id] = new org::kde::kdeconnect::telephony(
             serviceName,
-            deviceBasePath + id + "/telephony",
+            deviceBasePath + id,
             bus(),
             nullptr
             );

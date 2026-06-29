@@ -1,11 +1,10 @@
 #include "messageshandler.h"
+#include "dbus.h"
 
 static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 
 MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
     : QObject{parent},
-    m_device(orgKdeConnect, "/modules/kdeconnect/devices/" + deviceID, QDBusConnection::sessionBus()),
-    m_conversations(orgKdeConnect, "/modules/kdeconnect/devices/" + deviceID, QDBusConnection::sessionBus()),
     m_deviceID(deviceID)
 {
 }
@@ -21,11 +20,11 @@ void MessagesHandler::startListening()
 
     m_cacheManager.load(m_deviceID);
 
-    QObject::connect(&m_conversations, &org::kde::kdeconnect::conversations::conversationLoaded,
+    QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationLoaded,
                      this, &MessagesHandler::onConversationLoaded);
-    QObject::connect(&m_conversations, &org::kde::kdeconnect::conversations::conversationCreated,
+    QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationCreated,
                      this, &MessagesHandler::onConversationCreated);
-    QObject::connect(&m_conversations, &org::kde::kdeconnect::conversations::conversationUpdated,
+    QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationUpdated,
                      this, &MessagesHandler::onConversationUpdated);
 
     m_retryTimer.setInterval(1000);   // 1 second
@@ -42,7 +41,7 @@ void MessagesHandler::startListening()
 
 void MessagesHandler::attemptRequestAllThreads()
 {
-    QDBusPendingReply<> reply = m_conversations.requestAllConversationThreads();
+    QDBusPendingReply<> reply = dbus::conversations(m_deviceID).requestAllConversationThreads();
 
     auto *watcher = new QDBusPendingCallWatcher(reply, this);
     connect(watcher, &QDBusPendingCallWatcher::finished,
@@ -118,7 +117,8 @@ void MessagesHandler::requestConversationItems(
 
         if (m_pendingRequests.length() == 1) {
             const PendingRequest& headRequest = m_pendingRequests.head();
-            m_conversations.requestConversation(headRequest.conversationID, headRequest.startingIndex, headRequest.endingIndex);
+            qDebug() << Q_FUNC_INFO << "calling requestConversation" << headRequest.conversationID << headRequest.startingIndex << ".." << headRequest.endingIndex;
+            dbus::conversations(m_deviceID).requestConversation(headRequest.conversationID, headRequest.startingIndex, headRequest.endingIndex);
         }
     }
 }
@@ -131,12 +131,11 @@ int MessagesHandler::getNumberOfMessagesInConversation(qint64 conversationID)
     return messageCount;
 }
 
-
 void MessagesHandler::onConversationLoaded(qint64 threadID, qint64 messageCount)
 {
     noteDaemonActivity();
 
-    qDebug() << Q_FUNC_INFO << threadID;
+    qDebug() << Q_FUNC_INFO << threadID << messageCount;
     m_cacheManager.updateMessageCount(threadID, messageCount);
 
     if (threadID == m_messageBeingCreated.threadID())
@@ -177,7 +176,8 @@ void MessagesHandler::onConversationUpdated(const QDBusVariant &msg)
             m_pendingRequests.pop_front();
             if (!m_pendingRequests.empty()) {
                 PendingRequest* newHeadRequest = &m_pendingRequests.head();
-                m_conversations.requestConversation(newHeadRequest->conversationID, newHeadRequest->startingIndex, newHeadRequest->endingIndex);
+                qDebug() << Q_FUNC_INFO << "calling requestConversation" << newHeadRequest->conversationID << newHeadRequest->startingIndex << ".." << newHeadRequest->endingIndex;
+                dbus::conversations(m_deviceID).requestConversation(newHeadRequest->conversationID, newHeadRequest->startingIndex, newHeadRequest->endingIndex);
             }
         }
     }

@@ -73,8 +73,6 @@ private:
     //  Otherwise, the entry at the tip of the queue is the one we're waiting for dbus to respond to.
     QQueue<PendingRequest> m_pendingRequests;
 
-    org::kde::kdeconnect::device m_device;
-    org::kde::kdeconnect::conversations m_conversations;
     CacheManager m_cacheManager;
 
     // m_deviceManager.conversationCreated() happens first - it gives us this message, but we need to know
