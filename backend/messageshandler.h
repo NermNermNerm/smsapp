@@ -1,45 +1,39 @@
 #pragma once
 #include <QObject>
 #include <QQueue>
+#include <QSet>
 #include <QDateTime>
-#include "kdeconnect_proxy.h"
+#include <QTimer>
 #include "cachemanager.h"
 
 class ConversationMessage;
+class QDBusPendingCallWatcher;
 
 //  Manages all conversations with the kde connect daemon regarding SMS messages on a specific device.
 class MessagesHandler : public QObject
 {
     Q_OBJECT
 public:
-    using MessageAvailableCallback = std::function<void(int requestedIndex,  const ConversationMessage &item)>;
-    using FailureCallback = std::function<void(qint64 conversationID, int requestedIndex)>;
-
     explicit MessagesHandler(const QString &deviceId, QObject *parent = nullptr);
 
     // Call this after construction to attach to the dbus, load the cache, and start forwarding events.
     // This should only be called once.
     void startListening();
 
-    void requestConversationItems(qint64 conversationID, int startingIndex, int endingIndex, MessageAvailableCallback onMessageAvailable, FailureCallback onFailure = nullptr);
-    void requestConversationItem(qint64 conversationID, int singleIndex, MessageAvailableCallback onCompletion, FailureCallback onFailure = nullptr) {
-        requestConversationItems(conversationID, singleIndex, singleIndex, onCompletion, onFailure);
-    }
-
-    int getNumberOfMessagesInConversation(qint64 conversationID);
+    void requestConversationItems(qint64 conversationID);
     QDateTime lastDaemonActivityUtc() const { return m_lastActivity; }
-
     const QString &deviceID() const { return m_deviceID; }
+    bool isConversationKnown(qint64 conversationID) const { return m_knownThreads.contains(conversationID); }
 
-    // TODO: This probably isn't the right signature, as we should probably return an opaque "RequestID" type so that
-    //   callers can cancel a particular request.
-    // void cancelPendingRequestsForConversation(qint64 conversationID);
-
-    int unreadMessageCount() const { return 0; } // TODO
+    QVector<ConversationMessage> getAllConversationMessages() const
+        { return m_cacheManager.getAllConversationMessages(); }
+    QVector<ConversationMessage> getConversationMessages(qint64 conversationID) const
+        { return m_cacheManager.getConversationMessages(conversationID); }
 
 signals:
-    // A new text has arrived for a conversation
-    void conversationMessageCountChanged(qint64 conversationID, int messageCount);
+    void conversationMessageChanged(const ConversationMessage &updatedMessage);
+    void conversationBecomesKnown(qint64 conversationID);
+    void conversationDeleted(qint64 conversationId);
 
     // Note: conversationCreated is handled internally, as it's really just the first message
     // in a two message conversation.  Our signal will be conversationLoaded, when conversationCreated
@@ -54,31 +48,15 @@ private:
     void onRequestAllThreadsFinished(QDBusPendingCallWatcher *watcher);
 
     void noteDaemonActivity() { m_lastActivity = QDateTime::currentDateTimeUtc(); }
-
-    struct PendingRequest {
-        qint64 conversationID;
-        int startingIndex;
-        int endingIndex;
-        MessageAvailableCallback onMessageAvailable;
-        FailureCallback onFailure;
-        qint64 expectedDateMinimum;
-        qint64 expectedDateMaximum;
-    };
+    void markConversationKnown(qint64 conversationID);
 
     QDateTime m_lastActivity;
     QString m_deviceID;
     QTimer m_retryTimer;
+    qint64 m_stableThreadTime = 0;
 
-    // If m_pendingRequests is empty, that means no requests have been sent out on dbus.
-    //  Otherwise, the entry at the tip of the queue is the one we're waiting for dbus to respond to.
-    QQueue<PendingRequest> m_pendingRequests;
+    QQueue<qint64> m_conversationsNeedingUpdate;
+    QSet<qint64> m_knownThreads;
 
     CacheManager m_cacheManager;
-
-    // m_deviceManager.conversationCreated() happens first - it gives us this message, but we need to know
-    // how many messages are in the new thread before we can add it to the cache.  For that, we need to await
-    // the conversationLoaded signal.
-    ConversationMessage m_messageBeingCreated;
-
-    bool m_startListeningCalled = false;
 };

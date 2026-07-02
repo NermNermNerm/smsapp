@@ -1,6 +1,8 @@
+#include <QtAssert>
 #include "conversationlistmodel.h"
 #include "conversationheader.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
+#include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "messageshandler.h"
 
 ConversationListModel::ConversationListModel(QObject *parent)
@@ -9,21 +11,55 @@ ConversationListModel::ConversationListModel(QObject *parent)
 
 void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
 {
+    Q_ASSERT(messagesHandlerForNewDevice);
+
+    // Hook up message handlers to the new guy
+    // The old m_messagesHandler, if it ever existed, should have been deleted before this,
+    // meaning there's no need to disconnect from the old one.
     m_messagesHandler = messagesHandlerForNewDevice;
-    m_messagesHandler->connect(m_messagesHandler, &MessagesHandler::conversationMessageCountChanged
-                               , this, &ConversationListModel::onConversationMessageCountChanged);
-    // Note - the old device (if it exists) will have already been destroyed, so we don't
-    // have to worry about detaching from it.
+    QObject::connect(m_messagesHandler, &MessagesHandler::conversationMessageChanged,
+                     this, &ConversationListModel::onConversationMessageChanged);
+    QObject::connect(m_messagesHandler, &MessagesHandler::conversationDeleted,
+                     this, &ConversationListModel::onConversationDeleted);
 
-    // It's the caller's job to call MessagesHandler::startListening after this call.
-
-    beginRemoveRows(QModelIndex(), 0, m_list.size());
+    // Clear old data
+    beginResetModel();
+    qDeleteAll(m_list); // if m_list holds pointers/owned objects; adjust as needed
     m_list.clear();
     m_index.clear();
-    endRemoveRows();
+    endResetModel();
 
-    // We actually *can't* ask for a cached list of conversations here, because conversations can be deleted
-    // on the phone and KDE doesn't/can't tell us about that through any other mechanism than requestAllConversations.
+    // Populate the list from the cache
+    //   First calculate all the latest messages from each thread
+    QMap<qint64, const ConversationMessage *> latestMessageInThread;
+    const auto allConversationMessages = m_messagesHandler->getAllConversationMessages();
+    for (const ConversationMessage & message: allConversationMessages) {
+        const ConversationMessage *existingMessage = latestMessageInThread[message.threadID()];
+        if (!existingMessage || isNewerMessage(message, *existingMessage)) {
+            latestMessageInThread[message.threadID()] = &message;
+        }
+    }
+
+    if (!latestMessageInThread.isEmpty()) {
+        //   Sort the conversations in reverse chronological order
+        QVector<const ConversationMessage*> sortedConversations;
+        sortedConversations.reserve(latestMessageInThread.size());
+        for (auto it = latestMessageInThread.constBegin(); it != latestMessageInThread.constEnd(); ++it)
+            sortedConversations.append(it.value());
+        std::stable_sort(sortedConversations.begin(), sortedConversations.end(),
+                         [](const ConversationMessage* a, const ConversationMessage* b) -> bool {
+                             return isNewerMessage(*a, *b);
+                         });
+
+        // Build ConversationHeader model items out of that list.
+        beginInsertRows(QModelIndex(), 0, sortedConversations.size()-1);
+        for (const ConversationMessage *message: sortedConversations) {
+            auto *header = new ConversationHeader(*message, this);
+            m_list.emplaceBack(header);
+            m_index.insert(message->threadID(), header);
+        }
+        endInsertRows();
+    }
 }
 
 int ConversationListModel::rowCount(const QModelIndex &parent) const
@@ -58,46 +94,43 @@ int ConversationListModel::findInsertPosition(const QDateTime &date) const
     return m_list.size(); // goes at end
 }
 
-void ConversationListModel::onConversationMessageCountChanged(qint64 conversationID, int messageCount)
+void ConversationListModel::onConversationMessageChanged(const ConversationMessage &updatedMessage)
 {
-    // NOTE!  If it's ever necessary to store messageCount, check the new messageCount against that,
-    //  and if it's the same, skip doing the rest of this.
-    m_messagesHandler->requestConversationItem(
-        conversationID,
-        1,
-        [this](int index, const ConversationMessage &message) {
-            auto *c = m_index.value(message.threadID());
-            if (c) {
-                int oldRow = m_list.indexOf(c);
-                QDateTime newDate = QDateTime::fromMSecsSinceEpoch(message.date());
+    auto *associatedHeader = m_index[updatedMessage.threadID()];
+    if (associatedHeader == nullptr) { // This is a new conversation
+        auto *newConversation = new ConversationHeader(updatedMessage, this);
+        int pos = findInsertPosition(QDateTime::fromMSecsSinceEpoch(updatedMessage.date()));
+        beginInsertRows(QModelIndex(), pos, pos);
+        m_list.insert(pos, newConversation);
+        endInsertRows();
+        m_index[updatedMessage.threadID()] = newConversation;
+    }
+    else if (associatedHeader->isUpdateNeeded(updatedMessage)) { // else if it's new data on an old one
+        int oldRow = m_list.indexOf(associatedHeader);
+        int newRow = findInsertPosition(QDateTime::fromMSecsSinceEpoch(updatedMessage.date()));
+        if (newRow > oldRow)
+            ++newRow;
 
-                // Compute where it *should* go
-                int newRow = findInsertPosition(newDate);
+        associatedHeader->update(updatedMessage);
+        if (oldRow != newRow) {
+            beginMoveRows(QModelIndex(), oldRow, oldRow,
+                          QModelIndex(), newRow);
+            m_list.move(oldRow, newRow);
+            endMoveRows();
+        }
+    }
+}
 
-                // Adjust for downward moves
-                if (newRow > oldRow)
-                    newRow--;
-
-                bool needsMove = (newRow != oldRow);
-
-                if (needsMove) {
-                    beginMoveRows(QModelIndex(), oldRow, oldRow,
-                                  QModelIndex(), newRow);
-                    m_list.move(oldRow, newRow);
-                    endMoveRows();
-                }
-
-                // Update after the move
-                c->update(message);
-            }
-            else {
-                auto *newConversation = new ConversationHeader(message, this);
-                int pos = findInsertPosition(newConversation->date());
-                beginInsertRows(QModelIndex(), pos, pos);
-                m_list.insert(pos, newConversation);
-                endInsertRows();
-
-                m_index.insert(message.threadID(), newConversation);
-            }
-        });
+void ConversationListModel::onConversationDeleted(qint64 conversationId)
+{
+    auto *associatedHeader = m_index[conversationId];
+    if (associatedHeader != nullptr)
+    {
+        int oldRow = m_list.indexOf(associatedHeader);
+        beginRemoveRows(QModelIndex(), oldRow, oldRow);
+        m_list.remove(oldRow);
+        endRemoveRows();
+        m_index.remove(conversationId);
+        delete associatedHeader;
+    }
 }

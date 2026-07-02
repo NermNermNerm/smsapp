@@ -107,18 +107,32 @@ ConversationMessage messageFromJson(const QJsonObject &o)
 }
 
 
-bool isSameMessage(const ConversationMessage &a, const ConversationMessage &b)
+bool isSameMessageID(const ConversationMessage &oldMsg, const ConversationMessage &newMsgb)
 {
-    return a.threadID() == b.threadID()
-    && a.date() == b.date()
-        && a.uID() == b.uID()
-        && a.subID() == b.subID();
+    return oldMsg.threadID() == newMsgb.threadID()
+        && oldMsg.date() == newMsgb.date()
+        && oldMsg.uID() == newMsgb.uID()
+        && oldMsg.subID() == newMsgb.subID();
+}
+
+bool isFullVersionOf(const ConversationMessage &oldMsg,
+                       const ConversationMessage &newMsg)
+{
+    if (!isSameMessageID(oldMsg, newMsg))
+        return false;
+
+    // Full messages always have more content than metadata messages
+    if (newMsg.body().length() > oldMsg.body().length())
+        return true;
+
+    if (newMsg.attachments().size() > oldMsg.attachments().size())
+        return true;
+
+    return false;
 }
 
 bool isNewerMessage(const ConversationMessage &a, const ConversationMessage &b)
 {
-    Q_ASSERT(a.threadID() == b.threadID());
-
     if (a.date() != b.date()) return a.date() > b.date();
     if (a.uID()  != b.uID())  return a.uID()  > b.uID();
     return a.subID() > b.subID();

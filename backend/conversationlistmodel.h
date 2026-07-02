@@ -6,6 +6,10 @@ class ConversationHeader;
 class ConversationMessage;
 class MessagesHandler;
 
+/**
+ * @brief This class backs up the list of conversations in the UX.  It maintains a list
+ *   of ConversationHeaders, which
+ */
 class ConversationListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -24,7 +28,8 @@ public:
     void setDevice(MessagesHandler *messageHandlerForNewDevice);
 
 private:
-    void onConversationMessageCountChanged(qint64 conversationID, int messageCount);
+    void onConversationMessageChanged(const ConversationMessage &updatedMessage);
+    void onConversationDeleted(qint64 conversationId);
     int findInsertPosition(const QDateTime &date) const;
 
     QVector<ConversationHeader*> m_list;

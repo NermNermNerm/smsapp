@@ -4,22 +4,8 @@
 static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 
 MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
-    : QObject{parent},
-    m_deviceID(deviceID)
+    : QObject{parent}, m_deviceID(deviceID), m_cacheManager(deviceID, this)
 {
-}
-
-void MessagesHandler::startListening()
-{
-    Q_ASSERT(!m_startListeningCalled);
-    if (m_startListeningCalled)
-    {
-        return;
-    }
-    m_startListeningCalled = true;
-
-    m_cacheManager.load(m_deviceID);
-
     QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationLoaded,
                      this, &MessagesHandler::onConversationLoaded);
     QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationCreated,
@@ -30,8 +16,7 @@ void MessagesHandler::startListening()
     m_retryTimer.setInterval(1000);   // 1 second
     m_retryTimer.setSingleShot(true);
 
-    connect(&m_retryTimer, &QTimer::timeout,
-            this, &MessagesHandler::attemptRequestAllThreads);
+    connect(&m_retryTimer, &QTimer::timeout, this, &MessagesHandler::attemptRequestAllThreads);
     attemptRequestAllThreads();
 
     // We're setting this now to avoid giving a down reading when we can be pretty sure things
@@ -44,10 +29,8 @@ void MessagesHandler::attemptRequestAllThreads()
     QDBusPendingReply<> reply = dbus::conversations(m_deviceID).requestAllConversationThreads();
 
     auto *watcher = new QDBusPendingCallWatcher(reply, this);
-    connect(watcher, &QDBusPendingCallWatcher::finished,
-            this, &MessagesHandler::onRequestAllThreadsFinished);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, &MessagesHandler::onRequestAllThreadsFinished);
 }
-
 
 void MessagesHandler::onRequestAllThreadsFinished(QDBusPendingCallWatcher *watcher)
 {
@@ -65,89 +48,36 @@ void MessagesHandler::onRequestAllThreadsFinished(QDBusPendingCallWatcher *watch
     }
 }
 
-void MessagesHandler::requestConversationItems(
-    qint64 conversationID,
-    int startingIndex,
-    int endingIndex,
-    MessageAvailableCallback onMessageAvailable,
-    FailureCallback onFailure)
+void MessagesHandler::requestConversationItems(qint64 conversationID)
 {
-    // Process any we already have in cache
-    int firstUncachedIndex = -1;
-    qint64 expectedDateMinimum = 0;
-    for (int i = startingIndex; i <= endingIndex; ++i) {
-        ConversationMessage cachedMessage;
-        if (m_cacheManager.tryGetMessage(conversationID, i, cachedMessage)) {
-            onMessageAvailable(i, cachedMessage);
-            expectedDateMinimum = cachedMessage.date();
-        }
-        else {
-            firstUncachedIndex = i;
-            break;
-        }
-    }
-
-    if (firstUncachedIndex >= 0) {
-        // We didn't find all the requested values in the cache.
-
-        // Check and see if there are some  at the far side of the range already.
-        qint64 expectedDateMaximum = std::numeric_limits<qint64>::max();
-        int lastUncachedIndex = endingIndex; // Note that we're guaranteed to hit the 'else' condition below
-        for (int i = endingIndex; i >= startingIndex; --i) {
-            ConversationMessage cachedMessage;
-            if (m_cacheManager.tryGetMessage(conversationID, i, cachedMessage)) {
-                expectedDateMaximum = cachedMessage.date();
-                onMessageAvailable(i, cachedMessage);
-            }
-            else {
-                lastUncachedIndex = i;
-                break;
-            }
-        }
-
-        m_pendingRequests.enqueue(PendingRequest{
-            .conversationID      = conversationID,
-            .startingIndex       = firstUncachedIndex,
-            .endingIndex         = lastUncachedIndex,
-            .onMessageAvailable  = std::move(onMessageAvailable),
-            .onFailure           = std::move(onFailure),
-            .expectedDateMinimum = expectedDateMinimum,
-            .expectedDateMaximum = expectedDateMaximum
-        });
-
-        if (m_pendingRequests.length() == 1) {
-            const PendingRequest& headRequest = m_pendingRequests.head();
-            qDebug() << Q_FUNC_INFO << "calling requestConversation" << headRequest.conversationID << headRequest.startingIndex << ".." << headRequest.endingIndex;
-            dbus::conversations(m_deviceID).requestConversation(headRequest.conversationID, headRequest.startingIndex, headRequest.endingIndex);
-        }
-    }
-}
-
-int MessagesHandler::getNumberOfMessagesInConversation(qint64 conversationID)
-{
-    int messageCount = 0;
-    bool isKnownConversation = m_cacheManager.tryGetMessageCount(conversationID, messageCount);
-    Q_ASSERT(isKnownConversation);
-    return messageCount;
+    dbus::conversations(m_deviceID).requestConversation(conversationID, 0, 9999);
 }
 
 void MessagesHandler::onConversationLoaded(qint64 threadID, qint64 messageCount)
 {
     noteDaemonActivity();
-
     qDebug() << Q_FUNC_INFO << threadID << messageCount;
-    m_cacheManager.updateMessageCount(threadID, messageCount);
-
-    if (threadID == m_messageBeingCreated.threadID())
-    {
-        m_cacheManager.storeMessage(threadID, 1, m_messageBeingCreated);
-        m_messageBeingCreated = ConversationMessage();
+    if (messageCount == 0) {
+        m_cacheManager.deleteConversation(threadID);
+        m_knownThreads.remove(threadID);
+        emit conversationDeleted(threadID);
     }
-
-    // Any ConversationCreated message is expected to be immediately followed by an onConversationLoaded signal.
-    Q_ASSERT(m_messageBeingCreated.threadID() == 0);
-
-    emit conversationMessageCountChanged(threadID, messageCount);
+    else if (!m_knownThreads.contains(threadID)) {
+        if (m_stableThreadTime > 0 && m_cacheManager.isCachedThreadOlderThan(threadID, m_stableThreadTime)) {
+            markConversationKnown(threadID);
+        }
+        else if (!m_conversationsNeedingUpdate.contains(threadID)) { // <- should always be true unless there's other client activity.
+            // Even though we have evidence that the thread is known, we don't mark it known here
+            // and instead wait for its 'updated' message to come through in order to avoid the risk
+            // of the thread-viewing window sending a requestConversationItems call simultaneous with
+            // the one we're sending here.
+            bool queueWasEmpty = m_conversationsNeedingUpdate.isEmpty();
+            m_conversationsNeedingUpdate.enqueue(threadID);
+            if (queueWasEmpty) {
+                dbus::conversations(m_deviceID).requestConversation(threadID, 0, 0);
+            }
+        }
+    }
 }
 
 void MessagesHandler::onConversationUpdated(const QDBusVariant &msg)
@@ -155,58 +85,30 @@ void MessagesHandler::onConversationUpdated(const QDBusVariant &msg)
     noteDaemonActivity();
     ConversationMessage message = ConversationMessage::fromDBus(msg);
     qDebug() << Q_FUNC_INFO << message.threadID() << message.body();
-
-    // Any ConversationCreated message is expected to be immediately followed by an onConversationLoaded signal.
-    Q_ASSERT(m_messageBeingCreated.threadID() == 0);
-
-    // Is this exactly the message we're requesting... probably.
-    PendingRequest* headRequest = m_pendingRequests.empty() ? nullptr : &m_pendingRequests.head();
-    if (headRequest
-        && headRequest->conversationID == message.threadID()
-        && headRequest->expectedDateMinimum <= message.date()
-        && message.date() <= headRequest->expectedDateMaximum)
-    {
-        int index = headRequest->startingIndex;
-        m_cacheManager.storeMessage(message.threadID(), index, message);
-        headRequest->onMessageAvailable(index, message);
-        if (headRequest->startingIndex < headRequest->endingIndex) {
-            headRequest->startingIndex += 1;
+    auto storeCacheResult = m_cacheManager.storeMessage(message);
+    if (storeCacheResult == CacheManager::StoreResult::Updated) {
+        emit conversationMessageChanged(message);
+    }
+    if (!m_conversationsNeedingUpdate.empty() && message.threadID() == m_conversationsNeedingUpdate.head()) {
+        if (storeCacheResult == CacheManager::StoreResult::AlreadyKnown) {
+            m_stableThreadTime = message.date();
         }
-        else {
-            m_pendingRequests.pop_front();
-            if (!m_pendingRequests.empty()) {
-                PendingRequest* newHeadRequest = &m_pendingRequests.head();
-                qDebug() << Q_FUNC_INFO << "calling requestConversation" << newHeadRequest->conversationID << newHeadRequest->startingIndex << ".." << newHeadRequest->endingIndex;
-                dbus::conversations(m_deviceID).requestConversation(newHeadRequest->conversationID, newHeadRequest->startingIndex, newHeadRequest->endingIndex);
-            }
+
+        m_conversationsNeedingUpdate.pop_front();
+        //while the head of conversationNeedingUpdate is the id of a thread in the cache whose youngest timestamp is older than stableThreadTime
+        while (!m_conversationsNeedingUpdate.empty()
+               && m_cacheManager.isCachedThreadOlderThan(m_conversationsNeedingUpdate.head(), m_stableThreadTime)) {
+            markConversationKnown(m_conversationsNeedingUpdate.head());
+            m_conversationsNeedingUpdate.pop_front();
+        }
+
+        // If there is still work to do, request the next head
+        if (!m_conversationsNeedingUpdate.empty()) {
+            dbus::conversations(m_deviceID).requestConversation(m_conversationsNeedingUpdate.head(), 0, 0);
         }
     }
-    else if (m_cacheManager.isNewerThanCached(message))
-    {
-        // ... it's a new text message has arrived on an existing conversation.
-        int messageCount;
-        bool isInCache = m_cacheManager.tryGetMessageCount(message.threadID(), messageCount);
-        // The daemon shouldn't send us messages it hasn't sent us conversationLoaded messages for.
-        Q_ASSERT(isInCache);
-        // ... but it conceivably could if a message arrived while it's spewing conversationUpdated while
-        // processing the requestAllConversationThreads request.  We'll handle it in release mode, but
-        // it's so rare, it seems worth an assert.
-        if (isInCache) {
-            m_cacheManager.updateMessageCount(message.threadID(), messageCount+1);
-            m_cacheManager.storeMessage(message.threadID(), 1, message); // Note: indices are 1-based.
-            emit conversationMessageCountChanged(message.threadID(), messageCount+1);
-        }
-        // else ignore it, as we'll have to pick it up when we finally get the loaded message.
-        else {
-            qDebug() << "  !Ignored message from a thread that we haven't got in our cache";
-        }
-    }
-    else {
-        qDebug() << "  !Ignored message that appears to be aimed at another SMS app on the kdbus";
-    }
 
-    // TODO: Consider going into some kind of error state if we haven't made progress on the
-    //  head request after a while.
+    markConversationKnown(message.threadID());
 }
 
 void MessagesHandler::onConversationCreated(const QDBusVariant &msg)
@@ -214,11 +116,16 @@ void MessagesHandler::onConversationCreated(const QDBusVariant &msg)
     noteDaemonActivity();
     ConversationMessage message = ConversationMessage::fromDBus(msg);
     qDebug() << Q_FUNC_INFO << message.threadID() << message.body();
+    if (m_cacheManager.storeMessage(message) == CacheManager::StoreResult::Updated) {
+        emit conversationMessageChanged(message);
+    }
+    markConversationKnown(message.threadID());
+}
 
-    // If this asserts, the daemon didn't send us a conversationLoaded message after the last created one.
-    // ?? Perhaps this is possible if two brand new conversations get created at the same instant and the
-    // daemon handles them on separate threads?
-    Q_ASSERT(m_messageBeingCreated.threadID() == 0);
-
-    m_messageBeingCreated = message;
+void MessagesHandler::markConversationKnown(qint64 conversationID)
+{
+    if (!m_knownThreads.contains(conversationID)) {
+        m_knownThreads.insert(conversationID);
+        emit conversationBecomesKnown(conversationID);
+    }
 }

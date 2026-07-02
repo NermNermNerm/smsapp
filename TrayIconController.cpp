@@ -1,6 +1,5 @@
 #include <QObject>
 #include "TrayIconController.h"
-#include "backend/messageshandler.h"
 #include "backend/devicestatus.h"
 #include <QPixmap>
 #include <QRandomGenerator>
@@ -37,7 +36,8 @@ void TrayIconController::refreshIcon()
         break;
     }
 
-    int unreadCount = m_deviceStatus.handler() ? m_deviceStatus.handler()->unreadMessageCount() : 0;
+    // TODO: Reconsider how to do this.
+    int unreadCount = 0; // m_deviceStatus.handler() ? m_deviceStatus.handler()->unreadMessageCount() : 0;
     path += "_";
     path += unreadCount > 0 ? "msgs" : "nomsgs";
     path += ".svg";

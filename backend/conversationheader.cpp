@@ -1,6 +1,7 @@
 #include "conversationheader.h"
 #include "nameresolver.h"
 #include <QDateTime>
+#include "kdeconnect_interfaces/conversationmessage_ext.h"
 
 static QString computeParticipants(const ConversationMessage &latestMessage)
 {
@@ -91,6 +92,10 @@ QString ConversationHeader::latestMessageBody() const
 qint64 ConversationHeader::threadID() const
 {
     return m_latestMessage.threadID();
+}
+
+bool ConversationHeader::isUpdateNeeded(const ConversationMessage &message) {
+    return message.threadID() != m_latestMessage.threadID() && isNewerMessage(message, m_latestMessage);
 }
 
 void ConversationHeader::update(const ConversationMessage &message)

@@ -4,56 +4,44 @@
 #include <QMap>
 #include <QString>
 #include <QReadWriteLock>
+#include <QTimer>
 
 #include "kdeconnect_interfaces/conversationmessage.h"
-
-class QTimer;
 
 class CacheManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit CacheManager(QObject *parent = nullptr);
-    ~CacheManager() override;
+    explicit CacheManager(const QString &deviceId, QObject *parent = nullptr);
 
-    // Load/save persistent JSON cache
-    void load(const QString &deviceId);
-    void saveNow();
+    void save();
 
-    // Update the daemon-reported messageCount for a thread.
-    // Shifts cached indices upward if daemonCount increased.
-    void updateMessageCount(qint64 threadId, int daemonCount);
+    enum class StoreResult {
+        // The cache contained identical information to what's given here
+        AlreadyKnown,
+        // The message was either changed or inserted
+        Updated,
+    };
+    StoreResult storeMessage(const ConversationMessage &msg);
 
-    // Try-get pattern for retrieving a cached message by index.
-    bool tryGetMessage(qint64 threadId, int index, ConversationMessage &out) const;
-
-    // Store a message at a given index.
-    // Backend assigns the index; CacheManager does not validate it.
-    void storeMessage(qint64 threadId, int index, const ConversationMessage &msg);
-
-    void clearThread(qint64 threadId);
-
-    bool hasMessage(qint64 threadId, const ConversationMessage &msg) const;
-
-    bool isNewerThanCached(const ConversationMessage &msg) const;
-
-    bool tryGetMessageCount(qint64 threadId, int &messageCount) const;
-
-private slots:
-    void saveIfDirty();
+    /**
+     * @brief Returns true if the cached thread for the given conversation id exists and all
+     *   the messages are older than the given time.  cutoffTime is in the same units as
+     *   ConversationMessage::date().
+     */
+    bool isCachedThreadOlderThan(qint64 conversationID, qint64 cutoffTime) const;
+    void deleteConversation(qint64 conversationID);
+    QVector<ConversationMessage> getAllConversationMessages() const;
+    QVector<ConversationMessage> getConversationMessages(qint64 conversationID) const;
 
 private:
-    bool saveUnlocked() const;
-
-    struct ThreadData {
-        int messageCount = 0; // daemon's count
-        QMap<int, ConversationMessage> messages; // index → message
-    };
+    bool doSave() const;
+    void doLoad(const QString &deviceId);
 
     QString m_cachePath;
     mutable QReadWriteLock m_lock;
-    QMap<qint64, ThreadData> m_threads;
+    QMap<qint64, QVector<ConversationMessage>> m_threads;
     bool m_dirty = false;
-    QTimer *m_timer = nullptr;
+    QTimer m_timer;
 };

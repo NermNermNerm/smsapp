@@ -205,7 +205,6 @@ void DeviceStatus::updateHandler()
     if (!preferredDevice().isEmpty()) {
         m_handler = new MessagesHandler(preferredDevice(), this);
         setStatus(dbus::device(preferredDevice()).isReachable() ? Status::DeviceReady : Status::DeviceUnreachable);
-        m_handler->startListening();
     }
     qDebug() << "MessagesHandler:" << (m_handler ? m_handler->deviceID() : "null");
 

@@ -22,6 +22,12 @@ public:
     QString latestMessageBody() const;
     QString shortFriendlyDate() const { return m_shortFriendlyDate; }
 
+    /**
+     * @brief Checks to see if this message is a newer message in the conversation this covers.
+     * @return true if the given message is newer than what we have.
+     */
+    bool isUpdateNeeded(const ConversationMessage &message);
+
     void update(const ConversationMessage &message);
     qint64 threadID() const;
 
