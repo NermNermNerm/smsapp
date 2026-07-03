@@ -62,6 +62,7 @@ Terminal=false
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
+
     global_engine.loadFromModule("smsapp", "Main");
 
     return QGuiApplication::exec();

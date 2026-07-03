@@ -20,25 +20,24 @@ qt_add_executable(appsmsapp
 qt_add_qml_module(appsmsapp
     URI smsapp
     VERSION 1.0
-    QML_FILES
-        Main.qml
-        SOURCES TrayIconController.h
-        SOURCES TrayIconController.cpp
-        SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
-        SOURCES backend/conversationheader.h backend/conversationheader.cpp
-        SOURCES
-        SOURCES backend/conversationlistmodel.h backend/conversationlistmodel.cpp
-        SOURCES
-        SOURCES backend/smsmessageitemlist.h backend/smsmessageitemlist.cpp
-        SOURCES backend/smsmessageitem.h backend/smsmessageitem.cpp
-        SOURCES backend/nameresolver.h backend/nameresolver.cpp
-        SOURCES backend/cachemanager.h backend/cachemanager.cpp
-        SOURCES kdeconnect_interfaces/conversationmessage_ext.h kdeconnect_interfaces/conversationmessage_ext.cpp
-        SOURCES backend/messageshandler.h backend/messageshandler.cpp
-        SOURCES backend/devicestatus.h backend/devicestatus.cpp
-        SOURCES dbus.h
-        SOURCES settings.h settings.cpp
-        RESOURCES todo.md
+    SOURCES TrayIconController.h
+    SOURCES TrayIconController.cpp
+    SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
+    SOURCES backend/conversationheader.h backend/conversationheader.cpp
+    SOURCES backend/conversationlistmodel.h backend/conversationlistmodel.cpp
+    SOURCES backend/smsmessageitemlist.h backend/smsmessageitemlist.cpp
+    SOURCES backend/smsmessageitem.h backend/smsmessageitem.cpp
+    SOURCES backend/nameresolver.h backend/nameresolver.cpp
+    SOURCES backend/cachemanager.h backend/cachemanager.cpp
+    SOURCES kdeconnect_interfaces/conversationmessage_ext.h kdeconnect_interfaces/conversationmessage_ext.cpp
+    SOURCES backend/messageshandler.h backend/messageshandler.cpp
+    SOURCES backend/devicestatus.h backend/devicestatus.cpp
+    SOURCES dbus.h
+    SOURCES settings.h settings.cpp
+    RESOURCES todo.md
+    QML_FILES Main.qml
+    QML_FILES StatusBar.qml
+    QML_FILES ConversationList.qml
 )
 
 # Add general Qt resources *after* the QML module
