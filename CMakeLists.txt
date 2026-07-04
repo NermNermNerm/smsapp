@@ -38,6 +38,7 @@ qt_add_qml_module(appsmsapp
     QML_FILES Main.qml
     QML_FILES StatusBar.qml
     QML_FILES ConversationList.qml
+    QML_FILES Conversation.qml
 )
 
 # Add general Qt resources *after* the QML module

@@ -9,11 +9,6 @@ Window {
     visible: true
     title: qsTr("Hello World")
 
-    Component.onCompleted: {
-        console.log("status =", deviceStatus.status)
-        console.log("enum =", DeviceStatus.NoSmsDevice)
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
@@ -26,6 +21,10 @@ Window {
         ConversationList {
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            onSelectedConversationIdChanged: {
+                console.log("Selected conversation ID:", selectedConversationId)
+            }
         }
     }
 }

@@ -89,11 +89,6 @@ QString ConversationHeader::latestMessageBody() const
     return m_latestMessage.body();
 }
 
-qint64 ConversationHeader::threadID() const
-{
-    return m_latestMessage.threadID();
-}
-
 bool ConversationHeader::isUpdateNeeded(const ConversationMessage &message) {
     return message.threadID() != m_latestMessage.threadID() && isNewerMessage(message, m_latestMessage);
 }

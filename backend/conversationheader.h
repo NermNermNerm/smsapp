@@ -13,6 +13,7 @@ class ConversationHeader : public QObject
     Q_PROPERTY(QString participants READ participants CONSTANT)
     Q_PROPERTY(QString latestMessageBody READ latestMessageBody NOTIFY latestMessageBodyChanged)
     Q_PROPERTY(QString shortFriendlyDate READ shortFriendlyDate NOTIFY dateChanged)
+    Q_PROPERTY(qint64 conversationID READ conversationID CONSTANT)
 
 public:
     explicit ConversationHeader(const ConversationMessage &latestMessage, QObject *parent = nullptr);
@@ -29,7 +30,7 @@ public:
     bool isUpdateNeeded(const ConversationMessage &message);
 
     void update(const ConversationMessage &message);
-    qint64 threadID() const;
+    qint64 conversationID() const { return m_latestMessage.threadID(); }
 
 signals:
     void dateChanged();
