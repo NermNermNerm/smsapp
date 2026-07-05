@@ -35,6 +35,21 @@ ColumnLayout {
         Layout.fillHeight: true
         clip: true
 
+        // Keep the tip of the list in view
+        onCountChanged: {
+            console.log("onCountChanged");
+            messageList.forceLayout()   // ensures delegates have sized
+            messageList.contentY = messageList.contentHeight - messageList.height
+        }
+        Component.onCompleted: {
+            console.log("onCompleted");
+            messageList.contentY = messageList.contentHeight - messageList.height
+        }
+        onWidthChanged: {
+            messageList.forceLayout()
+            messageList.contentY = messageList.contentHeight - messageList.height
+        }
+
         ScrollBar.vertical: ScrollBar {
             visible: true
             active: true // Keeps the scrollbar visible during scroll activity
