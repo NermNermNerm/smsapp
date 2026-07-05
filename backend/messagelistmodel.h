@@ -1,6 +1,7 @@
 #pragma once
 #include <QAbstractListModel>
 #include <QObject>
+#include <QSet>
 
 class MessageItem;
 class ConversationMessage;
@@ -33,4 +34,5 @@ private:
     MessagesHandler *m_messagesHandler = nullptr;
     qint64 m_conversationID;
     QVector<MessageItem*> m_list;
+    QSet<qint64> m_requestedConversations;
 };

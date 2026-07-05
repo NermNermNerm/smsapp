@@ -90,7 +90,7 @@ QString ConversationHeader::latestMessageBody() const
 }
 
 bool ConversationHeader::isUpdateNeeded(const ConversationMessage &message) {
-    return message.threadID() != m_latestMessage.threadID() && isNewerMessage(message, m_latestMessage);
+    return message.threadID() == m_latestMessage.threadID() && !isNewerMessage(m_latestMessage, message);
 }
 
 void ConversationHeader::update(const ConversationMessage &message)

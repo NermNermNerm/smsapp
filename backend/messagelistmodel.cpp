@@ -84,7 +84,11 @@ void MessageListModel::setConversationID(qint64 conversationID)
         addOrUpdate(message);
     }
 
-    m_messagesHandler->requestConversationItems(conversationID);
+    if (!m_requestedConversations.contains(conversationID))
+    {
+        m_requestedConversations.insert(conversationID);
+        m_messagesHandler->requestConversationItems(conversationID);
+    }
 }
 
 void MessageListModel::onConversationMessageChanged(const ConversationMessage &updatedMessage)
