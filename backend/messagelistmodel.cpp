@@ -103,7 +103,7 @@ void MessageListModel::addOrUpdate(const ConversationMessage &updatedMessage)
     // Scan until either:
     //  - we find the same message (update + return)
     //  - we find a message older than updatedMessage (insert before it)
-    for (;  i < m_list.size() && !isNewerMessage(m_list[i]->rawData(), updatedMessage); ++i) {
+    for (;  i < m_list.size() && !isNewerMessage(updatedMessage, m_list[i]->rawData()); ++i) {
         MessageItem *item = m_list[i];
         if (isSameMessageID(updatedMessage, item->rawData())) {
             item->update(updatedMessage);
