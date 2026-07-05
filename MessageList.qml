@@ -36,15 +36,25 @@ ColumnLayout {
             model: messageListModel
             spacing: 12
 
-            delegate: Text {
-                width: messageList.width
-                text: object.body
-                font.pointSize: 14
-                color: "#222222"
-                wrapMode: Text.Wrap
-                elide: Text.ElideNone
-                Layout.fillWidth: true
-                verticalAlignment: Text.AlignTop
+            delegate: Rectangle {
+                width: messageList.width - 32
+                radius: 8
+                color: object.isIncoming ? "#e8f4ff" : "#cce8ff"
+                height: contentLayout.implicitHeight + 24
+
+                ColumnLayout {
+                    id: contentLayout
+                    x: 16
+                    y: 12
+                    width: parent.width - 32 // 16px left + 16px right padding
+                    Text {
+                        text: object.body
+                        wrapMode: Text.Wrap
+                        font.pointSize: 14
+                        color: "#222222"
+                        Layout.fillWidth: true
+                    }
+                }
             }
         }
     }
