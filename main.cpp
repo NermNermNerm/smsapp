@@ -9,6 +9,7 @@
 #include "backend/devicestatus.h"
 #include "backend/conversationlistmodel.h"
 #include "dbus.h"
+#include "backend/messagelistmodel.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
@@ -42,20 +43,24 @@ Terminal=false
     NameResolver::load();
     qmlRegisterType<DeviceStatus>("Sms", 1, 0, "DeviceStatus");
     qmlRegisterType<ConversationListModel>("Sms", 1, 0, "ConversationListModel");
+    qmlRegisterType<MessageListModel>("Sms", 1, 0, "MessageListModel");
 
     DeviceStatus deviceStatus;
-    ConversationListModel conversations;
+    ConversationListModel conversationListModel;
+    MessageListModel messageListModel;
 
     QObject::connect(&deviceStatus, &DeviceStatus::handlerChanged,
-                     &conversations, [&]() {
-        conversations.setDevice(deviceStatus.handler());
+                     &conversationListModel, [&]() {
+        conversationListModel.setDevice(deviceStatus.handler());
+        messageListModel.setDevice(deviceStatus.handler());
     });
 
     TrayIconController tray(deviceStatus);
 
     QQmlApplicationEngine global_engine;
     global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
-    global_engine.rootContext()->setContextProperty("conversations", &conversations);
+    global_engine.rootContext()->setContextProperty("conversationListModel", &conversationListModel);
+    global_engine.rootContext()->setContextProperty("messageListModel", &messageListModel);
     QObject::connect(
         &global_engine,
         &QQmlApplicationEngine::objectCreationFailed,

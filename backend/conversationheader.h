@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QDateTime>
 #include "kdeconnect_interfaces/conversationmessage.h"
-#include "smsmessageitemlist.h"
+#include "messagelistmodel.h"
 
 class ConversationHeader : public QObject
 {

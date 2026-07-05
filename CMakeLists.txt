@@ -25,8 +25,8 @@ qt_add_qml_module(appsmsapp
     SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
     SOURCES backend/conversationheader.h backend/conversationheader.cpp
     SOURCES backend/conversationlistmodel.h backend/conversationlistmodel.cpp
-    SOURCES backend/smsmessageitemlist.h backend/smsmessageitemlist.cpp
-    SOURCES backend/smsmessageitem.h backend/smsmessageitem.cpp
+    SOURCES backend/messagelistmodel.h backend/messagelistmodel.cpp
+    SOURCES backend/messageitem.h backend/messageitem.cpp
     SOURCES backend/nameresolver.h backend/nameresolver.cpp
     SOURCES backend/cachemanager.h backend/cachemanager.cpp
     SOURCES kdeconnect_interfaces/conversationmessage_ext.h kdeconnect_interfaces/conversationmessage_ext.cpp
@@ -38,7 +38,7 @@ qt_add_qml_module(appsmsapp
     QML_FILES Main.qml
     QML_FILES StatusBar.qml
     QML_FILES ConversationList.qml
-    QML_FILES Conversation.qml
+    QML_FILES MessageList.qml
 )
 
 # Add general Qt resources *after* the QML module

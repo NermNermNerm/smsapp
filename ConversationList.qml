@@ -5,7 +5,6 @@ import Sms 1.0
 
 Item {
     id: root
-    property int selectedConversationId: conversationList.currentId
 
     Rectangle {
         anchors.fill: parent
@@ -21,10 +20,13 @@ Item {
                 focus: true
                 anchors.fill: parent
                 anchors.margins: 8
-                model: conversations
+                model: conversationListModel
                 clip: true
 
-                property int currentId: currentItem ? currentItem.conversationID : -1
+                onCurrentItemChanged: {
+                    messageListModel.setConversationID(currentItem ? currentItem.conversationID : -1)
+                    console.log("Set conversation id to " + (currentItem ? currentItem.conversationID : -1))
+                }
 
                 highlight: Rectangle {
                     color: "#3498db"

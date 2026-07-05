@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Sms 1.0
 
 Window {
-    width: 640
+    width: 940
     height: 480
     visible: true
     title: qsTr("Hello World")
@@ -18,12 +18,22 @@ Window {
             Layout.fillWidth: true
         }
 
-        ConversationList {
+        SplitView {
+            id: split
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            onSelectedConversationIdChanged: {
-                console.log("Selected conversation ID:", selectedConversationId)
+            ConversationList {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                SplitView.preferredWidth: 300
+                SplitView.minimumWidth: 200
+                SplitView.maximumWidth: 500
+            }
+
+            MessageList {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
             }
         }
     }
