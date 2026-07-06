@@ -1,5 +1,4 @@
-#ifndef MESSAGEITEM_H
-#define MESSAGEITEM_H
+#pragma once
 
 #include <QObject>
 #include <QDateTime>
@@ -15,6 +14,8 @@ class MessageItem : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QDateTime date READ date CONSTANT)
+    Q_PROPERTY(bool isDisplayDateVisible READ isDisplayDateVisible NOTIFY displayDateChanged FINAL)
+    Q_PROPERTY(QString displayDate READ displayDate NOTIFY displayDateChanged FINAL)
     Q_PROPERTY(QString sender READ sender CONSTANT)
     Q_PROPERTY(bool isIncoming READ isIncoming CONSTANT)
     Q_PROPERTY(QString initials READ initials CONSTANT)
@@ -30,6 +31,9 @@ public:
     void update(const ConversationMessage& updated);
 
     QDateTime date() const { return QDateTime::fromMSecsSinceEpoch(m_rawData.date()); }
+    QString displayDate() const;
+    QString displayDate(QDateTime now) const;
+    bool isDisplayDateVisible() const { return m_isDisplayDateVisible; }
     QString body() const { return m_rawData.body(); }
     QString sender() const;
     bool isIncoming() const { return m_rawData.isIncoming(); }
@@ -38,14 +42,35 @@ public:
     QColor avatarForeground() const;
 
     const ConversationMessage &rawData() const { return m_rawData; }
+    void updateShowTime(QDateTime priorMessage, QDateTime now = QDateTime::currentDateTime());
 
 signals:
     void bodyChanged();
+    void displayDateChanged();
 
 private:
+    enum class DisplayFormat {
+        Unknown,
+        RelativeToNow,
+        TodayTime,
+        YesterdayTime,
+        WeekdayTime,
+        MonthDayTime,
+        FullDateTime
+    };
+
+    static bool formatDependsOnNow(DisplayFormat f) {
+        return f == DisplayFormat::RelativeToNow
+               || f == DisplayFormat::TodayTime
+               || f == DisplayFormat::YesterdayTime;
+    }
+    DisplayFormat computeDisplayFormat(QDateTime priorMessage, QDateTime now) const;
+
     ConversationMessage m_rawData;
     QString m_cachedRecipientList;
+    QDateTime m_priorMessageDate {};
+    mutable DisplayFormat m_displayFormat { DisplayFormat::Unknown };
+    mutable bool m_isDisplayDateVisible { false };
+    mutable QString m_displayDate {};
     mutable QString m_sender;
 };
-
-#endif // MESSAGEITEM_H

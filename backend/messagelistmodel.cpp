@@ -10,6 +10,9 @@
 MessageListModel::MessageListModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+    connect(&m_updateTimesTimer, &QTimer::timeout, this, &MessageListModel::updateTimes);
+    m_updateTimesTimer.setInterval(30000);
+    m_updateTimesTimer.start();
 }
 
 // ---------------------------------------------------------------
@@ -113,6 +116,23 @@ void MessageListModel::addOrUpdate(const ConversationMessage &updatedMessage)
 
     // Now i is the insert position
     beginInsertRows(QModelIndex(), i, i);
-    m_list.insert(i, new MessageItem(updatedMessage, this));
+    auto *newMessage = new MessageItem(updatedMessage, this);
+    m_list.insert(i, newMessage);
     endInsertRows();
+
+    newMessage->updateShowTime(i < m_list.size()-1 ? m_list[i+1]->date() : QDateTime());
+    if (i > 0) {
+        m_list[i-1]->updateShowTime(newMessage->date());
+    }
+}
+
+void MessageListModel::updateTimes()
+{
+    const int numItems = m_list.size();
+    for (int i = 0; i < numItems; ++i) {
+        const QDateTime prior =
+            (i + 1 < numItems ? m_list[i + 1]->date() : QDateTime{});
+
+        m_list[i]->updateShowTime(prior);
+    }
 }

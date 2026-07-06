@@ -2,6 +2,7 @@
 #include <QAbstractListModel>
 #include <QObject>
 #include <QSet>
+#include <QTimer>
 
 class MessageItem;
 class ConversationMessage;
@@ -30,9 +31,11 @@ public slots:
 private:
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
     void addOrUpdate(const ConversationMessage &date);
+    void updateTimes();
 
     MessagesHandler *m_messagesHandler = nullptr;
     qint64 m_conversationID;
     QVector<MessageItem*> m_list;
     QSet<qint64> m_requestedConversations;
+    QTimer m_updateTimesTimer;
 };
