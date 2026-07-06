@@ -15,12 +15,11 @@ KDE Plugin Asks
 
 ## Message List
 - [x] Date calculation not done until the 30 second tick
-- [ ] Date not centered
-- [ ] From-Me blocks are not right aligned
-- [ ] Trim trailing newlines
+- [x] Date not centered
+- [x] From-Me blocks are not right aligned
 - [ ] This-week dates should be "tuesday"
 - [ ] all dates should have day-of-week
-- [ ] Colors should be more striking - incoming color is okay, outgoing should be white-on-dark-blue
+- [x] Colors should be more striking - incoming color is okay, outgoing should be white-on-dark-blue
 - [ ] Group Chat should show senders
 - [ ] Chat header
 - [ ] Convo Header should have participant(s) icon then comma-separated list of participants

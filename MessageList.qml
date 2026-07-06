@@ -68,7 +68,7 @@ ColumnLayout {
                         width: contentLayout.width + 32
                         height: contentLayout.implicitHeight + 24
                         radius: 8
-                        color: object.isIncoming ? "#e8f4ff" : "#cce8ff"
+                        color: object.isIncoming ? "#e8f4ff" : "#2222ff"
 
                         Item {
                             id: contentLayout
@@ -85,7 +85,7 @@ ColumnLayout {
                             Text {
                                 id: textBlock
                                 text: object.body
-                                color: "#222222"
+                                color: object.isIncoming ? "#222222" : "#ffffff"
 
                                 // Stretch to fill the Item parent width calculated above
                                 width: parent.width
