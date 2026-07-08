@@ -108,8 +108,6 @@ void ConversationListModel::onConversationMessageChanged(const ConversationMessa
     else if (associatedHeader->isUpdateNeeded(updatedMessage)) { // else if it's new data on an old one
         int oldRow = m_list.indexOf(associatedHeader);
         int newRow = findInsertPosition(QDateTime::fromMSecsSinceEpoch(updatedMessage.date()));
-        if (newRow > oldRow)
-            ++newRow;
 
         associatedHeader->update(updatedMessage);
         if (oldRow != newRow) {
