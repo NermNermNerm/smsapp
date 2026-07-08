@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <phonenumbers/phonenumberutil.h>
+using namespace i18n::phonenumbers;
 
 QHash<QString, QString> NameResolver::s_canonicalPhoneNumberToNameMap;
 
@@ -14,20 +15,57 @@ QHash<QString, QString> NameResolver::s_canonicalPhoneNumberToNameMap;
 // Canonicalization: strip spaces, punctuation, plus signs, leading zeroes.
 // One regex does the whole job.
 // ---------------------------------------------------------------
+
 static QString canonicalize(const QString &input)
 {
     // Remove spaces, dashes, parentheses, plus signs
     static const QRegularExpression stripChars(R"([ \-\(\)\+])");
 
-    // Remove leading zeroes
+    // Remove leading zeroes (but not trunk prefixes; this is safe)
     static const QRegularExpression leadingZeroes(R"(^0+)");
 
-    QString out = input;
+    QString out = input.trimmed();
     out.replace(stripChars, "");
     out.replace(leadingZeroes, "");
 
     if (out.isEmpty())
         return input;
+
+    // If original input started with "+", strip country code
+    if (input.trimmed().startsWith("+")) {
+        using namespace i18n::phonenumbers;
+
+        PhoneNumberUtil *util = PhoneNumberUtil::GetInstance();
+        PhoneNumber parsed;
+
+        // Parse in international mode ("ZZ" = unknown region)
+        auto err = util->Parse(input.toStdString(), "ZZ", &parsed);
+        if (err == PhoneNumberUtil::NO_PARSING_ERROR) {
+            int cc = parsed.country_code();
+            QString ccStr = QString::number(cc);
+
+            // Remove "+<cc>"
+            if (out.startsWith(ccStr)) {
+                out.remove(0, ccStr.length());
+            }
+        }
+
+        return out;
+    }
+
+    // 2. Locale-based NANP rule (safe only for country code 1)
+    QLocale systemLocale;
+    int localeCountryCode = PhoneNumberUtil::GetInstance()->GetCountryCodeForRegion(
+            systemLocale.name().split('_').last().toStdString()
+        );
+
+    // If locale is NANP (country code 1) and number begins with 1,
+    // strip the leading 1. This is safe because NANP area codes
+    // never begin with 1.
+    if (localeCountryCode == 1 && out.startsWith("1")) {
+        out.remove(0, 1);
+        return out;
+    }
 
     return out;
 }
@@ -128,29 +166,5 @@ QString NameResolver::phoneNumberToName(const QString &phoneNumber)
         return *it;
     }
 
-    // If it starts with "+", try stripping the country code
-    if (phoneNumber.startsWith("+")) {
-        using namespace i18n::phonenumbers;
-
-        PhoneNumberUtil *util = PhoneNumberUtil::GetInstance();
-        PhoneNumber parsed;
-
-        // Parse WITHOUT assuming a region
-        // Region "ZZ" = unknown region (libphonenumber special case)
-        PhoneNumberUtil::ErrorType err =
-            util->Parse(phoneNumber.toStdString(), "ZZ", &parsed);
-
-        if (err == PhoneNumberUtil::NO_PARSING_ERROR) {
-            int cc = parsed.country_code();          // e.g. 1, 44, 351
-            QString ccStr = QString::number(cc);
-
-            // Strip "+<cc>"
-            canon.remove(0, ccStr.length());
-            if (auto it = s_canonicalPhoneNumberToNameMap.find(canon);
-                it != s_canonicalPhoneNumberToNameMap.end()) {
-                return *it;
-            }
-        }
-    }
     return phoneNumber;
 }
