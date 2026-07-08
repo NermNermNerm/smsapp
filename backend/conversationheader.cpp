@@ -2,8 +2,9 @@
 #include "nameresolver.h"
 #include <QDateTime>
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
+#include "backend/avatarmodel.h"
 
-static QString computeParticipants(const ConversationMessage &latestMessage)
+QString ConversationHeader::computeParticipants(const ConversationMessage &latestMessage)
 {
     QStringList names;
     names.reserve(latestMessage.addresses().size());
@@ -72,6 +73,7 @@ ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage,
     , m_participants(computeParticipants(latestMessage))
     , m_shortFriendlyDate(::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(latestMessage.date())))
 {
+    m_avatarData = AvatarModel::getAvatarData(latestMessage);
 }
 
 QDateTime ConversationHeader::date() const

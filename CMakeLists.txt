@@ -39,6 +39,10 @@ qt_add_qml_module(appsmsapp
     QML_FILES StatusBar.qml
     QML_FILES ConversationList.qml
     QML_FILES MessageList.qml
+    QML_FILES Avatar.qml
+    SOURCES backend/avatarmodel.h backend/avatarmodel.cpp
+    SOURCES backend/singleavatarmodel.h backend/singleavatarmodel.cpp
+    QML_FILES SingleAvatar.qml
 )
 
 # Add general Qt resources *after* the QML module

@@ -5,6 +5,8 @@
 #include "backend/messageshandler.h"
 #include <QVector>
 #include <QDebug>
+#include "backend/avatarmodel.h"
+#include "backend/conversationheader.h"
 
 // Use QVector internally (Qt6 best practice)
 MessageListModel::MessageListModel(QObject *parent)
@@ -91,6 +93,23 @@ void MessageListModel::setConversationID(qint64 conversationID)
     {
         m_requestedConversations.insert(conversationID);
         m_messagesHandler->requestConversationItems(conversationID);
+    }
+
+    QString avatarData = "";
+    QString participants = "";
+    if (allConversationMessages.length() > 0) {
+        auto sampleMessage = allConversationMessages.first();
+        avatarData = AvatarModel::getAvatarData(sampleMessage);
+        participants = ConversationHeader::computeParticipants(sampleMessage);
+    }
+
+    if (avatarData != m_avatarData) {
+        m_avatarData = avatarData;
+        emit avatarDataChanged();
+    }
+    if (participants != m_participants) {
+        m_participants = participants;
+        emit participantsChanged();
     }
 }
 

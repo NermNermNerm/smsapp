@@ -17,18 +17,18 @@ KDE Plugin Asks
 - [x] Date calculation not done until the 30 second tick
 - [x] Date not centered
 - [x] From-Me blocks are not right aligned
-- [ ] This-week dates should be "tuesday"
-- [ ] all dates should have day-of-week
+- [x] all dates should have day-of-week
 - [x] Colors should be more striking - incoming color is okay, outgoing should be white-on-dark-blue
 - [ ] Group Chat should show senders
-- [ ] Chat header
-- [ ] Convo Header should have participant(s) icon then comma-separated list of participants
-  (For group chats, the group gets an icon built for it)
+- [x] Chat header should have an avatar and put the date on its own
+- [x] Convo Header should have participant(s) icon then comma-separated list of participants
+      - [x] Show avatar in conversation heading
+      - [x] De-dupe the partcipants list
 - [ ] Implement sending messages
 
 ## Headings
 - [ ] Trim newlines on messages
-- [ ] Make avatars? for participants
+- [x] Make avatars? for participants
 - [ ] Fix selection animation
 
 ## Main Window
@@ -38,6 +38,8 @@ KDE Plugin Asks
 ## Test infrastructure
 - [ ] Implement simulated message arrival
 - [ ] Incremental load of messages
+- [ ] Full load of messages
+  - [ ] Check multi-target messaging
 `
 
 

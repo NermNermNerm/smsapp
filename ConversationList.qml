@@ -62,43 +62,51 @@ Item {
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
-                    contentItem: ColumnLayout {
-                        id: content
-                        spacing: 4
-                        // FIX: Removed manual anchors.left/right from here.
-                        // ItemDelegate automatically handles positioning its contentItem using paddings.
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: object.participants
-                            font.bold: true
-                            font.pointSize: 14
-                            elide: Text.ElideRight
-
-                            // FIX: Flip text color to white when highlighted for legibility
-                            color: delegateItem.ListView.isCurrentItem ? "white" : "#222222"
-
-                            HoverHandler { id: hh2 }
-                            ToolTip.visible: hh2.hovered && truncated
-                            ToolTip.text: object.participants
-                            ToolTip.delay: 2000
+                    contentItem: RowLayout {
+                        Avatar {
+                            participants: object.avatarData
                         }
 
-                        Label {
+                        ColumnLayout {
+                            id: content
+                            spacing: 4
                             Layout.fillWidth: true
-                            text: object.latestMessageBody
-                            font.pointSize: 12
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
 
-                            // FIX: Dynamic text dimming for readability against blue/white
-                            color: delegateItem.ListView.isCurrentItem ? "#e0e0e0" : "#666666"
+                            // FIX: Removed manual anchors.left/right from here.
+                            // ItemDelegate automatically handles positioning its contentItem using paddings.
 
-                            HoverHandler { id: hh }
-                            ToolTip.visible: hh.hovered && truncated
-                            ToolTip.text: object.latestMessageBody
-                            ToolTip.delay: 2000
+                            Label {
+                                Layout.fillWidth: true
+                                text: object.participants
+                                font.bold: true
+                                font.pointSize: 14
+                                elide: Text.ElideRight
+
+                                // FIX: Flip text color to white when highlighted for legibility
+                                color: delegateItem.ListView.isCurrentItem ? "white" : "#222222"
+
+                                HoverHandler { id: hh2 }
+                                ToolTip.visible: hh2.hovered && truncated
+                                ToolTip.text: object.participants
+                                ToolTip.delay: 2000
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: object.latestMessageBody
+                                font.pointSize: 12
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+
+                                // FIX: Dynamic text dimming for readability against blue/white
+                                color: delegateItem.ListView.isCurrentItem ? "#e0e0e0" : "#666666"
+
+                                HoverHandler { id: hh }
+                                ToolTip.visible: hh.hovered && truncated
+                                ToolTip.text: object.latestMessageBody
+                                ToolTip.delay: 2000
+                            }
                         }
 
                         Text {

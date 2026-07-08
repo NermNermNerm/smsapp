@@ -13,6 +13,7 @@ class MessagesHandler;
 class ConversationListModel : public QAbstractListModel
 {
     Q_OBJECT
+
 public:
     explicit ConversationListModel(QObject *parent = nullptr);
 

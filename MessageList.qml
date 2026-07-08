@@ -17,10 +17,23 @@ ColumnLayout {
         height: 40
         color: "#dddddd"
 
-        Text {
-            anchors.centerIn: parent
-            text: "Conversation Header"
-            font.bold: true
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 6
+            spacing: 6
+
+            Avatar {
+                size: 35
+                participants: messageListModel.avatarData
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: messageListModel.participants
+                font.bold: true
+                Layout.alignment: Qt.AlignVCenter
+            }
         }
     }
 

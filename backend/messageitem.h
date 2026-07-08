@@ -18,9 +18,6 @@ class MessageItem : public QObject
     Q_PROPERTY(QString displayDate READ displayDate NOTIFY displayDateChanged FINAL)
     Q_PROPERTY(QString sender READ sender CONSTANT)
     Q_PROPERTY(bool isIncoming READ isIncoming CONSTANT)
-    Q_PROPERTY(QString initials READ initials CONSTANT)
-    Q_PROPERTY(QColor avatarBackground READ avatarBackground CONSTANT)
-    Q_PROPERTY(QColor avatarForeground READ avatarForeground CONSTANT)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged FINAL)
 
 public:
@@ -37,9 +34,6 @@ public:
     QString body() const { return m_rawData.body(); }
     QString sender() const;
     bool isIncoming() const { return m_rawData.isIncoming(); }
-    QString initials() const;
-    QColor avatarBackground() const;
-    QColor avatarForeground() const;
 
     const ConversationMessage &rawData() const { return m_rawData; }
     void updateShowTime(QDateTime priorMessage, QDateTime now = QDateTime::currentDateTime());
