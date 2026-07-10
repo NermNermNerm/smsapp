@@ -158,10 +158,15 @@ ColumnLayout {
                 messageListModel.draftText = text
             }
 
-            Keys.onReturnPressed: {
+            Keys.onPressed: {
+                if (!(event.key === Qt.Key_Return || event.key === Qt.Key_Enter) || event.modifiers !== 0)
+                    return;
+                // else the key is return or enter and shift/ctrl etc. aren't held down.
+
                 if (!messageListModel.isSending && inputField.text.length > 0) {
                     messageListModel.sendMessage(inputField.text)
                 }
+                event.accepted = true
             }
         }
 
