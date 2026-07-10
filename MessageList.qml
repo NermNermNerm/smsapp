@@ -50,8 +50,29 @@ ColumnLayout {
         verticalLayoutDirection: ListView.BottomToTop
 
         ScrollBar.vertical: ScrollBar {
-            visible: true
-            active: true // Keeps the scrollbar visible during scroll activity
+            id: verticalScrollBar // Add an ID so the rectangles can see its 'active' state
+
+            // Track
+            background: Rectangle {
+                implicitWidth: 10
+                color: "#e0e0e0"
+                radius: 5
+
+                // Fades out smoothly when scrolling stops
+                opacity: verticalScrollBar.active ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 250 } }
+            }
+
+            // Handle
+            contentItem: Rectangle {
+                implicitWidth: 10
+                color: "#666666"
+                radius: 5
+
+                // Fades out smoothly when scrolling stops
+                opacity: verticalScrollBar.active ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 250 } }
+            }
         }
 
         delegate: Item {
