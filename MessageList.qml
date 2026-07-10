@@ -189,23 +189,18 @@ ColumnLayout {
         // -----------------------------
         Item {
             id: sendButton
+            // Keeps the item active for animations even when click interactions are blocked
             enabled: inputField.text.length > 0 && !messageListModel.isSending
             height: 40
 
-            // ANIMATION TARGETS: Instead of sudden 'visible' toggles, we drive layout properties
             Layout.preferredWidth: inputField.text.length > 0 ? 40 : 0
             Layout.preferredHeight: 40
             opacity: inputField.text.length > 0 ? 1.0 : 0.0
-
-            // Crucial: Keeps the paper airplane canvas from bleeding outside bounds while collapsing to 0 width
             clip: true
 
-            // Tells the layout engine to smoothly morph the button width frame-by-frame
             Behavior on Layout.preferredWidth {
                 NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
             }
-
-            // Smooth fade in/out
             Behavior on opacity {
                 NumberAnimation { duration: 200 }
             }
@@ -215,7 +210,7 @@ ColumnLayout {
                 id: bg
                 anchors.fill: parent
                 radius: width / 2
-                color: enabled ? "#4a90e2" : "#aaaaaa"
+                color: "#2222ff"
             }
 
             // Triangle (paper airplane)
@@ -225,32 +220,75 @@ ColumnLayout {
                 width: 20
                 height: 20
 
+                scale: messageListModel.isSending ? 0.0 : 1.0
+                opacity: messageListModel.isSending ? 0.0 : 1.0
+
+                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.clearRect(0, 0, width, height);
-                    ctx.fillStyle = "white";
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 1.5;
+                    ctx.lineJoin = "round"
 
                     ctx.beginPath();
-                    ctx.moveTo(0, height);
-                    ctx.lineTo(width, height / 2);
+                    ctx.moveTo(width*.4, height/2);
+                    ctx.lineTo(0, height/2-1);
                     ctx.lineTo(0, 0);
+                    ctx.lineTo(width, height / 2);
+                    ctx.lineTo(0, height);
+                    ctx.lineTo(0, height/2+1);
                     ctx.closePath();
-                    ctx.fill();
+
+                    ctx.stroke();
                 }
             }
 
-            // Spin animation during send
-            RotationAnimator {
-                target: sendButton
-                running: messageListModel.isSending
-                from: 0
-                to: 360
-                duration: 800
-                loops: Animation.Infinite
+            // OVERHAULED: Bigger, custom-styled white loader
+            BusyIndicator {
+                id: loadingSpinner
+                anchors.centerIn: parent
 
-                onRunningChanged: {
-                    if (!running) {
-                        sendButton.rotation = 0
+                // THE FIX: Increased size from 24 to 30 so the spinner feels substantial
+                width: 30
+                height: 30
+
+                running: messageListModel.isSending
+                scale: running ? 1.0 : 0.0
+                opacity: running ? 1.0 : 0.0
+
+                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                // THE FIX: Replace the dark system graphic with a beautiful, glowing white ring arc
+                contentItem: Canvas {
+                    id: spinnerCanvas
+                    width: parent.width
+                    height: parent.height
+
+                    onPaint: {
+                        var ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.strokeStyle = "white"; // Perfect contrast against the blue background
+                        ctx.lineWidth = 3;         // Thicker line makes it much easier to see
+                        ctx.lineCap = "round";
+
+                        ctx.beginPath();
+                        // Draws a three-quarter circle arc (0 to 270 degrees) to create the classic loading gap
+                        ctx.arc(width / 2, height / 2, (width / 2) - ctx.lineWidth, 0, Math.PI * 1.5);
+                        ctx.stroke();
+                    }
+
+                    // Drives the infinitely smooth spinning loop
+                    RotationAnimator {
+                        target: spinnerCanvas
+                        running: loadingSpinner.running
+                        from: 0
+                        to: 360
+                        duration: 1000
+                        loops: Animation.Infinite
                     }
                 }
             }
