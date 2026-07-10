@@ -139,32 +139,31 @@ ColumnLayout {
     // Send area
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: inputField.text.length > 0 ? 8 : 0 // Collapses layout spacing when hidden
         height: 50
+
+        // Smoothly animate the spacing collapse
+        Behavior on spacing { NumberAnimation { duration: 200 } }
 
         // -----------------------------
         // Text input
         // -----------------------------
         TextArea {
             id: inputField
-            Layout.fillWidth: true
-            Layout.preferredWidth: inputField.text.length > 0 ? parent.width * 0.80 : parent.width
+            Layout.fillWidth: true // Automatically claims all leftover space in the row
             wrapMode: TextArea.Wrap
             placeholderText: "Type a message"
             readOnly: messageListModel.isSending
             text: messageListModel.draftText
 
-            // PRO-TIP: Add padding so the typing cursor doesn't hug the rounded corners!
             leftPadding: 12
             rightPadding: 12
             topPadding: 10
             bottomPadding: 10
 
-            // THE FIX: Overrides the native style's border and backdrop entirely
             background: Rectangle {
                 color: "#e8f4ff"
                 radius: 8
-                // Setting border.width to 0 ensures the default line completely vanishes
                 border.width: 0
             }
 
@@ -175,7 +174,6 @@ ColumnLayout {
             Keys.onPressed: {
                 if (!(event.key === Qt.Key_Return || event.key === Qt.Key_Enter) || event.modifiers !== 0)
                     return;
-                // else the key is return or enter and shift/ctrl etc. aren't held down.
 
                 if (!messageListModel.isSending && inputField.text.length > 0) {
                     messageListModel.sendMessage(inputField.text)
@@ -189,10 +187,26 @@ ColumnLayout {
         // -----------------------------
         Item {
             id: sendButton
-            visible: inputField.text.length > 0
             enabled: inputField.text.length > 0 && !messageListModel.isSending
-            width: 40
             height: 40
+
+            // ANIMATION TARGETS: Instead of sudden 'visible' toggles, we drive layout properties
+            Layout.preferredWidth: inputField.text.length > 0 ? 40 : 0
+            Layout.preferredHeight: 40
+            opacity: inputField.text.length > 0 ? 1.0 : 0.0
+
+            // Crucial: Keeps the paper airplane canvas from bleeding outside bounds while collapsing to 0 width
+            clip: true
+
+            // Tells the layout engine to smoothly morph the button width frame-by-frame
+            Behavior on Layout.preferredWidth {
+                NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+            }
+
+            // Smooth fade in/out
+            Behavior on opacity {
+                NumberAnimation { duration: 200 }
+            }
 
             // Circular background
             Rectangle {
