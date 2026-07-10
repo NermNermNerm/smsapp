@@ -154,6 +154,20 @@ ColumnLayout {
             readOnly: messageListModel.isSending
             text: messageListModel.draftText
 
+            // PRO-TIP: Add padding so the typing cursor doesn't hug the rounded corners!
+            leftPadding: 12
+            rightPadding: 12
+            topPadding: 10
+            bottomPadding: 10
+
+            // THE FIX: Overrides the native style's border and backdrop entirely
+            background: Rectangle {
+                color: "#e8f4ff"
+                radius: 8
+                // Setting border.width to 0 ensures the default line completely vanishes
+                border.width: 0
+            }
+
             onTextChanged: {
                 messageListModel.draftText = text
             }
