@@ -171,14 +171,16 @@ ColumnLayout {
                 messageListModel.draftText = text
             }
 
-            Keys.onPressed: {
-                if (!(event.key === Qt.Key_Return || event.key === Qt.Key_Enter) || event.modifiers !== 0)
-                    return;
-
-                if (!messageListModel.isSending && inputField.text.length > 0) {
-                    messageListModel.sendMessage(inputField.text)
+            Keys.onReturnPressed: (event) => {
+                if (event.modifiers !== 0) { // If shift, let it through
+                    event.accepted = false;
                 }
-                event.accepted = true
+                else {
+                    if (!messageListModel.isSending && inputField.text.length > 0) {
+                        messageListModel.sendMessage(inputField.text)
+                    }
+                    event.accepted = true;
+                }
             }
         }
 
