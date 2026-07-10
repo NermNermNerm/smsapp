@@ -5,6 +5,7 @@
 #include "backend/messageshandler.h"
 #include <QVector>
 #include <QDebug>
+#include <QtLogging>
 #include "backend/avatarmodel.h"
 #include "backend/conversationheader.h"
 
@@ -59,9 +60,9 @@ void MessageListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
     // The old m_messagesHandler, if it ever existed, should have been deleted before this,
     // meaning there's no need to disconnect from the old one.
     m_messagesHandler = messagesHandlerForNewDevice;
-    QObject::connect(m_messagesHandler, &MessagesHandler::conversationMessageChanged,
-                     this, &MessageListModel::onConversationMessageChanged);
-
+    connect(m_messagesHandler, &MessagesHandler::conversationMessageChanged, this, &MessageListModel::onConversationMessageChanged);
+    connect(m_messagesHandler, &MessagesHandler::messageDelivered, this, &MessageListModel::onMessageDelivered);
+    connect(m_messagesHandler, &MessagesHandler::messageDeliveryFailed, this, &MessageListModel::onMessageDeliveryFailed);
 
     setConversationID(-1);
 }
@@ -78,6 +79,7 @@ void MessageListModel::setConversationID(qint64 conversationID)
     m_list.clear();
     endResetModel();
 
+    m_conversationID = conversationID;
     if (conversationID < 0) {
         return;
     }
@@ -111,11 +113,16 @@ void MessageListModel::setConversationID(qint64 conversationID)
         m_participants = participants;
         emit participantsChanged();
     }
+
+    emit draftTextChanged();
+    setIsSending(m_messagesHandler->hasUndeliveredOutgoing(m_conversationID));
 }
 
 void MessageListModel::onConversationMessageChanged(const ConversationMessage &updatedMessage)
 {
-    addOrUpdate(updatedMessage);
+    if (updatedMessage.threadID() == m_conversationID) {
+        addOrUpdate(updatedMessage);
+    }
 }
 
 void MessageListModel::addOrUpdate(const ConversationMessage &updatedMessage)
@@ -155,3 +162,48 @@ void MessageListModel::updateTimes()
         m_list[i]->updateShowTime(prior);
     }
 }
+
+void MessageListModel::sendMessage(const QString &messageText)
+{
+    m_messagesHandler->sendMessage(m_conversationID, messageText);
+    setIsSending(true);
+}
+
+
+void MessageListModel::onMessageDelivered(qint64 conversationID)
+{
+    if (conversationID == m_conversationID) {
+        setDraftText({});
+        setIsSending(false);
+    }
+}
+
+void MessageListModel::onMessageDeliveryFailed(qint64 conversationID)
+{
+    if (conversationID == m_conversationID) {
+        setDraftText({});
+        setIsSending(false);
+    }
+}
+
+void MessageListModel::setIsSending(bool isSending)
+{
+    if (isSending != m_isSending) {
+        m_isSending = isSending;
+        emit isSendingChanged();
+    }
+}
+
+void MessageListModel::setDraftText(const QString &draftText)
+{
+    if (m_drafts.value(m_conversationID) != draftText) {
+        if (draftText.isEmpty()) {
+            m_drafts.remove(m_conversationID);
+        }
+        else {
+            m_drafts[m_conversationID] = draftText;
+        }
+        emit draftTextChanged();
+    }
+}
+

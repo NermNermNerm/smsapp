@@ -115,17 +115,97 @@ ColumnLayout {
         }
     }
 
-    // ============================
-    // Footer placeholder
-    // ============================
-    Rectangle {
+    // Send area
+    RowLayout {
         Layout.fillWidth: true
+        spacing: 8
         height: 50
-        color: "#dddddd"
 
-        Text {
-            anchors.centerIn: parent
-            text: "Compose Area Placeholder"
+        // -----------------------------
+        // Text input
+        // -----------------------------
+        TextArea {
+            id: inputField
+            Layout.fillWidth: true
+            Layout.preferredWidth: inputField.text.length > 0 ? parent.width * 0.80 : parent.width
+            wrapMode: TextArea.Wrap
+            placeholderText: "Type a message"
+            readOnly: messageListModel.isSending
+            text: messageListModel.draftText
+
+            onTextChanged: {
+                messageListModel.draftText = text
+            }
+
+            Keys.onReturnPressed: {
+                if (!messageListModel.isSending && inputField.text.length > 0) {
+                    messageListModel.sendMessage(inputField.text)
+                }
+            }
+        }
+
+        // -----------------------------
+        // Send button (paper airplane)
+        // -----------------------------
+        Item {
+            id: sendButton
+            visible: inputField.text.length > 0
+            enabled: inputField.text.length > 0 && !messageListModel.isSending
+            width: 40
+            height: 40
+
+            // Circular background
+            Rectangle {
+                id: bg
+                anchors.fill: parent
+                radius: width / 2
+                color: enabled ? "#4a90e2" : "#aaaaaa"
+            }
+
+            // Triangle (paper airplane)
+            Canvas {
+                id: triangle
+                anchors.centerIn: parent
+                width: 20
+                height: 20
+
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.fillStyle = "white";
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, height);
+                    ctx.lineTo(width, height / 2);
+                    ctx.lineTo(0, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // Spin animation during send
+            RotationAnimator {
+                target: sendButton
+                running: messageListModel.isSending
+                from: 0
+                to: 360
+                duration: 800
+                loops: Animation.Infinite
+
+                onRunningChanged: {
+                    if (!running) {
+                        sendButton.rotation = 0
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                enabled: !messageListModel.isSending
+                onClicked: {
+                    messageListModel.sendMessage(inputField.text)
+                }
+            }
         }
     }
 }

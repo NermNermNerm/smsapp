@@ -4,6 +4,7 @@
 #include <QSet>
 #include <QDateTime>
 #include <QTimer>
+#include <QMutex>
 #include "cachemanager.h"
 
 class ConversationMessage;
@@ -13,6 +14,9 @@ class QDBusPendingCallWatcher;
 class MessagesHandler : public QObject
 {
     Q_OBJECT
+
+    const int WaitTimeInMsForMessageDelivery = 4000;
+
 public:
     explicit MessagesHandler(const QString &deviceId, QObject *parent = nullptr);
 
@@ -30,10 +34,16 @@ public:
     QVector<ConversationMessage> getConversationMessages(qint64 conversationID) const
         { return m_cacheManager.getConversationMessages(conversationID); }
 
+    void sendMessage(qint64 conversationID, const QString &messageBody);
+    bool hasUndeliveredOutgoing(qint64 conversationID) { return m_conversationsWithOutgoingMessages.contains(conversationID); }
+
 signals:
     void conversationMessageChanged(const ConversationMessage &updatedMessage);
     void conversationBecomesKnown(qint64 conversationID);
     void conversationDeleted(qint64 conversationId);
+
+    void messageDelivered(qint64 conversationID);
+    void messageDeliveryFailed(qint64 conversationID);
 
     // Note: conversationCreated is handled internally, as it's really just the first message
     // in a two message conversation.  Our signal will be conversationLoaded, when conversationCreated
@@ -50,6 +60,9 @@ private:
     void noteDaemonActivity() { m_lastActivity = QDateTime::currentDateTimeUtc(); }
     void markConversationKnown(qint64 conversationID);
 
+    void resolvePendingOutgoing(const ConversationMessage &message);
+    void checkOutgoingTimeouts();
+
     QDateTime m_lastActivity;
     QString m_deviceID;
     QTimer m_retryTimer;
@@ -59,4 +72,7 @@ private:
     QSet<qint64> m_knownThreads;
 
     CacheManager m_cacheManager;
+    QHash<qint64,QDateTime> m_conversationsWithOutgoingMessages;
+    mutable QMutex m_outgoingMutex;
+    QTimer m_outgoingTimeoutTimer;
 };

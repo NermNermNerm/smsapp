@@ -1,3 +1,4 @@
+// clazy:excludeall=range-loop-detach
 #include "nameresolver.h"
 
 #include <QProcess>

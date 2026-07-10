@@ -16,6 +16,11 @@ MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
     m_retryTimer.setInterval(1000);   // 1 second
     m_retryTimer.setSingleShot(true);
 
+    connect(&m_outgoingTimeoutTimer, &QTimer::timeout, this, &MessagesHandler::checkOutgoingTimeouts);
+    m_outgoingTimeoutTimer.setInterval(1000);
+    m_outgoingTimeoutTimer.setSingleShot(false);
+    m_outgoingTimeoutTimer.start();
+
     connect(&m_retryTimer, &QTimer::timeout, this, &MessagesHandler::attemptRequestAllThreads);
     attemptRequestAllThreads();
 
@@ -88,6 +93,7 @@ void MessagesHandler::onConversationUpdated(const QDBusVariant &msg)
     auto storeCacheResult = m_cacheManager.storeMessage(message);
     if (storeCacheResult == CacheManager::StoreResult::Updated) {
         emit conversationMessageChanged(message);
+        resolvePendingOutgoing(message);
     }
     if (!m_conversationsNeedingUpdate.empty() && message.threadID() == m_conversationsNeedingUpdate.head()) {
         if (storeCacheResult == CacheManager::StoreResult::AlreadyKnown) {
@@ -118,6 +124,7 @@ void MessagesHandler::onConversationCreated(const QDBusVariant &msg)
     qDebug() << Q_FUNC_INFO << message.threadID() << message.body();
     if (m_cacheManager.storeMessage(message) == CacheManager::StoreResult::Updated) {
         emit conversationMessageChanged(message);
+        resolvePendingOutgoing(message);
     }
     markConversationKnown(message.threadID());
 }
@@ -128,4 +135,68 @@ void MessagesHandler::markConversationKnown(qint64 conversationID)
         m_knownThreads.insert(conversationID);
         emit conversationBecomesKnown(conversationID);
     }
+}
+
+void MessagesHandler::sendMessage(qint64 conversationID, const QString &body)
+{
+    if (!dbus::device(m_deviceID).isReachable()) {
+        emit messageDeliveryFailed(conversationID);
+        return;
+    }
+
+    Q_ASSERT(!m_conversationsWithOutgoingMessages.contains(conversationID));
+    QDBusPendingReply<void> reply = dbus::conversations(m_deviceID).replyToConversation(conversationID, body, {});
+
+    // Watch for transport-level failure
+    auto watcher = QSharedPointer<QDBusPendingCallWatcher>(new QDBusPendingCallWatcher(reply, this));
+    connect(watcher.data(), &QDBusPendingCallWatcher::finished, this,
+            [conversationID, watcher, this]() {
+                Q_ASSERT(!this->m_deviceID.isEmpty()); // shenanigans to avoid a clang-null-deref false positive.
+                if (watcher.data()->isError()) {
+                    emit messageDeliveryFailed(conversationID);
+                } else {
+                    QMutexLocker locker(&m_outgoingMutex);
+                    m_conversationsWithOutgoingMessages[conversationID] = QDateTime::currentDateTimeUtc();
+                }
+            });
+}
+
+void MessagesHandler::resolvePendingOutgoing(const ConversationMessage &message)
+{
+    if (!message.isOutgoing())
+        return;
+
+    bool shouldEmit = false;
+    {
+        QMutexLocker locker(&m_outgoingMutex);
+        shouldEmit = m_conversationsWithOutgoingMessages.remove(message.threadID());
+    }
+
+    if (shouldEmit) {
+        emit messageDelivered(message.threadID());
+    }
+}
+
+void MessagesHandler::checkOutgoingTimeouts()
+{
+    const auto now = QDateTime::currentDateTimeUtc();
+    QList<qint64> expired;
+
+    {
+        QMutexLocker locker(&m_outgoingMutex);
+
+        for (auto it = m_conversationsWithOutgoingMessages.begin();
+             it != m_conversationsWithOutgoingMessages.end(); )
+        {
+            if (it.value().msecsTo(now) > WaitTimeInMsForMessageDelivery) {
+                expired.append(it.key());
+                it = m_conversationsWithOutgoingMessages.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    for (qint64 conversationID : expired)
+        emit messageDeliveryFailed(conversationID);
 }

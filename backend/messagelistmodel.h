@@ -14,6 +14,8 @@ class MessageListModel : public QAbstractListModel
 
     Q_PROPERTY(QString avatarData READ avatarData NOTIFY avatarDataChanged FINAL)
     Q_PROPERTY(QString participants READ participants NOTIFY participantsChanged FINAL)
+    Q_PROPERTY(bool isSending READ isSending NOTIFY isSendingChanged FINAL)
+    Q_PROPERTY(QString draftText READ draftText WRITE setDraftText NOTIFY draftTextChanged FINAL)
 
 public:
     explicit MessageListModel(QObject *parent = nullptr);
@@ -29,25 +31,37 @@ public:
 
     QString avatarData() const { return m_avatarData; }
     QString participants() const { return m_participants; }
+    bool isSending() const { return m_isSending; }
+    QString draftText() const { return m_drafts.value(m_conversationID); }
     void setDevice(MessagesHandler *messagesHandlerForNewDevice);
+    void setDraftText(const QString &draftText);
 
 public slots:
     void setConversationID(qint64 conversationID);
+    void sendMessage(const QString &message);
 
 signals:
     void avatarDataChanged();
     void participantsChanged();
+    void isSendingChanged();
+    void draftTextChanged();
 
 private:
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
     void addOrUpdate(const ConversationMessage &date);
     void updateTimes();
 
+    void onMessageDelivered(qint64 conversationID);
+    void onMessageDeliveryFailed(qint64 conversationID);
+    void setIsSending(bool isSending);
+
     MessagesHandler *m_messagesHandler = nullptr;
-    qint64 m_conversationID;
+    qint64 m_conversationID = 0;
     QVector<MessageItem*> m_list;
     QSet<qint64> m_requestedConversations;
     QTimer m_updateTimesTimer;
     QString m_avatarData;
     QString m_participants;
+    bool m_isSending = false;
+    QHash<qint64, QString> m_drafts;
 };
