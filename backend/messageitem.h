@@ -19,6 +19,7 @@ class MessageItem : public QObject
     Q_PROPERTY(QString sender READ sender CONSTANT)
     Q_PROPERTY(bool isIncoming READ isIncoming CONSTANT)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged FINAL)
+    Q_PROPERTY(QList<Attachment> attachments READ attachments CONSTANT)
 
 public:
     explicit MessageItem(const ConversationMessage &message, QObject *parent = nullptr)
@@ -34,6 +35,7 @@ public:
     QString body() const { return m_rawData.body(); }
     QString sender() const;
     bool isIncoming() const { return m_rawData.isIncoming(); }
+    QList<Attachment> attachments() const { return m_rawData.attachments(); }
 
     const ConversationMessage &rawData() const { return m_rawData; }
     void updateShowTime(QDateTime priorMessage, QDateTime now = QDateTime::currentDateTime());

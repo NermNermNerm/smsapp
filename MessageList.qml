@@ -96,6 +96,16 @@ ColumnLayout {
                 }
 
                 RowLayout {
+                    Layout.leftMargin: 8
+                    Item { visible: !object.isIncoming; Layout.fillWidth: true }
+                    Attachments {
+                        attachments: object.attachments;
+                    }
+                }
+
+                RowLayout {
+                    visible: object.body !== ""
+
                     Item { visible: !object.isIncoming; Layout.fillWidth: true }
 
                     Rectangle {

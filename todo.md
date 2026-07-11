@@ -24,16 +24,21 @@ KDE Plugin Asks
 - [x] Convo Header should have participant(s) icon then comma-separated list of participants
       - [x] Show avatar in conversation heading
       - [x] De-dupe the partcipants list
-- [ ] Implement sending messages from conversation
+- [x] Implement sending messages from conversation
       - [x] Minimal send - just send and hope for the best
       - [x] Keep message in pending state until it shows up in the conversation
             (Any new message that's from the user will clear this state)
       - [x] Message area should be saved when switching conversations with an unsent text
-      - [ ] Animate button appearing/disappearing
+      - [x] Animate button appearing/disappearing
 - [ ] Attachments
-      [ ] In message body
-      [ ] Blank messages with just attachments show as 'Image' in headers
-      [ ] Allow drag&drop images into send area
+      - [ ] Blank messages with just attachments show as 'Image' in headers
+      - [ ] Enable displaying the download links -- do this for all mime types.
+              "[📄 PDF file — 128 KB]   [Download]"
+            https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
+               
+      - [ ] Enable displaying images
+      - [ ] Enable drag&drop files into the send-message
+      - [ ] Enable cut&paste images
 
 ## Headings
 - [ ] Trim newlines on messages
