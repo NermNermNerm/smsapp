@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
+import Qt.labs.platform 1.1
 import Sms 1.0   // AttachmentListModel
 
 Column {
@@ -37,6 +38,21 @@ Column {
                 wrapMode: Text.Wrap
             }
 
+            FileDialog {
+                id: saveDialog
+                title: qsTr("Save Attachment")
+                fileMode: FileDialog.SaveFile
+                currentFile: "attachment." + model.extension;
+                nameFilters: [
+                    qsTr("%1 files (*.%1)").arg(model.extension),
+                    qsTr("All files (*.*)")
+                ]
+
+                onAccepted: {
+                    attachmentList.saveToPath(model.index, saveDialog.file)
+                }
+            }
+
             Button {
                 implicitWidth: implicitContentWidth+2
                 icon.source: "qrc:/icons/download.svg"
@@ -46,7 +62,10 @@ Column {
                 ToolTip.visible: hovered
                 ToolTip.text: "Download"
                 ToolTip.delay: 400
-                onClicked: attachmentList.download(model.index)
+                onClicked: {
+                    saveDialog.currentFile = "attachment." + model.extension;
+                    saveDialog.open();
+                }
             }
         }
     }

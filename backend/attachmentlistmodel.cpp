@@ -66,32 +66,15 @@ QHash<int, QByteArray> AttachmentListModel::roleNames() const
     };
 }
 
-void AttachmentListModel::download(int index)
+void AttachmentListModel::saveToPath(int index, const QString &path)
 {
     if (index < 0 || index >= m_items.size())
         return;
 
     const Item &item = m_items[index];
-
-    // Decode base64
     const QByteArray decoded = QByteArray::fromBase64(item.base64EncodedFile.toUtf8());
 
-    // Default filename suggestion
-    const QString suggested =
-        QStringLiteral("attachment.%1").arg(item.extension);
-
-    // Native file-save dialog
-    const QString path = QFileDialog::getSaveFileName(
-        nullptr,
-        tr("Save Attachment"),
-        suggested,
-        tr("All Files (*.*)")
-        );
-
-    if (path.isEmpty())
-        return; // user cancelled
-
-    QFile file(path);
+    QFile file(QUrl(path).toLocalFile());
     if (!file.open(QIODevice::WriteOnly)) {
         qWarning() << "Failed to save attachment:" << path;
         return;

@@ -35,7 +35,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 public slots:
-    void download(int index);
+    void saveToPath(int index, const QString &path);
 
 private:
     Item convertAttachment(const Attachment &a) const;
