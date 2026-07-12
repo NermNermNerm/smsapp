@@ -44,7 +44,7 @@ ColumnLayout {
             Image {
                 id: preview
                 visible: isImage(model)
-                source: "data:" + model.mimeType + ";base64," + model.base64
+                source: model.fileUri
                 fillMode: Image.PreserveAspectFit
                 // 1. Leave sourceSize ALONE. This allows QML to populate sourceSize.width
                 // and sourceSize.height with the true encoded dimensions of the file.
@@ -75,7 +75,7 @@ ColumnLayout {
             Text {
                 visible: !isImage(model)
                 // yields "pdf file - 147kb"
-                text: qsTr("%1 file — %2").arg(model.extension).arg(humanSize(model.base64.length*3/4))
+                text: qsTr("%1 file — %2").arg(model.extension).arg(humanSize(model.size))
                 wrapMode: Text.Wrap
             }
 

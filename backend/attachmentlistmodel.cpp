@@ -1,7 +1,9 @@
 #include "attachmentlistmodel.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
 #include "mimetypes.h"
-#include <QFileDialog>
+#include <QStandardPaths>
+#include <QFile>
+#include <QUrl>
 
 extern const std::unordered_map<QString, QString> g_mimeToExtension;
 
@@ -29,6 +31,7 @@ AttachmentListModel::Item AttachmentListModel::convertAttachment(const Attachmen
     item.extension = getExtensionForMimeType(a.mimeType());
     item.base64EncodedFile = a.base64EncodedFile();
     item.mimeType = a.mimeType();
+    item.uniqueid = QString::number(a.partID());
     return item;
 }
 
@@ -51,10 +54,12 @@ QVariant AttachmentListModel::data(const QModelIndex &index, int role) const
         return item.mimeType;
     case ExtensionRole:
         return item.extension;
-    case Base64Role:
-        return item.base64EncodedFile;
+    case SizeRole:
+        return item.base64EncodedFile.length() * 3 / 4;
     case IndexRole:
         return index.row();
+    case FileUriRole:
+        return getFileUrl(item);
     }
 
     return {};
@@ -65,8 +70,9 @@ QHash<int, QByteArray> AttachmentListModel::roleNames() const
     return {
         {MimeTypeRole, "mimeType"},
         {ExtensionRole, "extension"},
-        {Base64Role, "base64"},
-        {IndexRole, "index"}
+        {SizeRole, "size"},
+        {IndexRole, "index"},
+        {FileUriRole, "fileUri"}
     };
 }
 
@@ -90,5 +96,21 @@ void AttachmentListModel::saveToPath(int index, const QString &path)
 
 void AttachmentListModel::open(int index)
 {
+}
 
+QUrl AttachmentListModel::getFileUrl(const Item &item) const
+{
+    QString path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/sms-" + item.uniqueid + "." + item.extension;
+
+    if (!QFile::exists(path)) {
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly)) {
+            qWarning() << "Failed to save attachment:" << path;
+            return {};
+        }
+        file.write(QByteArray::fromBase64(item.base64EncodedFile.toUtf8()));
+        file.close();
+    }
+
+    return QUrl::fromLocalFile(path);
 }

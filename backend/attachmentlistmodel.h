@@ -17,7 +17,8 @@ public:
     enum Roles {
         MimeTypeRole = Qt::UserRole + 1,
         ExtensionRole,
-        Base64Role,
+        SizeRole,
+        FileUriRole,
         IndexRole,
     };
 
@@ -25,6 +26,7 @@ public:
         QString mimeType;
         QString extension;
         QString base64EncodedFile;
+        QString uniqueid;
     };
 
     explicit AttachmentListModel(QObject *parent = nullptr);
@@ -42,6 +44,7 @@ public slots:
 
 private:
     Item convertAttachment(const Attachment &a) const;
+    QUrl getFileUrl(const Item &item) const;
 
 private:
     QList<Attachment> m_attachments;
