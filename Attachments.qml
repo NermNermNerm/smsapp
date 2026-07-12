@@ -46,10 +46,24 @@ ColumnLayout {
                 visible: isImage(model)
                 source: "data:" + model.mimeType + ";base64," + model.base64
                 fillMode: Image.PreserveAspectFit
+                // 1. Leave sourceSize ALONE. This allows QML to populate sourceSize.width
+                // and sourceSize.height with the true encoded dimensions of the file.
 
-                // Now these layout properties will actually work!
-                //Layout.maxWidth: 200 // Or whatever max size fits your bubble design
-                //Layout.fillWidth: false
+                // 2. Calculate the native aspect ratio directly from the file data
+                readonly property real aspectRatio: sourceSize.height > 0 ? (sourceSize.width / sourceSize.height) : 1.0
+
+                // 3. Set a safe maximum cap that doesn't rely on the ColumnLayout's width.
+                // (Tip: If you want this to be responsive, change 400 to something outside the
+                // layout chain, like 'mainWindow.width * 0.5')
+                property real maxPreviewWidth: 400
+
+                // 4. Let the image's own dimensions dictate the layout bounds!
+                // It will perfectly scale down to match its aspect ratio, but never upscale tiny images.
+                Layout.preferredWidth: Math.min(sourceSize.width, maxPreviewWidth)
+                Layout.preferredHeight: sourceSize.width > 0 ? (Layout.preferredWidth / aspectRatio) : 0
+
+                Layout.fillWidth: false
+                Layout.fillHeight: false
 
                 MouseArea {
                     anchors.fill: parent
