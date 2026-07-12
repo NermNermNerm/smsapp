@@ -97,8 +97,8 @@ ColumnLayout {
 
                 RowLayout {
                     Layout.leftMargin: 8
-                    Item { visible: !object.isIncoming; Layout.fillWidth: true }
                     Attachments {
+                        isIncoming: object.isIncoming
                         attachments: object.attachments;
                     }
                 }

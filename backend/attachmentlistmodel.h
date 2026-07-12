@@ -15,12 +15,14 @@ class AttachmentListModel : public QAbstractListModel
 
 public:
     enum Roles {
-        ExtensionRole = Qt::UserRole + 1,
-        SizeRole,
-        IndexRole
+        MimeTypeRole = Qt::UserRole + 1,
+        ExtensionRole,
+        Base64Role,
+        IndexRole,
     };
 
     struct Item {
+        QString mimeType;
         QString extension;
         QString base64EncodedFile;
     };
@@ -36,6 +38,7 @@ public:
 
 public slots:
     void saveToPath(int index, const QString &path);
+    void open(int index);
 
 private:
     Item convertAttachment(const Attachment &a) const;

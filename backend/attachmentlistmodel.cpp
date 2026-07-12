@@ -28,6 +28,7 @@ AttachmentListModel::Item AttachmentListModel::convertAttachment(const Attachmen
     Item item;
     item.extension = getExtensionForMimeType(a.mimeType());
     item.base64EncodedFile = a.base64EncodedFile();
+    item.mimeType = a.mimeType();
     return item;
 }
 
@@ -46,10 +47,12 @@ QVariant AttachmentListModel::data(const QModelIndex &index, int role) const
     const Item &item = m_items.at(index.row());
 
     switch (role) {
+    case MimeTypeRole:
+        return item.mimeType;
     case ExtensionRole:
         return item.extension;
-    case SizeRole:
-        return item.base64EncodedFile.length() * 3 / 4;
+    case Base64Role:
+        return item.base64EncodedFile;
     case IndexRole:
         return index.row();
     }
@@ -60,8 +63,9 @@ QVariant AttachmentListModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> AttachmentListModel::roleNames() const
 {
     return {
+        {MimeTypeRole, "mimeType"},
         {ExtensionRole, "extension"},
-        {SizeRole, "size"},
+        {Base64Role, "base64"},
         {IndexRole, "index"}
     };
 }
@@ -84,3 +88,7 @@ void AttachmentListModel::saveToPath(int index, const QString &path)
     file.close();
 }
 
+void AttachmentListModel::open(int index)
+{
+
+}
