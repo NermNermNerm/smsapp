@@ -46,7 +46,7 @@ ColumnLayout {
 
             Item { visible: !root.isIncoming; Layout.fillWidth: true }
 
-            Image {
+            AnimatedImage {
                 id: preview
                 visible: isImage(model)
                 source: model.fileUri === ""
