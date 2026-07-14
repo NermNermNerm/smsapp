@@ -27,6 +27,16 @@ MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
     // We're setting this now to avoid giving a down reading when we can be pretty sure things
     // are in a good state since we got a positive signal on device reachability to get here.
     noteDaemonActivity();
+
+    QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::attachmentReceived,
+                     this, [&](QString filePath, QString fileName) {
+        qWarning() << "Got attachment, filePath:" << filePath << "fileName:" << fileName;
+    });
+    auto result = dbus::conversations(m_deviceID).requestAttachmentFile(1898, "PART_1777942132359");
+    result.waitForFinished();
+    if (result.isError()) {
+        qWarning() << "request failed";
+    }
 }
 
 void MessagesHandler::attemptRequestAllThreads()

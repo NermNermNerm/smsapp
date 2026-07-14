@@ -11,10 +11,14 @@ ColumnLayout {
 
     property var attachments
     property bool isIncoming
+    // 1. Snag the max width property passed from the message list container.
+    // We add a fallback (400) just in case it's instantiated somewhere else without it.
+    property real maxImageWidth: 400
 
     AttachmentListModel {
         id: attachmentList
         attachments: root.attachments
+        messagesHandler: deviceStatus.handler
     }
 
     // Convert raw byte count → "128 KB", "2.3 MB", etc.
@@ -38,37 +42,33 @@ ColumnLayout {
         RowLayout {
             spacing: 12
             Layout.fillWidth: true
+            Layout.leftMargin: 8
 
             Item { visible: !root.isIncoming; Layout.fillWidth: true }
 
             Image {
                 id: preview
                 visible: isImage(model)
-                source: model.fileUri
+                source: model.fileUri === ""
+                        ? ("data:" + model.mimeType + ";base64," + model.thumbnail)
+                        : model.fileUri;
                 fillMode: Image.PreserveAspectFit
-                // 1. Leave sourceSize ALONE. This allows QML to populate sourceSize.width
-                // and sourceSize.height with the true encoded dimensions of the file.
-
-                // 2. Calculate the native aspect ratio directly from the file data
-                readonly property real aspectRatio: sourceSize.height > 0 ? (sourceSize.width / sourceSize.height) : 1.0
-
-                // 3. Set a safe maximum cap that doesn't rely on the ColumnLayout's width.
-                // (Tip: If you want this to be responsive, change 400 to something outside the
-                // layout chain, like 'mainWindow.width * 0.5')
-                property real maxPreviewWidth: 400
-
-                // 4. Let the image's own dimensions dictate the layout bounds!
-                // It will perfectly scale down to match its aspect ratio, but never upscale tiny images.
-                Layout.preferredWidth: Math.min(sourceSize.width, maxPreviewWidth)
-                Layout.preferredHeight: sourceSize.width > 0 ? (Layout.preferredWidth / aspectRatio) : 0
-
                 Layout.fillWidth: false
-                Layout.fillHeight: false
+                Layout.preferredWidth: Math.min(implicitWidth, root.maxImageWidth)
+                Layout.preferredHeight: implicitWidth > 0
+                                        ? (Math.min(implicitWidth, root.maxImageWidth) * (implicitHeight / implicitWidth))
+                                        : 0
 
+                onStatusChanged: {
+                    if (status === Image.Ready && model.fileUri === "") {
+                        // Thumbnail just became visible → request full attachment
+                        attachmentList.requestFullAttachment(model.index)
+                    }
+                }
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
-                    onDoubleClicked: attachmentList.openImage(model.index)
+                    onDoubleClicked: attachmentList.open(model.index)
                 }
             }
 

@@ -95,12 +95,16 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
 
-                RowLayout {
-                    Layout.leftMargin: 8
-                    Attachments {
-                        isIncoming: object.isIncoming
-                        attachments: object.attachments;
-                    }
+                Attachments {
+                    isIncoming: object.isIncoming
+                    attachments: object.attachments;
+
+                    // 1. Force the custom component to obey the bubble's layout width
+                    Layout.fillWidth: true
+
+                    // 2. Pass a strict maximum image width down to the child elements.
+                    // This scales instantly if the user makes the message list full-screen!
+                    maxImageWidth: delegateRoot.maxBubbleContentWidth * 0.8
                 }
 
                 RowLayout {
