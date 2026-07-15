@@ -32,13 +32,17 @@ KDE Plugin Asks
       - [x] Animate button appearing/disappearing
 - [ ] Attachments
       - [ ] Blank messages with just attachments show as 'Image' in headers
-      - [ ] Enable displaying the download links -- do this for all mime types.
-              "[📄 PDF file — 128 KB]   [Download]"
-            https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
-               
-      - [ ] Enable displaying images
-      - [ ] Enable drag&drop files into the send-message
-      - [ ] Enable cut&paste images
+      - [x] Enable displaying the download links -- do this for all mime types.
+      - [x] Enable displaying images
+      - [x] Enable drag&drop files into the send-message
+      - [x] Enable cut&paste images
+      - [x] Initialize state from cache correctly in setAttachments
+      - [ ] Fix issue where animated gifs loaded late don't animate sometimes
+      - [ ] MakeMessagesHandler should have a 'checkForCachedItemsInQueue' method instead of the
+            thing that we have now that just looks at stuff at the head.
+      - [ ] Put mutexes around attachment queue access
+      - [ ] Consider making all images smaller and having a hover-over enlarge button in the upper right
+            and the 'open' button can do that too.
 
 ## Headings
 - [ ] Trim newlines on messages

@@ -18,7 +18,6 @@ ColumnLayout {
     AttachmentListModel {
         id: attachmentList
         attachments: root.attachments
-        messagesHandler: deviceStatus.handler
     }
 
     function isImage(a) {

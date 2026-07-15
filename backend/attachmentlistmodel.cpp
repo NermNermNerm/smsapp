@@ -7,9 +7,11 @@
 #include <QUrl>
 #include "messageshandler.h"
 
-AttachmentListModel::AttachmentListModel(QObject *parent)
-    : QAbstractListModel(parent)
+AttachmentListModel::AttachmentListModel(MessagesHandler *messagesHandler, QObject *parent)
+    : QAbstractListModel(parent), m_messagesHandler(messagesHandler)
 {
+    Q_ASSERT(messagesHandler != nullptr);
+    connect(m_messagesHandler, &MessagesHandler::attachmentRecieved, this, &AttachmentListModel::onAttachmentReceived);
 }
 
 void AttachmentListModel::setAttachments(const QList<Attachment> &list)
@@ -23,22 +25,18 @@ void AttachmentListModel::setAttachments(const QList<Attachment> &list)
         Item item;
         item.attachment = a;
         item.extension = getExtensionForMimeType(a.mimeType());
-        // TODO: See if the attachment is in the cache, if so populate item.fileUri;
+        QString filePath = m_messagesHandler->tryGetCachedAttachment(a);
+        if (filePath == "") {
+            filePath = m_messagesHandler->tryFindCompletedDownload(a);
+        }
+        if (filePath != "")
+        {
+            item.fileUri = QUrl::fromLocalFile(filePath);
+        }
+        item.isDownloading = m_messagesHandler->isDownloadUnderway(a);
         m_items.push_back(item);
     }
     endResetModel();
-}
-
-void AttachmentListModel::setMessagesHandler(MessagesHandler *messagesHandler)
-{
-    if (m_messagesHandler == messagesHandler) {
-        return;
-    }
-
-    m_messagesHandler = messagesHandler;
-    if (m_messagesHandler) {
-        connect(m_messagesHandler, &MessagesHandler::attachmentRecieved, this, &AttachmentListModel::onAttachmentReceived);
-    }
 }
 
 int AttachmentListModel::rowCount(const QModelIndex &parent) const

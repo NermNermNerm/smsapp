@@ -61,6 +61,11 @@ public:
     // User-triggered action
     Q_INVOKABLE void rebootDaemon();
 
+    static DeviceStatus *instance() {
+        Q_ASSERT(DeviceStatus::s_instance != nullptr);
+        return DeviceStatus::s_instance;
+    }
+
 signals:
     void validDevicesChanged();
     void preferredDeviceChanged();
@@ -91,6 +96,8 @@ private:
     Settings *m_settings = nullptr;
     QString m_preferredDeviceName;
     QDateTime m_lastWakeAttempt;
+
+    static DeviceStatus *s_instance;
 
 
     // Check device status using this as the rough interval - note that if the MessagesHandler has had

@@ -11,6 +11,9 @@
 DeviceStatus::DeviceStatus(QObject *parent)
     : QObject(parent)
 {
+    Q_ASSERT(s_instance == nullptr);
+    s_instance = this;
+
     // Timer for polling
     auto timer = new QTimer(this);
 
@@ -34,6 +37,8 @@ DeviceStatus::DeviceStatus(QObject *parent)
     // Initial poll
     QTimer::singleShot(0, this, &DeviceStatus::poll);
 }
+
+DeviceStatus *DeviceStatus::s_instance = nullptr;
 
 void DeviceStatus::poll()
 {
