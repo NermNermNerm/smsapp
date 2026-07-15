@@ -93,8 +93,46 @@ ColumnLayout {
                     }
                 }
                 MouseArea {
+                    id: imageMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
+                    cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+                    // Custom property to track if the mouse has stopped moving
+                    property bool isStationary: false
+
+                    // 1. When the mouse enters, start the timer
+                    onEntered: {
+                        isStationary = false
+                        hoverTimer.restart()
+                    }
+
+                    // 2. If the mouse moves, reset the timer and hide the tooltip
+                    onPositionChanged: {
+                        isStationary = false
+                        hoverTimer.restart()
+                    }
+
+                    // 3. If the mouse leaves, kill the timer entirely
+                    onExited: {
+                        isStationary = false
+                        hoverTimer.stop()
+                    }
+
+                    // The "settle" timer
+                    Timer {
+                        id: hoverTimer
+                        interval: 600 // Milliseconds to wait after the last movement
+                        repeat: false
+                        onTriggered: imageMouseArea.isStationary = true
+                    }
+
+                    // Tooltip only shows when the mouse is inside AND stationary
+                    ToolTip.visible: containsMouse && isStationary
+                    ToolTip.delay: 0 // Handled manually now by our timer!
+                    ToolTip.text: model.isExpanded
+                                  ? "Click to shrink\nDouble-click to open file"
+                                  : "Click to expand\nDouble-click to open file"
                     onDoubleClicked: attachmentList.open(model.index)
                     onClicked: attachmentList.toggleExpanded(model.index)
                 }
