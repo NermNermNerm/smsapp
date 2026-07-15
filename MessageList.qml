@@ -104,7 +104,7 @@ ColumnLayout {
 
                     // 2. Pass a strict maximum image width down to the child elements.
                     // This scales instantly if the user makes the message list full-screen!
-                    maxImageWidth: delegateRoot.maxBubbleContentWidth * 0.8
+                    maxImageWidth: delegateRoot.maxBubbleContentWidth
                 }
 
                 RowLayout {

@@ -26,6 +26,7 @@ public:
         IndexRole,
         DownloadLocationRole,
         IsLoadingRole,
+        IsExpandedRole,
     };
 
     struct Item {
@@ -35,6 +36,7 @@ public:
         bool isDownloading = false;
         bool isOpening = false;
         QString downloadLocation;
+        bool isExpanded = false;
     };
 
     explicit AttachmentListModel(MessagesHandler *messageHandler = DeviceStatus::instance()->handler(), QObject *parent = nullptr);
@@ -50,6 +52,7 @@ public slots:
     void saveToPath(int index, const QString &path);
     void open(int index);
     void requestFullAttachment(int index);
+    void toggleExpanded(int row);
 
 private:
     void onAttachmentReceived(const Attachment &attachment, const QString &path, bool isInCache);

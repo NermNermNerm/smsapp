@@ -20,7 +20,7 @@ KDE Plugin Asks
 - [x] all dates should have day-of-week
 - [x] Colors should be more striking - incoming color is okay, outgoing should be white-on-dark-blue
 - [ ] Group Chat should show senders
-- [ ] Seeing cases where the time is "28565m"
+- [x] Seeing cases where the time is "28565m"
 - [x] Chat header should have an avatar and put the date on its own
 - [x] Convo Header should have participant(s) icon then comma-separated list of participants
       - [x] Show avatar in conversation heading

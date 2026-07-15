@@ -5,13 +5,22 @@
 #include <QDesktopServices>
 #include <QFile>
 #include <QUrl>
+#include <QSet>
 #include "messageshandler.h"
+
+static QSet<QString> s_expandedAttachmentIds;
+static MessagesHandler *s_expandedAttachmentIdsHandler = nullptr;
 
 AttachmentListModel::AttachmentListModel(MessagesHandler *messagesHandler, QObject *parent)
     : QAbstractListModel(parent), m_messagesHandler(messagesHandler)
 {
     Q_ASSERT(messagesHandler != nullptr);
     connect(m_messagesHandler, &MessagesHandler::attachmentRecieved, this, &AttachmentListModel::onAttachmentReceived);
+
+    if (s_expandedAttachmentIdsHandler != messagesHandler) {
+        s_expandedAttachmentIds.clear();
+        s_expandedAttachmentIdsHandler = messagesHandler;
+    }
 }
 
 void AttachmentListModel::setAttachments(const QList<Attachment> &list)
@@ -34,6 +43,7 @@ void AttachmentListModel::setAttachments(const QList<Attachment> &list)
             item.fileUri = QUrl::fromLocalFile(filePath);
         }
         item.isDownloading = m_messagesHandler->isDownloadUnderway(a);
+        item.isExpanded = s_expandedAttachmentIds.contains(a.uniqueIdentifier());
         m_items.push_back(item);
     }
     endResetModel();
@@ -66,6 +76,8 @@ QVariant AttachmentListModel::data(const QModelIndex &index, int role) const
         return item.attachment.base64EncodedFile();
     case IsLoadingRole:
         return item.isDownloading;
+    case IsExpandedRole:
+        return s_expandedAttachmentIds.contains(item.attachment.uniqueIdentifier());
     }
 
     return {};
@@ -80,7 +92,8 @@ QHash<int, QByteArray> AttachmentListModel::roleNames() const
         {FileUriRole, "fileUri"},
         {ThumbnailRole, "thumbnail"},
         {DownloadLocationRole, "downloadLocation"},
-        {IsLoadingRole, "isLoading"}
+        {IsLoadingRole, "isLoading"},
+        {IsExpandedRole, "isExpanded"},
     };
 }
 
@@ -191,3 +204,22 @@ void AttachmentListModel::onAttachmentReceived(const Attachment &attachment, con
         QDesktopServices::openUrl(QUrl::fromLocalFile(path));
     }
 }
+
+void AttachmentListModel::toggleExpanded(int row)
+{
+    if (row < 0 || row >= m_items.size()) {
+        qWarning() << Q_FUNC_INFO << "index out of range" << row;
+        return;
+    }
+
+    auto uid = m_items[row].attachment.uniqueIdentifier();
+    if (s_expandedAttachmentIds.contains(uid)) {
+        s_expandedAttachmentIds.remove(uid);
+    }
+    else {
+        s_expandedAttachmentIds.insert(uid);
+    }
+
+    emit dataChanged(index(row), index(row), { IsExpandedRole });
+}
+

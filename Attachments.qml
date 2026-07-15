@@ -43,7 +43,7 @@ ColumnLayout {
                 fillMode: Image.PreserveAspectFit
                 // 1. Let the component calculate its own base dimensions.
                 // This triggers standard QML property listeners instantly when the asset initializes.
-                width: Math.min(implicitWidth, root.maxImageWidth)
+                width: model.isExpanded ? Math.min(implicitWidth, root.maxImageWidth) : 100
                 height: implicitWidth > 0 ? (width * (implicitHeight / implicitWidth)) : 0
 
                 // 2. Feed the clean, computed dimensions into the layout engine.
@@ -52,6 +52,17 @@ ColumnLayout {
                 Layout.fillWidth: false
                 Layout.preferredWidth: width
                 Layout.preferredHeight: height
+
+                Behavior on width {
+                    // Prevent animating the initial pop-in when the image loads
+                    enabled: preview.status === Image.Ready
+
+                    NumberAnimation {
+                        duration: 220 // Sweet spot for UI snappiness
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
                 onStatusChanged: {
                     if (status === Image.Ready && visible && model.fileUri === "") {
                         // Thumbnail just became visible → request full attachment
@@ -62,6 +73,7 @@ ColumnLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     onDoubleClicked: attachmentList.open(model.index)
+                    onClicked: attachmentList.toggleExpanded(model.index)
                 }
 
                 // ==========================================
