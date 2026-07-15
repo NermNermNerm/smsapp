@@ -211,16 +211,20 @@ void MessagesHandler::checkOutgoingTimeouts()
 
 QString MessagesHandler::tryGetCachedAttachment(const Attachment &attachment) const
 {
+    assertOnMyThread();
     qInfo() << Q_FUNC_INFO << attachment.uniqueIdentifier();
     return m_attachmentCache.tryGetCachedAttachment(attachment);
 }
 
 void MessagesHandler::requestAttachment(const Attachment &attachment, const QString &path)
 {
+    assertOnMyThread();
+
     qInfo() << Q_FUNC_INFO << attachment.uniqueIdentifier() << (path.isEmpty() ? "''" : path);
     const bool queueWasEmpty = m_attachmentRequests.isEmpty();
     m_attachmentRequests.enqueue(AttachmentRequestQueueItem{attachment, path});
 
+    processCachedItemsInQueue();
     if (queueWasEmpty) {
         sendHeadRequest();
     }
@@ -228,6 +232,8 @@ void MessagesHandler::requestAttachment(const Attachment &attachment, const QStr
 
 void MessagesHandler::onAttachmentReceived(const QString &path, const QString &uniqueId)
 {
+    assertOnMyThread();
+
     qInfo() << Q_FUNC_INFO << path << uniqueId;
     noteDaemonActivity();
 
@@ -265,43 +271,55 @@ void MessagesHandler::onAttachmentReceived(const QString &path, const QString &u
 
     emit attachmentRecieved(req.attachment, targetPath, req.pathOverride.isEmpty());
 
+    processCachedItemsInQueue();
     if (!m_attachmentRequests.isEmpty())
         sendHeadRequest();
 }
 
-void MessagesHandler::sendHeadRequest()
+void MessagesHandler::processCachedItemsInQueue()
 {
-    // Skip any head items that are already in cache.
-    while (!m_attachmentRequests.isEmpty()) {
-        AttachmentRequestQueueItem req = m_attachmentRequests.head();
+    assertOnMyThread();
+
+    for (int i = 0; i < m_attachmentRequests.size(); ) {
+
+        const AttachmentRequestQueueItem req = m_attachmentRequests.at(i);
         const QString cachedPath = m_attachmentCache.tryGetCachedAttachment(req.attachment);
 
         if (cachedPath.isEmpty()) {
-            // Not in cache → we actually need to send a DBus request for this one.
-            break;
+            ++i;
         }
+        else {
+            QString finalPath = cachedPath;
+            bool isInCache = !req.pathOverride.isEmpty();
 
-        // In cache
-        QString finalPath = cachedPath;
-        bool isInCache = true;
+            if (!isInCache) {
+                finalPath = req.pathOverride;
 
-        if (!req.pathOverride.isEmpty()) {
-            // Caller wants it somewhere else → copy from cache to override.
-            finalPath = req.pathOverride;
-            if (QFile::exists(finalPath)) QFile::remove(finalPath);
-            if (!QFile::copy(cachedPath, finalPath)) {
-                qWarning() << "Failed to copy cached attachment from"
-                           << cachedPath << "to" << finalPath;
-                finalPath.clear();
+                if (QFile::exists(finalPath))
+                    QFile::remove(finalPath);
+
+                if (!QFile::copy(cachedPath, finalPath)) {
+                    qWarning() << "Failed to copy cached attachment from"
+                               << cachedPath << "to" << finalPath;
+                    finalPath.clear();
+                }
+
+                isInCache = false;
             }
-            isInCache = false; // because the file the caller cares about is not in cache
+
+            m_attachmentRequests.removeAt(i);
+            emit attachmentRecieved(req.attachment, finalPath, isInCache);
+
+            // Do NOT increment i — we removed the element at i,
+            // so the next element has now shifted into index i.
         }
-
-        m_attachmentRequests.dequeue();
-        emit attachmentRecieved(req.attachment, finalPath, isInCache);
     }
+}
 
-    // After skipping cached items, if the queue is empty, we're done.
+void MessagesHandler::sendHeadRequest()
+{
+    assertOnMyThread();
+
     if (m_attachmentRequests.isEmpty())
         return;
 
@@ -329,6 +347,8 @@ void MessagesHandler::sendHeadRequest()
 
 bool MessagesHandler::isDownloadUnderway(const Attachment &attachment) const
 {
+    assertOnMyThread();
+
     return std::any_of(m_attachmentRequests.begin(),
                        m_attachmentRequests.end(),
                        [&](const AttachmentRequestQueueItem &item) {
@@ -339,5 +359,12 @@ bool MessagesHandler::isDownloadUnderway(const Attachment &attachment) const
 
 QString MessagesHandler::tryFindCompletedDownload(const Attachment &attachment) const
 {
+    assertOnMyThread();
+
     return m_completedDownloads.value(attachment.uniqueIdentifier());
+}
+
+void MessagesHandler::assertOnMyThread() const
+{
+    Q_ASSERT(QThread::currentThread() == this->thread());
 }

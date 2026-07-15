@@ -20,6 +20,7 @@ KDE Plugin Asks
 - [x] all dates should have day-of-week
 - [x] Colors should be more striking - incoming color is okay, outgoing should be white-on-dark-blue
 - [ ] Group Chat should show senders
+- [ ] Seeing cases where the time is "28565m"
 - [x] Chat header should have an avatar and put the date on its own
 - [x] Convo Header should have participant(s) icon then comma-separated list of participants
       - [x] Show avatar in conversation heading
@@ -38,9 +39,9 @@ KDE Plugin Asks
       - [x] Enable cut&paste images
       - [x] Initialize state from cache correctly in setAttachments
       - [ ] Fix issue where animated gifs loaded late don't animate sometimes
-      - [ ] MakeMessagesHandler should have a 'checkForCachedItemsInQueue' method instead of the
+      - [x] MakeMessagesHandler should have a 'checkForCachedItemsInQueue' method instead of the
             thing that we have now that just looks at stuff at the head.
-      - [ ] Put mutexes around attachment queue access
+      - [x] Put mutexes around attachment queue access
       - [ ] Consider making all images smaller and having a hover-over enlarge button in the upper right
             and the 'open' button can do that too.
 

@@ -94,12 +94,17 @@ private:
     void resolvePendingOutgoing(const ConversationMessage &message);
     void checkOutgoingTimeouts();
 
+    /** @brief For code that would have a problem if run concurrently, but we know that it will only
+     *  ever run on this object's thread, use this to assert that it's not called outside of that assumption. */
+    void assertOnMyThread() const;
+
     struct AttachmentRequestQueueItem {
         Attachment attachment;
         QString pathOverride;
     };
     QQueue<AttachmentRequestQueueItem> m_attachmentRequests;
 
+    void processCachedItemsInQueue();
     void sendHeadRequest();
 
     QDateTime m_lastActivity;
