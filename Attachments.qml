@@ -11,9 +11,10 @@ ColumnLayout {
 
     property var attachments
     property bool isIncoming
-    // 1. Snag the max width property passed from the message list container.
-    // We add a fallback (400) just in case it's instantiated somewhere else without it.
+
+    // These should be set by the caller, but have fallbacks just in case
     property real maxImageWidth: 400
+    property real maxImageHeight: 400
 
     AttachmentListModel {
         id: attachmentList
@@ -41,18 +42,40 @@ ColumnLayout {
                         ? ("data:" + model.mimeType + ";base64," + model.thumbnail)
                         : model.fileUri;
                 fillMode: Image.PreserveAspectFit
-                // 1. Let the component calculate its own base dimensions.
-                // This triggers standard QML property listeners instantly when the asset initializes.
-                width: model.isExpanded ? Math.min(implicitWidth, root.maxImageWidth) : 100
+                // =============================================================
+                // Aspect-Ratio-Preserving Boundary Math
+                // =============================================================
+                readonly property real expandedWidth: {
+                    if (implicitWidth <= 0 || implicitHeight <= 0) return 100;
+
+                    var ratio = implicitWidth / implicitHeight;
+                    // If we scaled the width to maxImageWidth, what would the height be?
+                    var heightAtMaxWidth = root.maxImageWidth / ratio;
+                    var targetW = 100;
+
+                    if (heightAtMaxWidth <= root.maxImageHeight) {
+                        // The height fits within our screen limits, so width is the constraint.
+                        targetW = Math.min(implicitWidth, root.maxImageWidth);
+                    } else {
+                        // The height would overflow the screen! Height is the constraint.
+                        // We work backward to calculate the matching aspect-locked width.
+                        targetW = Math.min(implicitWidth, root.maxImageHeight * ratio);
+                    }
+
+                    // Prevent tiny icons/images from shrinking below their thumbnail size
+                    return Math.max(100, targetW);
+                }
+
+                // 2. Toggle width based on expanded state
+                width: model.isExpanded ? expandedWidth : 100
+
+                // 3. Keep height strictly locked to the width aspect ratio.
+                // As width animates, height follows it linearly in perfect lockstep!
                 height: implicitWidth > 0 ? (width * (implicitHeight / implicitWidth)) : 0
 
-                // 2. Feed the clean, computed dimensions into the layout engine.
-                // When 'width' or 'height' updates, it guarantees the layout engine
-                // forces a refresh, completely bypassing the timing/caching bug.
                 Layout.fillWidth: false
                 Layout.preferredWidth: width
                 Layout.preferredHeight: height
-
                 Behavior on width {
                     // Prevent animating the initial pop-in when the image loads
                     enabled: preview.status === Image.Ready
