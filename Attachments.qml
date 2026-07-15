@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import Qt.labs.platform 1.1
+import Qt.labs.platform 1.1 as Platform
 import Sms 1.0   // AttachmentListModel
 
 ColumnLayout {
@@ -19,17 +19,6 @@ ColumnLayout {
         id: attachmentList
         attachments: root.attachments
         messagesHandler: deviceStatus.handler
-    }
-
-    // Convert raw byte count → "128 KB", "2.3 MB", etc.
-    function humanSize(bytes) {
-        if (bytes < 1024)
-            return qsTr("<1kb");
-        if (bytes < 1024 * 1024)
-            return qsTr("%1kb").arg(Math.round(bytes / 1024));
-        if (bytes < 1024 * 1024 * 1024)
-            return qsTr("%1mb").arg((bytes / (1024 * 1024)).toFixed(1));
-        return qsTr("%1gb").arg((bytes / (1024 * 1024 * 1024)).toFixed(1));
     }
 
     function isImage(a) {
@@ -53,14 +42,19 @@ ColumnLayout {
                         ? ("data:" + model.mimeType + ";base64," + model.thumbnail)
                         : model.fileUri;
                 fillMode: Image.PreserveAspectFit
-                Layout.fillWidth: false
-                Layout.preferredWidth: Math.min(implicitWidth, root.maxImageWidth)
-                Layout.preferredHeight: implicitWidth > 0
-                                        ? (Math.min(implicitWidth, root.maxImageWidth) * (implicitHeight / implicitWidth))
-                                        : 0
+                // 1. Let the component calculate its own base dimensions.
+                // This triggers standard QML property listeners instantly when the asset initializes.
+                width: Math.min(implicitWidth, root.maxImageWidth)
+                height: implicitWidth > 0 ? (width * (implicitHeight / implicitWidth)) : 0
 
+                // 2. Feed the clean, computed dimensions into the layout engine.
+                // When 'width' or 'height' updates, it guarantees the layout engine
+                // forces a refresh, completely bypassing the timing/caching bug.
+                Layout.fillWidth: false
+                Layout.preferredWidth: width
+                Layout.preferredHeight: height
                 onStatusChanged: {
-                    if (status === Image.Ready && model.fileUri === "") {
+                    if (status === Image.Ready && visible && model.fileUri === "") {
                         // Thumbnail just became visible → request full attachment
                         attachmentList.requestFullAttachment(model.index)
                     }
@@ -70,30 +64,87 @@ ColumnLayout {
                     hoverEnabled: true
                     onDoubleClicked: attachmentList.open(model.index)
                 }
+
+                // ==========================================
+                // Simple Top-Right Busy Indicator
+                // ==========================================
+                BusyIndicator {
+                    visible: parent.visible && model.isLoading
+                    running: visible // Only runs CPU cycles when loading
+
+                    // Strictly 20x20 visible footprint
+                    implicitWidth: 20
+                    implicitHeight: 20
+                    padding: 0
+
+                    // Float it neatly in the top-right corner of the image
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 6
+                }
             }
 
             Text {
                 visible: !isImage(model)
-                // yields "pdf file - 147kb"
-                text: qsTr("%1 file — %2").arg(model.extension).arg(humanSize(model.size))
+                text: qsTr("%1 file").arg(model.extension)
                 wrapMode: Text.Wrap
             }
 
-            FileDialog {
+            Dialog {
+                id: invalidLocationDialog
+                parent: Overlay.overlay
+                title: qsTr("Invalid Location")
+                modal: true
+                standardButtons: Dialog.Ok
+
+                // Position globally in the center of the screen
+                x: Math.round((parent.width - width) / 2)
+                y: Math.round((parent.height - height) / 2)
+                width: Math.min(340, parent.width - 40)
+
+                property alias text: dialogLabel.text
+
+                Label {
+                    id: dialogLabel
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                }
+            }
+
+            Platform.FileDialog {
                 id: saveDialog
                 title: qsTr("Save Attachment")
-                fileMode: FileDialog.SaveFile
+                fileMode: Platform.FileDialog.SaveFile
                 currentFile: "attachment." + model.extension;
                 nameFilters: [
                     qsTr("%1 files (*.%1)").arg(model.extension),
                     qsTr("All files (*.*)")
                 ]
 
-                onAccepted: attachmentList.saveToPath(model.index, saveDialog.file)
+                onAccepted: {
+                    var fileUrlStr = saveDialog.file.toString()
+
+                    // 1. Check if it's a local file protocol
+                    if (!fileUrlStr.startsWith("file://")) {
+                        invalidLocationDialog.text = qsTr("The selected location is not a local file.\nPlease choose a local folder.")
+                        invalidLocationDialog.open()
+                        return
+                    }
+
+                    // 2. Strip "file://" (7 characters) to get the raw path
+                    // On Linux: "file:///home/user/file" becomes "/home/user/file"
+                    var localPath = fileUrlStr.substring(7)
+
+                    // 3. Decode URL characters (e.g. convert "%20" back to standard spaces " ")
+                    localPath = decodeURIComponent(localPath)
+
+                    // 4. Send the clean, verified local path to C++
+                    attachmentList.saveToPath(model.index, localPath)
+                }
             }
 
-            Button {
-                visible: !isImage(model)
+            Button { // download
+                visible: !isImage(model) && !model.isLoading && model.fileUri === ""
                 implicitWidth: implicitContentWidth+2
                 icon.source: "qrc:/icons/download.svg"
                 display: AbstractButton.IconOnly
@@ -105,6 +156,48 @@ ColumnLayout {
                 onClicked: {
                     saveDialog.currentFile = "attachment." + model.extension;
                     saveDialog.open();
+                }
+            }
+
+            BusyIndicator {
+                visible: !isImage(model) && model.isLoading && model.fileUri === ""
+                running: visible // Only runs CPU animation cycles when active on screen
+                implicitWidth: 20
+                implicitHeight: 20
+
+                // Crucial: Strip style padding so the spinner expands to fill this box!
+                padding: 0
+            }
+
+            Button { // open file
+                visible: !isImage(model) && !model.isLoading && model.fileUri !== ""
+                implicitWidth: implicitContentWidth+2
+                icon.source: "qrc:/icons/open-file.svg"
+                display: AbstractButton.IconOnly
+                icon.width: 20
+                icon.height: 20
+                ToolTip.visible: hovered
+                ToolTip.text: "Open"
+                ToolTip.delay: 400
+                onClicked: {
+                    attachmentList.open(model.index)
+                }
+            }
+
+
+            Button {
+                visible: !isImage(model) && !model.isLoading && model.fileUri !== ""
+                implicitWidth: implicitContentWidth+2
+                icon.source: "qrc:/icons/open-folder.svg"
+                display: AbstractButton.IconOnly
+                icon.width: 20
+                icon.height: 20
+                ToolTip.visible: hovered
+                ToolTip.text: "Open folder"
+                ToolTip.delay: 400
+                onClicked: {
+                    // get rid of the trailing folder thing
+                    Qt.openUrlExternally(model.fileUri.replace(/\/[^\/]*$/, ""))
                 }
             }
         }

@@ -34,10 +34,9 @@ void CacheManager::doLoad(const QString &deviceId)
         qWarning() << "CacheManager::load: no application data location is available?!";
         return;
     }
-    if (!base.isEmpty()) {
-        QDir().mkpath(base);
-        m_cachePath = base + "/cache-" + deviceId + ".json";
-    }
+
+    QDir().mkpath(base);
+    m_cachePath = base + "/cache-" + deviceId + ".json";
 
     if (m_cachePath.isEmpty())
         return;

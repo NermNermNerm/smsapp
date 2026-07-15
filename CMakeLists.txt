@@ -46,6 +46,7 @@ qt_add_qml_module(appsmsapp
     SOURCES backend/attachmentlistmodel.h backend/attachmentlistmodel.cpp
     QML_FILES Attachments.qml
     SOURCES backend/mimetypes.h backend/mimetypes.cpp
+    SOURCES backend/attachmentcache.h backend/attachmentcache.cpp
 )
 
 # Add general Qt resources *after* the QML module
@@ -59,6 +60,8 @@ qt_add_resources(appsmsapp "app_resources"
         icons/tray_disconnected_nomsgs.svg
         icons/tray_error_nomsgs.svg
         icons/download.svg
+        icons/open-file.svg
+        icons/open-folder.svg
 )
 
 # Just to make it visible in the ide

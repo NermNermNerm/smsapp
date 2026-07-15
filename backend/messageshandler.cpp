@@ -1,10 +1,11 @@
 #include "messageshandler.h"
 #include "dbus.h"
+#include <QSharedPointer>
 
 static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 
 MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
-    : QObject{parent}, m_deviceID(deviceID), m_cacheManager(deviceID, this)
+    : QObject{parent}, m_deviceID(deviceID), m_cacheManager(deviceID, this), m_attachmentCache(deviceID)
 {
     QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationLoaded,
                      this, &MessagesHandler::onConversationLoaded);
@@ -12,6 +13,8 @@ MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
                      this, &MessagesHandler::onConversationCreated);
     QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::conversationUpdated,
                      this, &MessagesHandler::onConversationUpdated);
+    QObject::connect(&dbus::conversations(m_deviceID), &org::kde::kdeconnect::conversations::attachmentReceived,
+                     this, &MessagesHandler::onAttachmentReceived);
 
     m_retryTimer.setInterval(1000);   // 1 second
     m_retryTimer.setSingleShot(true);
@@ -32,11 +35,6 @@ MessagesHandler::MessagesHandler(const QString &deviceID, QObject *parent)
                      this, [&](QString filePath, QString fileName) {
         qWarning() << "Got attachment, filePath:" << filePath << "fileName:" << fileName;
     });
-    auto result = dbus::conversations(m_deviceID).requestAttachmentFile(1898, "PART_1777942132359");
-    result.waitForFinished();
-    if (result.isError()) {
-        qWarning() << "request failed";
-    }
 }
 
 void MessagesHandler::attemptRequestAllThreads()
@@ -209,4 +207,137 @@ void MessagesHandler::checkOutgoingTimeouts()
 
     for (qint64 conversationID : expired)
         emit messageDeliveryFailed(conversationID);
+}
+
+QString MessagesHandler::tryGetCachedAttachment(const Attachment &attachment) const
+{
+    qInfo() << Q_FUNC_INFO << attachment.uniqueIdentifier();
+    return m_attachmentCache.tryGetCachedAttachment(attachment);
+}
+
+void MessagesHandler::requestAttachment(const Attachment &attachment, const QString &path)
+{
+    qInfo() << Q_FUNC_INFO << attachment.uniqueIdentifier() << (path.isEmpty() ? "''" : path);
+    const bool queueWasEmpty = m_attachmentRequests.isEmpty();
+    m_attachmentRequests.enqueue(AttachmentRequestQueueItem{attachment, path});
+
+    if (queueWasEmpty) {
+        sendHeadRequest();
+    }
+}
+
+void MessagesHandler::onAttachmentReceived(const QString &path, const QString &uniqueId)
+{
+    qInfo() << Q_FUNC_INFO << path << uniqueId;
+    noteDaemonActivity();
+
+    if (m_attachmentRequests.isEmpty()) {
+        qWarning() << "Unexpected attachmentReceived:" << uniqueId;
+        return;
+    }
+
+    AttachmentRequestQueueItem req = m_attachmentRequests.head();
+    if (req.attachment.uniqueIdentifier() != uniqueId) {
+        // For this and the previous message, we *could* search the queue to see if it's out of order, which would
+        // only happen if there was another agent on the dbus.  It doesn't seem worth defending against that at this point.
+        qWarning() << "attachmentReceived mismatch:" << uniqueId
+                   << "expected:" << req.attachment.uniqueIdentifier();
+        return;
+    }
+
+    // Determine final target path
+    QString targetPath;
+
+    if (req.pathOverride.isEmpty()) {
+        targetPath = m_attachmentCache.emplaceFile(req.attachment, path);
+    } else {
+        targetPath = req.pathOverride;
+        if (QFile::exists(targetPath)) QFile::remove(targetPath);
+        if (QFile::copy(path, targetPath)) {
+            m_completedDownloads[req.attachment.uniqueIdentifier()] = targetPath;
+        }
+        else {
+            targetPath = "";
+            qWarning() << "Failed to copy" << path << "to" << targetPath;
+        }
+    }
+    m_attachmentRequests.dequeue();
+
+    emit attachmentRecieved(req.attachment, targetPath, req.pathOverride.isEmpty());
+
+    if (!m_attachmentRequests.isEmpty())
+        sendHeadRequest();
+}
+
+void MessagesHandler::sendHeadRequest()
+{
+    // Skip any head items that are already in cache.
+    while (!m_attachmentRequests.isEmpty()) {
+        AttachmentRequestQueueItem req = m_attachmentRequests.head();
+        const QString cachedPath = m_attachmentCache.tryGetCachedAttachment(req.attachment);
+
+        if (cachedPath.isEmpty()) {
+            // Not in cache → we actually need to send a DBus request for this one.
+            break;
+        }
+
+        // In cache
+        QString finalPath = cachedPath;
+        bool isInCache = true;
+
+        if (!req.pathOverride.isEmpty()) {
+            // Caller wants it somewhere else → copy from cache to override.
+            finalPath = req.pathOverride;
+            if (QFile::exists(finalPath)) QFile::remove(finalPath);
+            if (!QFile::copy(cachedPath, finalPath)) {
+                qWarning() << "Failed to copy cached attachment from"
+                           << cachedPath << "to" << finalPath;
+                finalPath.clear();
+            }
+            isInCache = false; // because the file the caller cares about is not in cache
+        }
+
+        m_attachmentRequests.dequeue();
+        emit attachmentRecieved(req.attachment, finalPath, isInCache);
+    }
+
+    // After skipping cached items, if the queue is empty, we're done.
+    if (m_attachmentRequests.isEmpty())
+        return;
+
+    // Now the head is not in cache → send the DBus request.
+    const AttachmentRequestQueueItem &req = m_attachmentRequests.head();
+
+    auto reply = dbus::conversations(m_deviceID)
+                     .requestAttachmentFile(req.attachment.partID(),
+                                            req.attachment.uniqueIdentifier());
+
+    auto *watcher = new QDBusPendingCallWatcher(reply, this);
+    // Wrap it in a QSharedPointer ONLY to silence the analyzer. The custom deleter does nothing because Qt owns the lifetime.
+    QSharedPointer<QDBusPendingCallWatcher> analyzerShutup(watcher, [](QDBusPendingCallWatcher*){});
+
+    connect(watcher, &QDBusPendingCallWatcher::finished, this,
+            [this, watcher]() {
+                watcher->deleteLater();
+                if (watcher->isError()) {
+                    const auto failed = m_attachmentRequests.dequeue();
+                    emit attachmentRecieved(failed.attachment, QString(), false);
+                    sendHeadRequest();
+                }
+            });
+}
+
+bool MessagesHandler::isDownloadUnderway(const Attachment &attachment) const
+{
+    return std::any_of(m_attachmentRequests.begin(),
+                       m_attachmentRequests.end(),
+                       [&](const AttachmentRequestQueueItem &item) {
+                           return !item.pathOverride.isEmpty()
+                                  && item.attachment.uniqueIdentifier() == attachment.uniqueIdentifier();
+                       });
+}
+
+QString MessagesHandler::tryFindCompletedDownload(const Attachment &attachment) const
+{
+    return m_completedDownloads.value(attachment.uniqueIdentifier());
 }

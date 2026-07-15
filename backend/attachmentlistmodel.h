@@ -24,13 +24,17 @@ public:
         FileUriRole,
         ThumbnailRole,
         IndexRole,
+        DownloadLocationRole,
+        IsLoadingRole,
     };
 
     struct Item {
         Attachment attachment;
-        QString mimeType;
         QString extension;
         QUrl fileUri;
+        bool isDownloading = false;
+        bool isOpening = false;
+        QString downloadLocation;
     };
 
     explicit AttachmentListModel(QObject *parent = nullptr);
@@ -51,7 +55,7 @@ public slots:
     void requestFullAttachment(int index);
 
 private:
-    void onAttachmentReceived(const QString &path, const QString &uniqueID);
+    void onAttachmentReceived(const Attachment &attachment, const QString &path, bool isInCache);
 
     QList<Attachment> m_attachments;
     QVector<Item> m_items;
