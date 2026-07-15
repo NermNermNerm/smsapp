@@ -60,7 +60,7 @@ private:
                || f == DisplayFormat::TodayTime
                || f == DisplayFormat::YesterdayTime;
     }
-    DisplayFormat computeDisplayFormat(QDateTime priorMessage, QDateTime now) const;
+    DisplayFormat computeDisplayFormat(QDateTime now) const;
 
     ConversationMessage m_rawData;
     QString m_cachedRecipientList;

@@ -24,7 +24,7 @@ void MessageItem::update(const ConversationMessage& updated)
     Q_ASSERT(old.date() == updated.date()); // Sanity check
 }
 
-MessageItem::DisplayFormat MessageItem::computeDisplayFormat(QDateTime priorMessage, QDateTime now) const
+MessageItem::DisplayFormat MessageItem::computeDisplayFormat(QDateTime now) const
 {
     if (m_displayFormat == DisplayFormat::FullDateTime) {
         // This won't be changing
@@ -34,13 +34,13 @@ MessageItem::DisplayFormat MessageItem::computeDisplayFormat(QDateTime priorMess
     //  It seems not worth the bother as it still requires date calculations
     //  to do properly.
 
-    if (priorMessage.secsTo(now) < 3600) {
-        return DisplayFormat::RelativeToNow;
-    }
-
     const QDateTime msgDt = date();
     const QDate msgDate = msgDt.date();
     const QDate today = now.date();
+
+    if (msgDt.secsTo(now) < 3600) {
+        return DisplayFormat::RelativeToNow;
+    }
 
     if (msgDate == today)
         return DisplayFormat::TodayTime;
@@ -71,7 +71,7 @@ void MessageItem::updateShowTime(QDateTime priorMessage, QDateTime now)
     const qint64 ageSecs = msgDt.secsTo(now);
 
     // compute new format class using the same deterministic logic
-    const DisplayFormat newFormat = computeDisplayFormat(priorMessage, now);
+    const DisplayFormat newFormat = computeDisplayFormat(now);
 
     // compute visibility (neighbor gap rules)
     bool newVisible = true;
@@ -118,7 +118,7 @@ QString MessageItem::displayDate(QDateTime now) const
     const QDateTime dt = date();
     QString formatted;
     if (m_displayFormat == DisplayFormat::Unknown) {
-        m_displayFormat = computeDisplayFormat(m_priorMessageDate, now);
+        m_displayFormat = computeDisplayFormat(now);
     }
 
     switch (m_displayFormat) {
