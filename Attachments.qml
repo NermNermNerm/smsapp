@@ -101,42 +101,71 @@ ColumnLayout {
                     // Custom property to track if the mouse has stopped moving
                     property bool isStationary: false
 
-                    // 1. When the mouse enters, start the timer
+                    // 1. When the mouse enters, start the tooltip timer
                     onEntered: {
                         isStationary = false
                         hoverTimer.restart()
                     }
 
-                    // 2. If the mouse moves, reset the timer and hide the tooltip
+                    // 2. If the mouse moves, reset the tooltip timer and hide the tooltip
                     onPositionChanged: {
                         isStationary = false
                         hoverTimer.restart()
                     }
 
-                    // 3. If the mouse leaves, kill the timer entirely
+                    // 3. If the mouse leaves, kill the tooltip timer entirely
                     onExited: {
                         isStationary = false
                         hoverTimer.stop()
                     }
 
-                    // The "settle" timer
+                    // ==========================================
+                    // Timers
+                    // ==========================================
+
+                    // The "settle" timer for the tooltip
                     Timer {
                         id: hoverTimer
-                        interval: 600 // Milliseconds to wait after the last movement
+                        interval: 600
                         repeat: false
                         onTriggered: imageMouseArea.isStationary = true
                     }
 
-                    // Tooltip only shows when the mouse is inside AND stationary
-                    ToolTip.visible: containsMouse && isStationary
-                    ToolTip.delay: 0 // Handled manually now by our timer!
-                    ToolTip.text: model.isExpanded
-                                  ? "Click to shrink\nDouble-click to open file"
-                                  : "Click to expand\nDouble-click to open file"
-                    onDoubleClicked: attachmentList.open(model.index)
-                    onClicked: attachmentList.toggleExpanded(model.index)
-                }
+                    // The single-click buffer timer.
+                    // It queries the OS double-click timeout (e.g., 400ms) to distinguish single vs double clicks.
+                    Timer {
+                        id: clickTimer
+                        interval: Math.min(220, Qt.styleHints.mouseDoubleClickInterval)
+                        repeat: false
+                        onTriggered: {
+                            attachmentList.toggleExpanded(model.index)
+                        }
+                    }
 
+                    // Tooltip configuration
+                    ToolTip.visible: containsMouse && isStationary
+                    ToolTip.delay: 0
+                    ToolTip.text: model.isExpanded
+                                  ? qsTr("Click to shrink | Double-click to open file")
+                                  : qsTr("Click to expand | Double-click to open file")
+
+                    // ==========================================
+                    // Click Handlers
+                    // ==========================================
+
+                    onClicked: {
+                        // Start the timer. If they don't click again before it finishes, the image expands/collapses.
+                        clickTimer.restart()
+                    }
+
+                    onDoubleClicked: {
+                        // Stop the single-click timer IMMEDIATELY so the image doesn't toggle!
+                        clickTimer.stop()
+
+                        // Execute the double-click action
+                        attachmentList.open(model.index)
+                    }
+                }
                 // ==========================================
                 // Simple Top-Right Busy Indicator
                 // ==========================================
