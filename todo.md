@@ -42,7 +42,7 @@ KDE Plugin Asks
       - [x] MakeMessagesHandler should have a 'checkForCachedItemsInQueue' method instead of the
             thing that we have now that just looks at stuff at the head.
       - [x] Put mutexes around attachment queue access
-      - [ ] Consider making all images smaller and having a hover-over enlarge button in the upper right
+      - [x] Consider making all images smaller and having a hover-over enlarge button in the upper right
             and the 'open' button can do that too.
 
 ## Headings
@@ -54,12 +54,13 @@ KDE Plugin Asks
 ## Main Window
 - [ ] Splitter should allow maximizing one side or the other
 - [ ] Fix Title (away from Hello World)
+- [ ] Remember window size and position
 
 ## Test infrastructure
 - [x] Implement simulated message arrival
-- [ ] Incremental load of messages
-- [ ] Full load of messages
-  - [ ] Check multi-target messaging
+- [x] Incremental load of messages
+- [x] Full load of messages
+  - [x] Check multi-target messaging
 `
 
 
