@@ -38,7 +38,9 @@ KDE Plugin Asks
             - [x] Need to clear area after message is sent
             - [x] DropArea should encompass whole messages control
             - [x] Send button should be there when there's an attachment
-      - [ ] Send attachments with paste
+      - [x] Send attachments with paste
+      - [-] Kvetching on the console when pasting non-images
+      - [x] Outgoing images don't shrink correctly when they are wide - they clip
 - [ ] Display Attachments
       - [ ] Blank messages with just attachments show as 'Image' in headers
       - [x] Enable displaying the download links -- do this for all mime types.

@@ -60,7 +60,7 @@ Item {
                     id: previewImage
                     anchors.fill: parent
                     source: model.fileUri
-                    fillMode: Image.PreserveAspectCrop
+                    fillMode: Image.PreserveAspectFit // Could be that PreserveApsectCrop is better.
 
                     // The magic: If Qt can't decode it as an image, it transitions
                     // to Image.Error, and we seamlessly hide it!
