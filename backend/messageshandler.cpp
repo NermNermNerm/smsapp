@@ -154,7 +154,7 @@ void MessagesHandler::sendMessage(qint64 conversationID, const QString &body, co
 
     QVariantList dbusAttachments;
     for (const QUrl &url: attachments)
-        dbusAttachments.append(url.toString());
+        dbusAttachments.append(url.toLocalFile());
 
     Q_ASSERT(!m_conversationsWithOutgoingMessages.contains(conversationID));
     QDBusPendingReply<void> reply = dbus::conversations(m_deviceID).replyToConversation(conversationID, body, dbusAttachments);
