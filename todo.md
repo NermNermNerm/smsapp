@@ -32,11 +32,11 @@ KDE Plugin Asks
             (Any new message that's from the user will clear this state)
       - [x] Message area should be saved when switching conversations with an unsent text
       - [x] Animate button appearing/disappearing
-      - [ ] Send attachments with drag&drop
+      - [x] Send attachments with drag&drop
             - [x] Figure out why the attachments aren't sending
             - [x] Need to disable drag&drop while message is sending
             - [x] Need to clear area after message is sent
-            - [ ] DropArea should encompass whole messages control
+            - [x] DropArea should encompass whole messages control
             - [x] Send button should be there when there's an attachment
       - [ ] Send attachments with paste
 - [ ] Display Attachments

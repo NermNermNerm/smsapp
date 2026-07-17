@@ -214,11 +214,9 @@ Item {
 
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_V && event.modifiers & Qt.ControlModifier) {
-                        let cb = Qt.application.clipboard
-
-                        if (cb.hasImage) {
-                            // TODO Handle screenshot paste as a file upload
-                            // TODO messageListModel.handleImagePaste(cb.image)
+                        let url = messageListModel.turnClipboardIntoAttachment();
+                        if (url.toString() !== "") {
+                            outgoingAttachmentListModel.add(url)
                             event.accepted = true
                         }
                     }

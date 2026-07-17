@@ -1,3 +1,9 @@
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QTemporaryFile>
+#include <QMimeData>
+#include <QImage>
+#include <QDir>
 #include "messagelistmodel.h"
 #include "messageitem.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
@@ -228,3 +234,46 @@ void MessageListModel::setDraftAttachments(const QVector<QString> &draftAttachme
     }
 }
 
+QUrl MessageListModel::turnClipboardIntoAttachment() const
+{
+    QClipboard *clipboard = QGuiApplication::clipboard();
+    if (!clipboard) {
+        return QUrl();
+    }
+
+    const QMimeData *mimeData = clipboard->mimeData();
+    if (!mimeData || !mimeData->hasImage()) {
+        return QUrl(); // Clipboard doesn't contain an image
+    }
+
+    QImage image = clipboard->image();
+    if (image.isNull()) {
+        return QUrl();
+    }
+
+    // Create a unique file in the system's temporary directory.
+    // Putting .png at the end of the template forces QTemporaryFile to preserve the extension.
+    QString tempTemplate = QDir::tempPath() + "/pasted_image_XXXXXX.png";
+    QTemporaryFile tempFile(tempTemplate);
+
+    // CRITICAL: Prevent the file from being deleted automatically when
+    // the tempFile object goes out of scope. The OS temp cleaner will handle it later.
+    tempFile.setAutoRemove(false);
+
+    if (!tempFile.open()) {
+        qWarning() << "Failed to create temporary file for pasted image.";
+        return QUrl();
+    }
+
+    // Save the QImage as a PNG directly to the open temporary file
+    if (!image.save(&tempFile, "PNG")) {
+        qWarning() << "Failed to write image data to temporary file.";
+        return QUrl();
+    }
+
+    QString filePath = tempFile.fileName();
+    tempFile.close(); // Safely close the handle so other processes can read it
+
+    // Return the local file URL (e.g., "file:///tmp/pasted_image_A1b2C3.png")
+    return QUrl::fromLocalFile(filePath);
+}
