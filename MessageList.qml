@@ -3,9 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Sms 1.0
 
-ColumnLayout {
+Item {
     id: root
-    spacing: 8
     Layout.fillWidth: true
     Layout.fillHeight: true
 
@@ -14,378 +13,365 @@ ColumnLayout {
         all: messageListModel.draftAttachments
 
         onAllChanged: {
-            // The guard check prevents infinite binding loops
+            // The guard check prevents infinite binding loops... hopefully.
             if (messageListModel.draftAttachments !== all) {
                 messageListModel.draftAttachments = all;
             }
         }
     }
 
-    // ============================
-    // Header placeholder
-    // ============================
-    Rectangle {
-        Layout.fillWidth: true
-        height: 40
-        color: "#dddddd"
+    // This is the actual visible content of the control
+    ColumnLayout {
+        id: mainLayout
+        anchors.fill: parent
+        spacing: 8
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 6
-            spacing: 6
+        // vv----  Header area -----vv
+        Rectangle {
+            Layout.fillWidth: true
+            height: 40
+            color: "#dddddd"
 
-            Avatar {
-                size: 35
-                participants: messageListModel.avatarData
-                Layout.alignment: Qt.AlignVCenter
-            }
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 6
+                spacing: 6
 
-            Text {
-                Layout.fillWidth: true
-                text: messageListModel.participants
-                font.bold: true
-                Layout.alignment: Qt.AlignVCenter
-            }
-        }
-    }
-
-    // ============================
-    // Message list
-    // ============================
-    ListView {
-        id: messageList
-        model: messageListModel
-        spacing: 12
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        clip: true
-        verticalLayoutDirection: ListView.BottomToTop
-
-        ScrollBar.vertical: ScrollBar {
-            id: verticalScrollBar // Add an ID so the rectangles can see its 'active' state
-
-            // Track
-            background: Rectangle {
-                implicitWidth: 10
-                color: "#e0e0e0"
-                radius: 5
-
-                // Fades out smoothly when scrolling stops
-                opacity: verticalScrollBar.active ? 1.0 : 0.0
-                Behavior on opacity { NumberAnimation { duration: 250 } }
-            }
-
-            // Handle
-            contentItem: Rectangle {
-                implicitWidth: 10
-                color: "#666666"
-                radius: 5
-
-                // Fades out smoothly when scrolling stops
-                opacity: verticalScrollBar.active ? 1.0 : 0.0
-                Behavior on opacity { NumberAnimation { duration: 250 } }
-            }
-        }
-
-        delegate: Item {
-            id: delegateRoot
-            width: messageList.width
-            height: bubble.height
-
-            // Helper property to calculate the true, unwrapped width of the text
-            property real maxBubbleContentWidth: messageList.width - 64
-
-            ColumnLayout {
-                id: bubble
-                width: parent.width
+                Avatar {
+                    size: 35
+                    participants: messageListModel.avatarData
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
                 Text {
-                    visible: object.isDisplayDateVisible
-                    horizontalAlignment: Text.AlignHCenter
-                    text: object.displayDate
-                    color: "#444444"
                     Layout.fillWidth: true
+                    text: messageListModel.participants
+                    font.bold: true
+                    Layout.alignment: Qt.AlignVCenter
+                }
+            }
+        }
+
+        // vv----  List of messages  -----vv
+        ListView {
+            id: messageList
+            model: messageListModel
+            spacing: 12
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            verticalLayoutDirection: ListView.BottomToTop
+
+            ScrollBar.vertical: ScrollBar {
+                id: verticalScrollBar
+
+                // Track
+                background: Rectangle {
+                    implicitWidth: 10
+                    color: "#e0e0e0"
+                    radius: 5
+
+                    // Fades out smoothly when scrolling stops
+                    opacity: verticalScrollBar.active ? 1.0 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
                 }
 
-                Attachments {
-                    isIncoming: object.isIncoming
-                    attachments: object.attachments;
+                // Handle
+                contentItem: Rectangle {
+                    implicitWidth: 10
+                    color: "#666666"
+                    radius: 5
 
-                    // Force the custom component to obey the bubble's layout width
-                    Layout.fillWidth: true
-
-                    // Pass a strict maximum image size down to the child elements.
-                    maxImageWidth: delegateRoot.maxBubbleContentWidth
-                    maxImageHeight: messageList.height > 0 ? messageList.height : 400
+                    // Fades out smoothly when scrolling stops
+                    opacity: verticalScrollBar.active ? 1.0 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 250 } }
                 }
+            }
 
-                RowLayout {
-                    visible: object.body !== ""
+            delegate: Item {
+                id: delegateRoot
+                width: messageList.width
+                height: bubble.height
 
-                    Item { visible: !object.isIncoming; Layout.fillWidth: true }
+                // Helper property to calculate the true, unwrapped width of the text
+                property real maxBubbleContentWidth: messageList.width - 64
 
-                    Rectangle {
-                        width: contentLayout.width + 32
-                        height: contentLayout.implicitHeight + 24
-                        radius: 8
-                        color: object.isIncoming ? "#e8f4ff" : "#2222ff"
+                ColumnLayout {
+                    id: bubble
+                    width: parent.width
 
-                        Item {
-                            id: contentLayout
-                            x: 16
-                            y: 12
+                    Text {
+                        visible: object.isDisplayDateVisible
+                        horizontalAlignment: Text.AlignHCenter
+                        text: object.displayDate
+                        color: "#444444"
+                        Layout.fillWidth: true
+                    }
 
-                            // If the text naturally fits on one line, use its implicitWidth.
-                            // Otherwise, cap it at the maximum allowed width.
-                            width: Math.min(textBlock.implicitWidth, delegateRoot.maxBubbleContentWidth)
+                    Attachments {
+                        isIncoming: object.isIncoming
+                        attachments: object.attachments;
 
-                            // Pass the layout's height down from the text element
-                            property real implicitHeight: textBlock.implicitHeight
+                        // Force the custom component to obey the bubble's layout width
+                        Layout.fillWidth: true
 
-                            Text {
-                                id: textBlock
-                                text: object.body
-                                color: object.isIncoming ? "#222222" : "#ffffff"
+                        // Pass a strict maximum image size down to the child elements.
+                        maxImageWidth: delegateRoot.maxBubbleContentWidth
+                        maxImageHeight: messageList.height > 0 ? messageList.height : 400
+                    }
 
-                                // Stretch to fill the Item parent width calculated above
-                                width: parent.width
+                    RowLayout {
+                        visible: object.body !== ""
 
-                                // Only wrap if the text is actually forced to take up the max width
-                                wrapMode: textBlock.implicitWidth > delegateRoot.maxBubbleContentWidth ? Text.Wrap : Text.NoWrap
+                        Item { visible: !object.isIncoming; Layout.fillWidth: true }
 
-                                horizontalAlignment: object.isIncoming ? Text.AlignLeft : Text.AlignRight
+                        Rectangle {
+                            width: contentLayout.width + 32
+                            height: contentLayout.implicitHeight + 24
+                            radius: 8
+                            color: object.isIncoming ? "#e8f4ff" : "#2222ff"
+
+                            Item {
+                                id: contentLayout
+                                x: 16
+                                y: 12
+
+                                // If the text naturally fits on one line, use its implicitWidth.
+                                // Otherwise, cap it at the maximum allowed width.
+                                width: Math.min(textBlock.implicitWidth, delegateRoot.maxBubbleContentWidth)
+
+                                // Pass the layout's height down from the text element
+                                property real implicitHeight: textBlock.implicitHeight
+
+                                Text {
+                                    id: textBlock
+                                    text: object.body
+                                    color: object.isIncoming ? "#222222" : "#ffffff"
+
+                                    // Stretch to fill the Item parent width calculated above
+                                    width: parent.width
+
+                                    // Only wrap if the text is actually forced to take up the max width
+                                    wrapMode: textBlock.implicitWidth > delegateRoot.maxBubbleContentWidth ? Text.Wrap : Text.NoWrap
+
+                                    horizontalAlignment: object.isIncoming ? Text.AlignLeft : Text.AlignRight
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    // Send area
-    OutgoingAttachments {
-        model: outgoingAttachmentListModel;
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 8 : 0 // Collapses layout spacing when hidden
-        height: 50
-
-        // Smoothly animate the spacing collapse
-        Behavior on spacing { NumberAnimation { duration: 200 } }
-
-        // -----------------------------
-        // Text input
-        // -----------------------------
-        TextArea {
-            id: inputField
-            Layout.fillWidth: true // Automatically claims all leftover space in the row
-            wrapMode: TextArea.Wrap
-            placeholderText: "Type a message"
-            readOnly: messageListModel.isSending
-            text: messageListModel.draftText
-
-            leftPadding: 12
-            rightPadding: 12
-            topPadding: 10
-            bottomPadding: 10
-
-            background: Rectangle {
-                color: "#e8f4ff"
-                radius: 8
-                border.width: 0
-            }
-
-            onTextChanged: {
-                messageListModel.draftText = text
-            }
-
-            Keys.onReturnPressed: (event) => {
-                if (event.modifiers !== 0) { // If shift, let it through
-                    event.accepted = false;
-                }
-                else {
-                    if (!messageListModel.isSending && (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)) {
-                        messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
-                    }
-                    event.accepted = true;
-                }
-            }
-
-            Keys.onPressed: (event) => {
-                if (event.key === Qt.Key_V && event.modifiers & Qt.ControlModifier) {
-                    let cb = Qt.application.clipboard
-
-                    if (cb.hasImage) {
-                        // TODO Handle screenshot paste as a file upload
-                        // TODO messageListModel.handleImagePaste(cb.image)
-                        event.accepted = true
-                    }
-                }
-            }
-
-            DropArea {
-                anchors.fill: parent
-
-                // Helper function to validate and filter the drag events
-                function validateDrag(dragEvent) {
-                    if (!dragEvent.hasUrls || messageListModel.isSending) {
-                        dragEvent.accepted = false;
-                        return;
-                    }
-
-                    // Iterate through all dragged URLs
-                    for (let i = 0; i < dragEvent.urls.length; i++) {
-                        let urlStr = dragEvent.urls[i].toString();
-                        // If any URL is not a local file, reject the entire drag
-                        if (!urlStr.startsWith("file://")) {
-                            dragEvent.accepted = false;
-                            return;
-                        }
-                    }
-
-                    // Explicitly accept the drag if it passes all checks
-                    dragEvent.accepted = true;
-                }
-
-                // Run the check when the drag enters AND whenever it moves
-                onEntered: (drag) => validateDrag(drag)
-                onPositionChanged: (drag) => validateDrag(drag)
-
-                onDropped: (drop) => {
-                    // This code double-checks the validateDrag conditions, just in case they
-                    // take a break.
-                    if (messageListModel.isSending) {
-                        return;
-                    }
-
-                    for (let i = 0; i < drop.urls.length; i++) {
-                       let urlStr = drop.urls[i].toString();
-                       // If any URL is not a local file, reject the entire drag
-                       if (urlStr.startsWith("file://")) {
-                           outgoingAttachmentListModel.add(drop.urls[i]);
-                       }
-                    }
-                }
-            }
+        // vv--------- Send area starts here -----------vv
+        OutgoingAttachments {
+            model: outgoingAttachmentListModel;
         }
 
-        // -----------------------------
-        // Send button (paper airplane)
-        // -----------------------------
-        Item {
-            id: sendButton
-            // Keeps the item active for animations even when click interactions are blocked
-            enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
-            height: 40
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 8 : 0 // Collapses layout spacing when hidden
+            height: 50
 
-            Layout.preferredWidth: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 40 : 0
-            Layout.preferredHeight: 40
-            opacity: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 1.0 : 0.0
-            clip: true
+            // Smoothly animate the spacing collapse for the button
+            Behavior on spacing { NumberAnimation { duration: 200 } }
 
-            Behavior on Layout.preferredWidth {
-                NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
-            }
-            Behavior on opacity {
-                NumberAnimation { duration: 200 }
-            }
+            // Outgoing message text input area
+            TextArea {
+                id: inputField
+                Layout.fillWidth: true // Automatically claims all leftover space in the row
+                wrapMode: TextArea.Wrap
+                placeholderText: "Type a message"
+                readOnly: messageListModel.isSending
+                text: messageListModel.draftText
 
-            // Circular background
-            Rectangle {
-                id: bg
-                anchors.fill: parent
-                radius: width / 2
-                color: "#2222ff"
-            }
+                leftPadding: 12
+                rightPadding: 12
+                topPadding: 10
+                bottomPadding: 10
 
-            // Triangle (paper airplane)
-            Canvas {
-                id: triangle
-                anchors.centerIn: parent
-                width: 20
-                height: 20
+                background: Rectangle {
+                    color: "#e8f4ff"
+                    radius: 8
+                    border.width: 0
+                }
 
-                scale: messageListModel.isSending ? 0.0 : 1.0
-                opacity: messageListModel.isSending ? 0.0 : 1.0
+                onTextChanged: {
+                    messageListModel.draftText = text
+                }
 
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-                Behavior on opacity { NumberAnimation { duration: 150 } }
+                Keys.onReturnPressed: (event) => {
+                    if (event.modifiers !== 0) { // If shift, let it through
+                        event.accepted = false;
+                    }
+                    else {
+                        if (!messageListModel.isSending && (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)) {
+                            messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
+                        }
+                        event.accepted = true;
+                    }
+                }
 
-                onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.strokeStyle = "white";
-                    ctx.lineWidth = 1.5;
-                    ctx.lineJoin = "round"
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_V && event.modifiers & Qt.ControlModifier) {
+                        let cb = Qt.application.clipboard
 
-                    ctx.beginPath();
-                    ctx.moveTo(width*.4, height/2);
-                    ctx.lineTo(0, height/2-1);
-                    ctx.lineTo(0, 0);
-                    ctx.lineTo(width, height / 2);
-                    ctx.lineTo(0, height);
-                    ctx.lineTo(0, height/2+1);
-                    ctx.closePath();
-
-                    ctx.stroke();
+                        if (cb.hasImage) {
+                            // TODO Handle screenshot paste as a file upload
+                            // TODO messageListModel.handleImagePaste(cb.image)
+                            event.accepted = true
+                        }
+                    }
                 }
             }
 
-            // OVERHAULED: Bigger, custom-styled white loader
-            BusyIndicator {
-                id: loadingSpinner
-                anchors.centerIn: parent
+            Item {
+                id: sendButton
+                enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
+                height: 40
 
-                // THE FIX: Increased size from 24 to 30 so the spinner feels substantial
-                width: 30
-                height: 30
+                Layout.preferredWidth: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 40 : 0
+                Layout.preferredHeight: 40
+                opacity: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 1.0 : 0.0
+                clip: true
 
-                running: messageListModel.isSending
-                scale: running ? 1.0 : 0.0
-                opacity: running ? 1.0 : 0.0
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: 200 }
+                }
 
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
-                Behavior on opacity { NumberAnimation { duration: 150 } }
+                // Circular background
+                Rectangle {
+                    id: bg
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: "#2222ff"
+                }
 
-                // THE FIX: Replace the dark system graphic with a beautiful, glowing white ring arc
-                contentItem: Canvas {
-                    id: spinnerCanvas
-                    width: parent.width
-                    height: parent.height
+                // Triangle (paper airplane)
+                Canvas {
+                    id: triangle
+                    anchors.centerIn: parent
+                    width: 20
+                    height: 20
+
+                    scale: messageListModel.isSending ? 0.0 : 1.0
+                    opacity: messageListModel.isSending ? 0.0 : 1.0
+
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
 
                     onPaint: {
                         var ctx = getContext("2d");
                         ctx.clearRect(0, 0, width, height);
-                        ctx.strokeStyle = "white"; // Perfect contrast against the blue background
-                        ctx.lineWidth = 3;         // Thicker line makes it much easier to see
-                        ctx.lineCap = "round";
+                        ctx.strokeStyle = "white";
+                        ctx.lineWidth = 1.5;
+                        ctx.lineJoin = "round"
 
                         ctx.beginPath();
-                        // Draws a three-quarter circle arc (0 to 270 degrees) to create the classic loading gap
-                        ctx.arc(width / 2, height / 2, (width / 2) - ctx.lineWidth, 0, Math.PI * 1.5);
+                        ctx.moveTo(width*.4, height/2);
+                        ctx.lineTo(0, height/2-1);
+                        ctx.lineTo(0, 0);
+                        ctx.lineTo(width, height / 2);
+                        ctx.lineTo(0, height);
+                        ctx.lineTo(0, height/2+1);
+                        ctx.closePath();
+
                         ctx.stroke();
                     }
+                }
 
-                    // Drives the infinitely smooth spinning loop
-                    RotationAnimator {
-                        target: spinnerCanvas
-                        running: loadingSpinner.running
-                        from: 0
-                        to: 360
-                        duration: 1000
-                        loops: Animation.Infinite
+                BusyIndicator {
+                    id: loadingSpinner
+                    anchors.centerIn: parent
+                    width: 30
+                    height: 30
+
+                    running: messageListModel.isSending
+                    scale: running ? 1.0 : 0.0
+                    opacity: running ? 1.0 : 0.0
+
+                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                    contentItem: Canvas {
+                        id: spinnerCanvas
+                        width: parent.width
+                        height: parent.height
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+                            ctx.strokeStyle = "white";
+                            ctx.lineWidth = 3;
+                            ctx.lineCap = "round";
+
+                            ctx.beginPath();
+                            ctx.arc(width / 2, height / 2, (width / 2) - ctx.lineWidth, 0, Math.PI * 1.5);
+                            ctx.stroke();
+                        }
+
+                        RotationAnimator {
+                            target: spinnerCanvas
+                            running: loadingSpinner.running
+                            from: 0
+                            to: 360
+                            duration: 1000
+                            loops: Animation.Infinite
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: !messageListModel.isSending
+                    onClicked: {
+                        messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.all)
                     }
                 }
             }
+        }
+    }
 
-            MouseArea {
-                anchors.fill: parent
-                enabled: !messageListModel.isSending
-                onClicked: {
-                    messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.all)
+    // Global Drop Area
+    DropArea {
+        id: globalDropArea
+        anchors.fill: parent // Fills the root Item perfectly
+        z: 10                // Keeps it sitting on top of everything during drag events
+
+        function validateDrag(dragEvent) {
+            if (!dragEvent.hasUrls || messageListModel.isSending) {
+                dragEvent.accepted = false;
+                return;
+            }
+
+            for (let i = 0; i < dragEvent.urls.length; i++) {
+                let urlStr = dragEvent.urls[i].toString();
+                // If any URL is not a local file, reject the entire drag
+                if (!urlStr.startsWith("file://")) {
+                    dragEvent.accepted = false;
+                    return;
                 }
+            }
+
+            dragEvent.accepted = true;
+        }
+
+        onEntered: (drag) => validateDrag(drag)
+        onPositionChanged: (drag) => validateDrag(drag)
+
+        onDropped: (drop) => {
+            if (messageListModel.isSending) {
+                return;
+            }
+
+            for (let i = 0; i < drop.urls.length; i++) {
+               let urlStr = drop.urls[i].toString();
+               if (urlStr.startsWith("file://")) {
+                   outgoingAttachmentListModel.add(drop.urls[i]);
+               }
             }
         }
     }
