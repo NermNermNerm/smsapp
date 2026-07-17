@@ -40,8 +40,21 @@ Item {
 
         delegate: Item {
             id: delegateRoot
-            width: 100
             height: 100
+            // Calculate width dynamically based on the image's physical aspect ratio
+            width: {
+                // Fallback default if image hasn't loaded yet
+                if (previewImage.implicitWidth <= 0 || previewImage.implicitHeight <= 0) {
+                    return 100;
+                }
+
+                let ratio = previewImage.implicitWidth / previewImage.implicitHeight;
+                let calculatedWidth = ratio * 100; // 100 is our fixed height
+
+                // Clamp it: Don't let wide images take over the whole screen (max 200px),
+                // and don't let tall images shrink into a tiny sliver (min 60px).
+                return Math.min(Math.max(calculatedWidth, 60), 300);
+            }
 
             // =================================================================
             // The Preview Card
@@ -60,7 +73,7 @@ Item {
                     id: previewImage
                     anchors.fill: parent
                     source: model.fileUri
-                    fillMode: Image.PreserveAspectFit // Could be that PreserveApsectCrop is better.
+                    fillMode: Image.PreserveAspectCrop
 
                     // The magic: If Qt can't decode it as an image, it transitions
                     // to Image.Error, and we seamlessly hide it!
