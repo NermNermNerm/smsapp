@@ -145,15 +145,19 @@ void MessagesHandler::markConversationKnown(qint64 conversationID)
     }
 }
 
-void MessagesHandler::sendMessage(qint64 conversationID, const QString &body, const QVariantList &attachments)
+void MessagesHandler::sendMessage(qint64 conversationID, const QString &body, const QVector<QUrl> &attachments)
 {
     if (!dbus::device(m_deviceID).isReachable()) {
         emit messageDeliveryFailed(conversationID);
         return;
     }
 
+    QVariantList dbusAttachments;
+    for (const QUrl &url: attachments)
+        dbusAttachments.append(url.toString());
+
     Q_ASSERT(!m_conversationsWithOutgoingMessages.contains(conversationID));
-    QDBusPendingReply<void> reply = dbus::conversations(m_deviceID).replyToConversation(conversationID, body, attachments);
+    QDBusPendingReply<void> reply = dbus::conversations(m_deviceID).replyToConversation(conversationID, body, dbusAttachments);
 
     // Watch for transport-level failure
     auto watcher = QSharedPointer<QDBusPendingCallWatcher>(new QDBusPendingCallWatcher(reply, this));

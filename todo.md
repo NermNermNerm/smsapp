@@ -35,7 +35,7 @@ KDE Plugin Asks
       - [ ] Send attachments with drag&drop
             - [x] Figure out why the attachments aren't sending
             - [x] Need to disable drag&drop while message is sending
-            - [ ] Need to clear area after message is sent
+            - [x] Need to clear area after message is sent
             - [ ] DropArea should encompass whole messages control
             - [x] Send button should be there when there's an attachment
       - [ ] Send attachments with paste

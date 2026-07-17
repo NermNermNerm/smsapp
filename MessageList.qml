@@ -11,6 +11,14 @@ ColumnLayout {
 
     OutgoingAttachmentListModel {
         id: outgoingAttachmentListModel
+        all: messageListModel.draftAttachments
+
+        onAllChanged: {
+            // The guard check prevents infinite binding loops
+            if (messageListModel.draftAttachments !== all) {
+                messageListModel.draftAttachments = all;
+            }
+        }
     }
 
     // ============================
@@ -376,7 +384,7 @@ ColumnLayout {
                 anchors.fill: parent
                 enabled: !messageListModel.isSending
                 onClicked: {
-                    messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
+                    messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.all)
                 }
             }
         }

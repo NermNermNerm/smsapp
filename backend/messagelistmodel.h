@@ -16,6 +16,7 @@ class MessageListModel : public QAbstractListModel
     Q_PROPERTY(QString participants READ participants NOTIFY participantsChanged FINAL)
     Q_PROPERTY(bool isSending READ isSending NOTIFY isSendingChanged FINAL)
     Q_PROPERTY(QString draftText READ draftText WRITE setDraftText NOTIFY draftTextChanged FINAL)
+    Q_PROPERTY(QVector<QString> draftAttachments READ draftAttachments WRITE setDraftAttachments NOTIFY draftAttachmentsChanged FINAL)
 
 public:
     explicit MessageListModel(QObject *parent = nullptr);
@@ -32,19 +33,22 @@ public:
     QString avatarData() const { return m_avatarData; }
     QString participants() const { return m_participants; }
     bool isSending() const { return m_isSending; }
-    QString draftText() const { return m_drafts.value(m_conversationID); }
+    QString draftText() const { return m_draftTexts.value(m_conversationID); }
+    QVector<QString> draftAttachments() const { return m_draftAttachments.value(m_conversationID); }
     void setDevice(MessagesHandler *messagesHandlerForNewDevice);
     void setDraftText(const QString &draftText);
+    void setDraftAttachments(const QVector<QString> &draftAttachments);
 
 public slots:
     void setConversationID(qint64 conversationID);
-    void sendMessage(const QString &message, const QVariantList &attachments);
+    void sendMessage(const QString &message, const QVector<QUrl> &attachments);
 
 signals:
     void avatarDataChanged();
     void participantsChanged();
     void isSendingChanged();
     void draftTextChanged();
+    void draftAttachmentsChanged();
 
 private:
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
@@ -63,5 +67,6 @@ private:
     QString m_avatarData;
     QString m_participants;
     bool m_isSending = false;
-    QHash<qint64, QString> m_drafts;
+    QHash<qint64, QString> m_draftTexts;
+    QHash<qint64, QVector<QString>> m_draftAttachments;
 };

@@ -10,6 +10,7 @@ class OutgoingAttachmentListModel : public QAbstractListModel {
     Q_OBJECT
 
     Q_PROPERTY(bool isEmpty READ isEmpty NOTIFY isEmptyChanged FINAL)
+    Q_PROPERTY(QVector<QUrl> all READ all WRITE setAll NOTIFY allChanged FINAL)
 
 public:
     enum Roles {
@@ -39,15 +40,19 @@ public:
     }
 
     bool isEmpty() const { return m_items.isEmpty(); }
+    QVector<QUrl> all() const;
+    void setAll(const QVector<QUrl> &all);
 
 signals:
     void isEmptyChanged();
+    void allChanged();
 
 public slots:
     void add(const QUrl &fileUri);
     void remove(int index);
-    QVariantList getAll() const;
 
 private:
+    Item makeItem(const QUrl &fileUri) const;
+
     QVector<Item> m_items;
 };

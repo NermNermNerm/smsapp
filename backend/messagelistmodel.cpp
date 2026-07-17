@@ -115,6 +115,7 @@ void MessageListModel::setConversationID(qint64 conversationID)
     }
 
     emit draftTextChanged();
+    emit draftAttachmentsChanged();
     setIsSending(m_messagesHandler->hasUndeliveredOutgoing(m_conversationID));
 }
 
@@ -163,7 +164,7 @@ void MessageListModel::updateTimes()
     }
 }
 
-void MessageListModel::sendMessage(const QString &messageText, const QVariantList &attachments)
+void MessageListModel::sendMessage(const QString &messageText, const QVector<QUrl> &attachments)
 {
     m_messagesHandler->sendMessage(m_conversationID, messageText, attachments);
     setIsSending(true);
@@ -174,6 +175,7 @@ void MessageListModel::onMessageDelivered(qint64 conversationID)
 {
     if (conversationID == m_conversationID) {
         setDraftText({});
+        setDraftAttachments({});
         setIsSending(false);
     }
 }
@@ -182,6 +184,7 @@ void MessageListModel::onMessageDeliveryFailed(qint64 conversationID)
 {
     if (conversationID == m_conversationID) {
         setDraftText({});
+        setDraftAttachments({});
         setIsSending(false);
     }
 }
@@ -196,14 +199,32 @@ void MessageListModel::setIsSending(bool isSending)
 
 void MessageListModel::setDraftText(const QString &draftText)
 {
-    if (m_drafts.value(m_conversationID) != draftText) {
+    if (m_draftTexts.value(m_conversationID) != draftText) {
         if (draftText.isEmpty()) {
-            m_drafts.remove(m_conversationID);
+            m_draftTexts.remove(m_conversationID);
         }
         else {
-            m_drafts[m_conversationID] = draftText;
+            m_draftTexts[m_conversationID] = draftText;
         }
         emit draftTextChanged();
+    }
+}
+
+void MessageListModel::setDraftAttachments(const QVector<QString> &draftAttachments)
+{
+    bool isChanged;
+    if (draftAttachments.isEmpty()) {
+        isChanged = m_draftAttachments.contains(m_conversationID);
+        m_draftAttachments.remove(m_conversationID);
+    }
+    else {
+        // minimum effort at checking equality.  In fact, I don't think this will ever not work given how we use it.
+        isChanged = draftAttachments.size() != m_draftAttachments[m_conversationID].size();
+        m_draftAttachments.insertOrAssign(m_conversationID, draftAttachments);
+    }
+
+    if (isChanged) {
+        emit draftAttachmentsChanged();
     }
 }
 
