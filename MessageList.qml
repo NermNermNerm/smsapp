@@ -9,6 +9,10 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.fillHeight: true
 
+    OutgoingAttachmentListModel {
+        id: outgoingAttachmentListModel
+    }
+
     // ============================
     // Header placeholder
     // ============================
@@ -151,6 +155,10 @@ ColumnLayout {
     }
 
     // Send area
+    OutgoingAttachments {
+        model: outgoingAttachmentListModel;
+    }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: inputField.text.length > 0 ? 8 : 0 // Collapses layout spacing when hidden
@@ -191,9 +199,56 @@ ColumnLayout {
                 }
                 else {
                     if (!messageListModel.isSending && inputField.text.length > 0) {
-                        messageListModel.sendMessage(inputField.text)
+                        messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
                     }
                     event.accepted = true;
+                }
+            }
+
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_V && event.modifiers & Qt.ControlModifier) {
+                    let cb = Qt.application.clipboard
+
+                    if (cb.hasImage) {
+                        // TODO Handle screenshot paste as a file upload
+                        // TODO messageListModel.handleImagePaste(cb.image)
+                        event.accepted = true
+                    }
+                }
+            }
+
+            DropArea {
+                anchors.fill: parent
+
+                // Helper function to validate and filter the drag events
+                function validateDrag(dragEvent) {
+                    if (!dragEvent.hasUrls) {
+                        dragEvent.accepted = false;
+                        return;
+                    }
+
+                    // Iterate through all dragged URLs
+                    for (let i = 0; i < dragEvent.urls.length; i++) {
+                        let urlStr = dragEvent.urls[i].toString();
+                        // If any URL is not a local file, reject the entire drag
+                        if (!urlStr.startsWith("file://")) {
+                            dragEvent.accepted = false;
+                            return;
+                        }
+                    }
+
+                    // Explicitly accept the drag if it passes all checks
+                    dragEvent.accepted = true;
+                }
+
+                // Run the check when the drag enters AND whenever it moves
+                onEntered: (drag) => validateDrag(drag)
+                onPositionChanged: (drag) => validateDrag(drag)
+
+                onDropped: (drop) => {
+                    for (let i = 0; i < drop.urls.length; i++) {
+                        outgoingAttachmentListModel.add(drop.urls[i]);
+                    }
                 }
             }
         }
@@ -204,7 +259,7 @@ ColumnLayout {
         Item {
             id: sendButton
             // Keeps the item active for animations even when click interactions are blocked
-            enabled: inputField.text.length > 0 && !messageListModel.isSending
+            enabled: (inputField.text.length > 0 || outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
             height: 40
 
             Layout.preferredWidth: inputField.text.length > 0 ? 40 : 0
@@ -311,7 +366,7 @@ ColumnLayout {
                 anchors.fill: parent
                 enabled: !messageListModel.isSending
                 onClicked: {
-                    messageListModel.sendMessage(inputField.text)
+                    messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
                 }
             }
         }

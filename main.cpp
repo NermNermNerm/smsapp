@@ -13,6 +13,7 @@
 #include "backend/avatarmodel.h"
 #include "backend/singleavatarmodel.h"
 #include "backend/attachmentlistmodel.h"
+#include "backend/outgoingattachmentListmodel.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
@@ -50,6 +51,7 @@ Terminal=false
     qmlRegisterType<AvatarModel>("Sms", 1, 0, "AvatarModel");
     qmlRegisterType<SingleAvatarModel>("Sms", 1, 0, "SingleAvatarModel");
     qmlRegisterType<AttachmentListModel>("Sms", 1, 0, "AttachmentListModel");
+    qmlRegisterType<OutgoingAttachmentListModel>("Sms", 1, 0, "OutgoingAttachmentListModel");
 
     DeviceStatus deviceStatus;
     ConversationListModel conversationListModel;

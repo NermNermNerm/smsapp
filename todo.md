@@ -25,13 +25,21 @@ KDE Plugin Asks
 - [x] Convo Header should have participant(s) icon then comma-separated list of participants
       - [x] Show avatar in conversation heading
       - [x] De-dupe the partcipants list
+- [ ] copy 2FA codes to the clipboard
 - [x] Implement sending messages from conversation
       - [x] Minimal send - just send and hope for the best
       - [x] Keep message in pending state until it shows up in the conversation
             (Any new message that's from the user will clear this state)
       - [x] Message area should be saved when switching conversations with an unsent text
       - [x] Animate button appearing/disappearing
-- [ ] Attachments
+      - [ ] Send attachments with drag&drop
+            - [x] Figure out why the attachments aren't sending
+            - [ ] Need to disable drag&drop while message is sending
+            - [ ] Need to clear area after message is sent
+            - [ ] DropArea should encompass whole messages control
+            - [ ] Send button should be there when there's an attachment
+      - [ ] Send attachments with paste
+- [ ] Display Attachments
       - [ ] Blank messages with just attachments show as 'Image' in headers
       - [x] Enable displaying the download links -- do this for all mime types.
       - [x] Enable displaying images
@@ -54,7 +62,7 @@ KDE Plugin Asks
 ## Main Window
 - [ ] Splitter should allow maximizing one side or the other
 - [ ] Fix Title (away from Hello World)
-- [ ] Remember window size and position
+- [x] Remember window size and position
 
 ## Test infrastructure
 - [x] Implement simulated message arrival

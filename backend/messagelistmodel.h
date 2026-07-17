@@ -38,7 +38,7 @@ public:
 
 public slots:
     void setConversationID(qint64 conversationID);
-    void sendMessage(const QString &message);
+    void sendMessage(const QString &message, const QVariantList &attachments);
 
 signals:
     void avatarDataChanged();

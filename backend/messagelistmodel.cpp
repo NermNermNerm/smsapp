@@ -163,9 +163,9 @@ void MessageListModel::updateTimes()
     }
 }
 
-void MessageListModel::sendMessage(const QString &messageText)
+void MessageListModel::sendMessage(const QString &messageText, const QVariantList &attachments)
 {
-    m_messagesHandler->sendMessage(m_conversationID, messageText);
+    m_messagesHandler->sendMessage(m_conversationID, messageText, attachments);
     setIsSending(true);
 }
 

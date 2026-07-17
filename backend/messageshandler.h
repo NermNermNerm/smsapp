@@ -35,7 +35,7 @@ public:
     QVector<ConversationMessage> getConversationMessages(qint64 conversationID) const
         { return m_cacheManager.getConversationMessages(conversationID); }
 
-    void sendMessage(qint64 conversationID, const QString &messageBody);
+    void sendMessage(qint64 conversationID, const QString &messageBody, const QVariantList &attachments);
     bool hasUndeliveredOutgoing(qint64 conversationID) { return m_conversationsWithOutgoingMessages.contains(conversationID); }
 
     /** @brief If the given attachment is in the cache, this will return the full
