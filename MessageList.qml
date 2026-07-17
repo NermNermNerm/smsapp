@@ -161,7 +161,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: inputField.text.length > 0 ? 8 : 0 // Collapses layout spacing when hidden
+        spacing: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 8 : 0 // Collapses layout spacing when hidden
         height: 50
 
         // Smoothly animate the spacing collapse
@@ -198,7 +198,7 @@ ColumnLayout {
                     event.accepted = false;
                 }
                 else {
-                    if (!messageListModel.isSending && inputField.text.length > 0) {
+                    if (!messageListModel.isSending && (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)) {
                         messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
                     }
                     event.accepted = true;
@@ -222,7 +222,7 @@ ColumnLayout {
 
                 // Helper function to validate and filter the drag events
                 function validateDrag(dragEvent) {
-                    if (!dragEvent.hasUrls) {
+                    if (!dragEvent.hasUrls || messageListModel.isSending) {
                         dragEvent.accepted = false;
                         return;
                     }
@@ -246,8 +246,18 @@ ColumnLayout {
                 onPositionChanged: (drag) => validateDrag(drag)
 
                 onDropped: (drop) => {
+                    // This code double-checks the validateDrag conditions, just in case they
+                    // take a break.
+                    if (messageListModel.isSending) {
+                        return;
+                    }
+
                     for (let i = 0; i < drop.urls.length; i++) {
-                        outgoingAttachmentListModel.add(drop.urls[i]);
+                       let urlStr = drop.urls[i].toString();
+                       // If any URL is not a local file, reject the entire drag
+                       if (urlStr.startsWith("file://")) {
+                           outgoingAttachmentListModel.add(drop.urls[i]);
+                       }
                     }
                 }
             }
@@ -259,12 +269,12 @@ ColumnLayout {
         Item {
             id: sendButton
             // Keeps the item active for animations even when click interactions are blocked
-            enabled: (inputField.text.length > 0 || outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
+            enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
             height: 40
 
-            Layout.preferredWidth: inputField.text.length > 0 ? 40 : 0
+            Layout.preferredWidth: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 40 : 0
             Layout.preferredHeight: 40
-            opacity: inputField.text.length > 0 ? 1.0 : 0.0
+            opacity: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 1.0 : 0.0
             clip: true
 
             Behavior on Layout.preferredWidth {
