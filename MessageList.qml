@@ -152,8 +152,10 @@ Item {
 
                                 Text {
                                     id: textBlock
-                                    text: object.body
+                                    textFormat: Text.StyledText
+                                    text: object.richTextBody
                                     color: object.isIncoming ? "#222222" : "#ffffff"
+                                    linkColor: object.isIncoming ? "#222222" : "#ffffff"
 
                                     // Stretch to fill the Item parent width calculated above
                                     width: parent.width
@@ -162,6 +164,7 @@ Item {
                                     wrapMode: textBlock.implicitWidth > delegateRoot.maxBubbleContentWidth ? Text.Wrap : Text.NoWrap
 
                                     horizontalAlignment: object.isIncoming ? Text.AlignLeft : Text.AlignRight
+                                    onLinkActivated: (link) => Qt.openUrlExternally(link)
                                 }
                             }
                         }

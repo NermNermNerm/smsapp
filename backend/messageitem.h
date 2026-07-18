@@ -19,12 +19,11 @@ class MessageItem : public QObject
     Q_PROPERTY(QString sender READ sender CONSTANT)
     Q_PROPERTY(bool isIncoming READ isIncoming CONSTANT)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged FINAL)
+    Q_PROPERTY(QString richTextBody READ richTextBody NOTIFY bodyChanged FINAL)
     Q_PROPERTY(QList<Attachment> attachments READ attachments CONSTANT)
 
 public:
-    explicit MessageItem(const ConversationMessage &message, QObject *parent = nullptr)
-        : m_rawData(message), QObject(parent)
-    { }
+    explicit MessageItem(const ConversationMessage &message, QObject *parent = nullptr);
 
     void update(const ConversationMessage& updated);
 
@@ -36,6 +35,7 @@ public:
     QString sender() const;
     bool isIncoming() const { return m_rawData.isIncoming(); }
     QList<Attachment> attachments() const { return m_rawData.attachments(); }
+    QString richTextBody() const { return m_richTextBody; }
 
     const ConversationMessage &rawData() const { return m_rawData; }
     void updateShowTime(QDateTime priorMessage, QDateTime now = QDateTime::currentDateTime());
@@ -45,7 +45,9 @@ signals:
     void displayDateChanged();
 
 private:
-    enum class DisplayFormat {
+    QString linkify(const QString &source) const;
+
+    enum class DateDisplayFormat {
         Unknown,
         RelativeToNow,
         TodayTime,
@@ -55,17 +57,18 @@ private:
         FullDateTime
     };
 
-    static bool formatDependsOnNow(DisplayFormat f) {
-        return f == DisplayFormat::RelativeToNow
-               || f == DisplayFormat::TodayTime
-               || f == DisplayFormat::YesterdayTime;
+    static bool formatDependsOnNow(DateDisplayFormat f) {
+        return f == DateDisplayFormat::RelativeToNow
+               || f == DateDisplayFormat::TodayTime
+               || f == DateDisplayFormat::YesterdayTime;
     }
-    DisplayFormat computeDisplayFormat(QDateTime now) const;
+    DateDisplayFormat computeDisplayFormat(QDateTime now) const;
 
     ConversationMessage m_rawData;
     QString m_cachedRecipientList;
     QDateTime m_priorMessageDate {};
-    mutable DisplayFormat m_displayFormat { DisplayFormat::Unknown };
+    QString m_richTextBody;
+    mutable DateDisplayFormat m_displayFormat { DateDisplayFormat::Unknown };
     mutable bool m_isDisplayDateVisible { false };
     mutable QString m_displayDate {};
     mutable QString m_sender;
