@@ -7,9 +7,6 @@ Item {
     id: root
     property OutgoingAttachmentListModel model
 
-    // =========================================================================
-    // Dynamic Layout & Visibility
-    // =========================================================================
     visible: model && !model.isEmpty
 
     // Drive height dynamically. Adds 40px if the angry banner needs to show.
@@ -34,9 +31,7 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // =========================================================================
-        // The "Angry Message Bar"
-        // =========================================================================
+        // Error message for oversized attachments
         Rectangle {
             id: angryBanner
             Layout.fillWidth: true
@@ -91,9 +86,7 @@ Item {
             }
         }
 
-        // =========================================================================
         // The Attachment Ribbon
-        // =========================================================================
         ListView {
             id: view
             Layout.fillWidth: true

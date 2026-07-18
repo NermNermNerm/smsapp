@@ -173,6 +173,7 @@ void MessageListModel::updateTimes()
 
 void MessageListModel::sendMessage(const QString &messageText, const QVector<QUrl> &attachments, bool isDownscaling)
 {
+    setHasSendFailure(false);
     QVector<QUrl> attachmentsToSend = attachments;
     if (isDownscaling)
     {
@@ -182,7 +183,6 @@ void MessageListModel::sendMessage(const QString &messageText, const QVector<QUr
     m_messagesHandler->sendMessage(m_conversationID, messageText, attachmentsToSend);
     setIsSending(true);
 }
-
 
 void MessageListModel::onMessageDelivered(qint64 conversationID)
 {
@@ -196,8 +196,7 @@ void MessageListModel::onMessageDelivered(qint64 conversationID)
 void MessageListModel::onMessageDeliveryFailed(qint64 conversationID)
 {
     if (conversationID == m_conversationID) {
-        setDraftText({});
-        setDraftAttachments({});
+        setHasSendFailure(true);
         setIsSending(false);
     }
 }
@@ -220,6 +219,14 @@ void MessageListModel::setDraftText(const QString &draftText)
             m_draftTexts[m_conversationID] = draftText;
         }
         emit draftTextChanged();
+    }
+}
+
+void MessageListModel::setHasSendFailure(bool hasSendFailure)
+{
+    if (m_hasSendFailure != hasSendFailure) {
+        m_hasSendFailure = hasSendFailure;
+        emit hasSendFailureChanged();
     }
 }
 

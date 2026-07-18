@@ -175,6 +175,66 @@ Item {
             model: outgoingAttachmentListModel;
         }
 
+        // --- Send Failure Banner ---
+        Rectangle {
+            id: sendFailureBanner
+            Layout.fillWidth: true
+            Layout.preferredHeight: messageListModel.hasSendFailure ? 40 : 0
+            visible: Layout.preferredHeight > 0
+            color: "#ff3b30"
+            clip: true // Prevents text/button from spilling out into other items when height is near 0
+            opacity: messageListModel.hasSendFailure ? 1.0 : 0.0
+
+            Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 8
+
+                Text {
+                    text: "⚠️ Message delivery failed"
+                    color: "white"
+                    font.bold: true
+                    Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
+
+                    HoverHandler {
+                        id: hoverGetter
+                    }
+
+                    ToolTip.visible: hoverGetter.hovered
+                    ToolTip.delay: 400
+                    ToolTip.text: "Why?  Got no idea, really.  Sorry about that.  KDE Connect's sms daemon just drops messages on the floor if it can't send them."
+                }
+
+                ToolButton {
+                    id: dismissButton
+                    text: "✕"
+
+                    contentItem: Text {
+                        text: dismissButton.text
+                        font.pixelSize: 14
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        color: dismissButton.down ? "#25ffffff" : (dismissButton.hovered ? "#15ffffff" : "transparent")
+                        radius: 4
+                    }
+
+                    onClicked: messageListModel.hasSendFailure = false
+                }
+            }
+        }
+
+        // This is the text message composition and send button row
         RowLayout {
             Layout.fillWidth: true
             spacing: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 8 : 0 // Collapses layout spacing when hidden

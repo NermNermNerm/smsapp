@@ -27,6 +27,10 @@ KDE Plugin Asks
 - [ ] Fix selection animation
 - [ ] Headings should show an indicator that there's a draft message
 - [ ] When phone starts unreachable, it doesn't show any cached data
+- [ ] Blank messages with just attachments show as 'Image' in headers
+- [ ] should show whether last message is to or from you
+- [ ] threads with last-message-transmitted should look distinct from received ones
+- [ ] remember a last-read date per thread
 
 ## Message List
 - [x] Date calculation not done until the 30 second tick
@@ -40,9 +44,7 @@ KDE Plugin Asks
 - [x] Convo Header should have participant(s) icon then comma-separated list of participants
       - [x] Show avatar in conversation heading
       - [x] De-dupe the partcipants list
-- [ ] copy 2FA codes to the clipboard
 - [ ] hyperlinks
-- [ ] Transmitted messages 
 - [x] Implement sending messages from conversation
       - [x] Minimal send - just send and hope for the best
       - [x] Keep message in pending state until it shows up in the conversation
@@ -56,15 +58,16 @@ KDE Plugin Asks
             - [x] DropArea should encompass whole messages control
             - [x] Send button should be there when there's an attachment
             - [x] Return key processor still uses getAll()
-            - [ ] Phone seems to be silently failing to process texts with attachments
-               - [ ] Limit total size to 600mb
+            - [x] Phone seems to be silently failing to process texts with attachments
+               - [x] Limit total size to 600mb
       - [x] Send attachments with paste
       - [?] Kvetching on the console when pasting non-images
       - [x] Outgoing images don't shrink correctly when they are wide - they clip
-      - [ ] Sending area is popping down even though the message got eaten.
-            - [ ] Add a message bar that pops up after the message looks doomed allowing cancel
+      - [x] Sending area is popping down even though the message got eaten.
+            - [x] Add a message bar that pops up after the message looks doomed allowing cancel
+      - [ ] Add a file-open dialog and a ctrl+o handler
+      - [ ] look into a send-to-phone capability
 - [ ] Display Attachments
-      - [ ] Blank messages with just attachments show as 'Image' in headers
       - [x] Enable displaying the download links -- do this for all mime types.
       - [x] Enable displaying images
       - [x] Enable drag&drop files into the send-message
@@ -84,6 +87,7 @@ KDE Plugin Asks
 - [x] Remember window size and position
 - [ ] Status bar should hide itself when phone status is green
       (be visible for ~3 seconds after the window becomes visible or status becomes green)
+- [ ] copy 2FA codes to the clipboard
 
 ## Test infrastructure
 - [x] Implement simulated message arrival

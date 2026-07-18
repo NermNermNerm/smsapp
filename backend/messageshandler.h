@@ -16,7 +16,7 @@ class MessagesHandler : public QObject
 {
     Q_OBJECT
 
-    const int WaitTimeInMsForMessageDelivery = 4000;
+    const int WaitTimeInMsForMessageDelivery = 10000;
 
 public:
     explicit MessagesHandler(const QString &deviceId, QObject *parent = nullptr);

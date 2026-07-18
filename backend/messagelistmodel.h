@@ -17,6 +17,7 @@ class MessageListModel : public QAbstractListModel
     Q_PROPERTY(bool isSending READ isSending NOTIFY isSendingChanged FINAL)
     Q_PROPERTY(QString draftText READ draftText WRITE setDraftText NOTIFY draftTextChanged FINAL)
     Q_PROPERTY(QVector<QString> draftAttachments READ draftAttachments WRITE setDraftAttachments NOTIFY draftAttachmentsChanged FINAL)
+    Q_PROPERTY(bool hasSendFailure READ hasSendFailure WRITE setHasSendFailure NOTIFY hasSendFailureChanged)
 
 public:
     explicit MessageListModel(QObject *parent = nullptr);
@@ -38,6 +39,8 @@ public:
     void setDevice(MessagesHandler *messagesHandlerForNewDevice);
     void setDraftText(const QString &draftText);
     void setDraftAttachments(const QVector<QString> &draftAttachments);
+    bool hasSendFailure() const { return m_hasSendFailure; }
+    void setHasSendFailure(bool hasSendFailure);
 
 public slots:
     void setConversationID(qint64 conversationID);
@@ -50,6 +53,7 @@ signals:
     void isSendingChanged();
     void draftTextChanged();
     void draftAttachmentsChanged();
+    void hasSendFailureChanged();
 
 private:
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
@@ -70,4 +74,5 @@ private:
     bool m_isSending = false;
     QHash<qint64, QString> m_draftTexts;
     QHash<qint64, QVector<QString>> m_draftAttachments;
+    bool m_hasSendFailure = false;
 };
