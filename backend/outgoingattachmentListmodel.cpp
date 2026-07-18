@@ -1,3 +1,4 @@
+//clazy:excludeall=range-loop-detach
 #include <QAbstractListModel>
 #include <QMimeDatabase>
 #include <QFileInfo>
@@ -74,6 +75,7 @@ void OutgoingAttachmentListModel::remove(int index) {
     if (isEmpty()) {
         emit isEmptyChanged();
     }
+    checkSizeLimit();
     emit allChanged();
 }
 
@@ -111,5 +113,46 @@ void OutgoingAttachmentListModel::setAll(const QVector<QUrl> &all)
 
     if (wasEmpty != isEmpty())
         emit isEmptyChanged();
+    checkSizeLimit();
     emit allChanged();
+}
+
+void OutgoingAttachmentListModel::setIsDownscaling(bool isDownscaling)
+{
+    if (isDownscaling != m_isDownscaling) {
+        m_isDownscaling = isDownscaling;
+        emit isDownscalingChanged();
+    }
+}
+
+void OutgoingAttachmentListModel::checkSizeLimit()
+{
+    qint64 totalBytes = 0;
+    for (const Item &it : m_items) {
+        const QString path = it.fileUri.toLocalFile();
+        QFileInfo fi(path);
+
+        if (fi.exists())
+            totalBytes += fi.size();
+    }
+
+    // --- Determine new states ---
+    const bool newOversized = (totalBytes > 600000);
+    const bool newAbleToDownscale = m_items.count() == 1 && m_items[0].isImage;
+
+    if (m_isOversized != newOversized) {
+        m_isOversized = newOversized;
+        emit isOversizedChanged();
+    }
+
+    if (m_isAbleToDownscale != newAbleToDownscale) {
+        m_isAbleToDownscale = newAbleToDownscale;
+        emit isAbleToDownscaleChanged();
+    }
+
+    // clear downscaling checkbox if we either don't need to downscale or can't
+    if ((!m_isOversized || !m_isAbleToDownscale) && m_isDownscaling) {
+        m_isDownscaling = false;
+        emit isDownscalingChanged();
+    }
 }

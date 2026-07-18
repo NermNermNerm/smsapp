@@ -42,6 +42,7 @@ KDE Plugin Asks
       - [x] De-dupe the partcipants list
 - [ ] copy 2FA codes to the clipboard
 - [ ] hyperlinks
+- [ ] Transmitted messages 
 - [x] Implement sending messages from conversation
       - [x] Minimal send - just send and hope for the best
       - [x] Keep message in pending state until it shows up in the conversation
@@ -54,11 +55,14 @@ KDE Plugin Asks
             - [x] Need to clear area after message is sent
             - [x] DropArea should encompass whole messages control
             - [x] Send button should be there when there's an attachment
-            - [ ] Return key processor still uses getAll()
+            - [x] Return key processor still uses getAll()
             - [ ] Phone seems to be silently failing to process texts with attachments
+               - [ ] Limit total size to 600mb
       - [x] Send attachments with paste
-      - [-] Kvetching on the console when pasting non-images
+      - [?] Kvetching on the console when pasting non-images
       - [x] Outgoing images don't shrink correctly when they are wide - they clip
+      - [ ] Sending area is popping down even though the message got eaten.
+            - [ ] Add a message bar that pops up after the message looks doomed allowing cancel
 - [ ] Display Attachments
       - [ ] Blank messages with just attachments show as 'Image' in headers
       - [x] Enable displaying the download links -- do this for all mime types.
@@ -78,6 +82,8 @@ KDE Plugin Asks
 - [ ] Splitter should allow maximizing one side or the other
 - [ ] Fix Title (away from Hello World)
 - [x] Remember window size and position
+- [ ] Status bar should hide itself when phone status is green
+      (be visible for ~3 seconds after the window becomes visible or status becomes green)
 
 ## Test infrastructure
 - [x] Implement simulated message arrival

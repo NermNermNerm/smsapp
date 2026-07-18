@@ -49,6 +49,7 @@ qt_add_qml_module(appsmsapp
     SOURCES backend/attachmentcache.h backend/attachmentcache.cpp
     QML_FILES OutgoingAttachments.qml
     SOURCES backend/outgoingattachmentListmodel.h backend/outgoingattachmentListmodel.cpp
+    SOURCES backend/downscale.h backend/downscale.cpp
 )
 
 # Add general Qt resources *after* the QML module

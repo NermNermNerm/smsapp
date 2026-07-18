@@ -41,7 +41,7 @@ public:
 
 public slots:
     void setConversationID(qint64 conversationID);
-    void sendMessage(const QString &message, const QVector<QUrl> &attachments);
+    void sendMessage(const QString &message, const QVector<QUrl> &attachments, bool isDownscaling);
     QUrl turnClipboardIntoAttachment() const;
 
 signals:

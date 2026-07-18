@@ -14,6 +14,7 @@
 #include <QtLogging>
 #include "backend/avatarmodel.h"
 #include "backend/conversationheader.h"
+#include "downscale.h"
 
 // Use QVector internally (Qt6 best practice)
 MessageListModel::MessageListModel(QObject *parent)
@@ -170,9 +171,15 @@ void MessageListModel::updateTimes()
     }
 }
 
-void MessageListModel::sendMessage(const QString &messageText, const QVector<QUrl> &attachments)
+void MessageListModel::sendMessage(const QString &messageText, const QVector<QUrl> &attachments, bool isDownscaling)
 {
-    m_messagesHandler->sendMessage(m_conversationID, messageText, attachments);
+    QVector<QUrl> attachmentsToSend = attachments;
+    if (isDownscaling)
+    {
+        Q_ASSERT(attachmentsToSend.count() == 1);
+        attachmentsToSend[0] = downscaleImage(attachmentsToSend[0]);
+    }
+    m_messagesHandler->sendMessage(m_conversationID, messageText, attachmentsToSend);
     setIsSending(true);
 }
 

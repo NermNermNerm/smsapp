@@ -20,6 +20,13 @@ Item {
         }
     }
 
+    function doSend()
+    {
+        let shouldDownscale = outgoingAttachmentListModel.isOversized && outgoingAttachmentListModel.isDownscaling && outgoingAttachmentListModel.isAbleToDownscale;
+        messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.all, shouldDownscale)
+    }
+
+
     // This is the actual visible content of the control
     ColumnLayout {
         id: mainLayout
@@ -205,8 +212,8 @@ Item {
                         event.accepted = false;
                     }
                     else {
-                        if (!messageListModel.isSending && (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)) {
-                            messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.getAll())
+                        if (sendButton.enabled) {
+                            root.doSend()
                         }
                         event.accepted = true;
                     }
@@ -225,7 +232,9 @@ Item {
 
             Item {
                 id: sendButton
-                enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) && !messageListModel.isSending
+                enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)
+                         && (!outgoingAttachmentListModel.isOversized || (outgoingAttachmentListModel.isAbleToDownscale && outgoingAttachmentListModel.isDownscaling))
+                         && !messageListModel.isSending
                 height: 40
 
                 Layout.preferredWidth: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 40 : 0
@@ -245,7 +254,7 @@ Item {
                     id: bg
                     anchors.fill: parent
                     radius: width / 2
-                    color: "#2222ff"
+                    color: sendButton.enabled ? "#2222ff": "#bbbbbb"
                 }
 
                 // Triangle (paper airplane)
@@ -325,9 +334,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     enabled: !messageListModel.isSending
-                    onClicked: {
-                        messageListModel.sendMessage(inputField.text, outgoingAttachmentListModel.all)
-                    }
+                    onClicked: root.doSend()
                 }
             }
         }
