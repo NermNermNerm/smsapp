@@ -6,6 +6,7 @@
 #include <QBuffer>
 #include <QUrl>
 #include "outgoingattachmentListmodel.h"
+#include <QImageReader>
 
 OutgoingAttachmentListModel::OutgoingAttachmentListModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -138,7 +139,12 @@ void OutgoingAttachmentListModel::checkSizeLimit()
 
     // --- Determine new states ---
     const bool newOversized = (totalBytes > 600000);
-    const bool newAbleToDownscale = m_items.count() == 1 && m_items[0].isImage;
+    bool newAbleToDownscale = m_items.count() == 1 && m_items[0].isImage;
+    if (newAbleToDownscale) {
+        // special case to not suggest downscaling an animated image.
+        QImageReader reader(m_items[0].fileUri.toLocalFile());
+        newAbleToDownscale = !reader.supportsAnimation() || reader.imageCount() == 1;
+    }
 
     if (m_isOversized != newOversized) {
         m_isOversized = newOversized;
