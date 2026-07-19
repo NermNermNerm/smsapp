@@ -22,6 +22,8 @@ public:
     QColor color() const { return m_color; }
     QString resolvedName() const { return m_resolvedName; }
 
+    static QColor colorForResolvedName(const QString &resolvedName);
+
 signals:
     void contentChanged();
 

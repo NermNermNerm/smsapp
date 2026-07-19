@@ -44,7 +44,7 @@ KDE Plugin Asks
       - [x] Show avatar in conversation heading
       - [x] De-dupe the partcipants list
 - [x] hyperlinks
-- [ ] Group Chat should show senders
+- [x] Group Chat should show senders
 - [x] Implement sending messages from conversation
       - [x] Minimal send - just send and hope for the best
       - [x] Keep message in pending state until it shows up in the conversation
@@ -67,7 +67,7 @@ KDE Plugin Asks
             - [x] Add a message bar that pops up after the message looks doomed allowing cancel
       - [-] Add a file-open dialog and a ctrl+o handler
       - [-] look into a send-to-phone capability
-- [ ] Display Attachments
+- [x] Display Attachments
       - [x] Enable displaying the download links -- do this for all mime types.
       - [x] Enable displaying images
       - [x] Enable drag&drop files into the send-message

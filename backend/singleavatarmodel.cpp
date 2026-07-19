@@ -6,13 +6,19 @@ SingleAvatarModel::SingleAvatarModel(QObject *parent)
     : QObject{parent}
 {}
 
-void SingleAvatarModel::setPhoneNumber(const QString phoneNumber)
+QColor SingleAvatarModel::colorForResolvedName(const QString &resolvedName)
 {
     static const QVector<QColor> palette = {
         "#F44336", "#E91E63", "#9C27B0", "#3F51B5", "#2196F3",
         "#009688", "#4CAF50", "#FF9800", "#795548", "#607D8B"
     };
 
+    int phoneNumberHash = qHash(resolvedName) % palette.size();
+    return palette[phoneNumberHash];
+}
+
+void SingleAvatarModel::setPhoneNumber(const QString phoneNumber)
+{
     if (phoneNumber == m_phoneNumber)
         return;
 
@@ -27,14 +33,7 @@ void SingleAvatarModel::setPhoneNumber(const QString phoneNumber)
         }
     }
 
-    // We set the color based on the phone number, as names could change
-    int phoneNumberHash = 0;
-    for (QChar c : std::as_const(m_phoneNumber)) {
-        if (c.isDigit()) {
-            phoneNumberHash = (phoneNumberHash * 10 + c.digitValue()) % 99991; // large prime
-        }
-    }
+    m_color = colorForResolvedName(m_resolvedName);
 
-    m_color = palette[phoneNumberHash % palette.size()];
     emit contentChanged();
 }

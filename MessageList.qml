@@ -115,6 +115,22 @@ Item {
                         Layout.fillWidth: true
                     }
 
+                    RowLayout
+                    {
+                        id: senderLine
+                        visible: object.isSenderVisible
+                        Avatar
+                        {
+                            participants: object.sender
+                            size: 20
+                        }
+                        Text
+                        {
+                            text: object.sender
+                            color: object.senderColor
+                        }
+                    }
+
                     Attachments {
                         isIncoming: object.isIncoming
                         attachments: object.attachments;

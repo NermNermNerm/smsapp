@@ -145,20 +145,16 @@ void MessageListModel::addOrUpdate(const ConversationMessage &updatedMessage)
     m_list.insert(i, newMessage);
     endInsertRows();
 
-    newMessage->updateShowTime(i < m_list.size()-1 ? m_list[i+1]->date() : QDateTime());
+    newMessage->updateShowTime(i < m_list.size()-1 ? &m_list[i+1]->rawData() : nullptr);
     if (i > 0) {
-        m_list[i-1]->updateShowTime(newMessage->date());
+        m_list[i-1]->updateShowTime(&newMessage->rawData());
     }
 }
 
 void MessageListModel::updateTimes()
 {
-    const int numItems = m_list.size();
-    for (int i = 0; i < numItems; ++i) {
-        const QDateTime prior =
-            (i + 1 < numItems ? m_list[i + 1]->date() : QDateTime{});
-
-        m_list[i]->updateShowTime(prior);
+    for (int i = 0; i < m_list.size(); ++i) {
+        m_list[i]->updateShowTime(i+1 < m_list.size() ? &m_list[i+1]->rawData() : nullptr);
     }
 }
 

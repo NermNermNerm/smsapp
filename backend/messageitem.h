@@ -14,7 +14,9 @@ class MessageItem : public QObject
     Q_PROPERTY(QDateTime date READ date CONSTANT)
     Q_PROPERTY(bool isDisplayDateVisible READ isDisplayDateVisible NOTIFY displayDateChanged FINAL)
     Q_PROPERTY(QString displayDate READ displayDate NOTIFY displayDateChanged FINAL)
+    Q_PROPERTY(bool isSenderVisible READ isSenderVisible NOTIFY isSenderVisibleChanged FINAL)
     Q_PROPERTY(QString sender READ sender CONSTANT)
+    Q_PROPERTY(QColor senderColor READ senderColor CONSTANT)
     Q_PROPERTY(bool isIncoming READ isIncoming CONSTANT)
     Q_PROPERTY(QString body READ body NOTIFY bodyChanged FINAL)
     Q_PROPERTY(QString richTextBody READ richTextBody NOTIFY bodyChanged FINAL)
@@ -31,16 +33,19 @@ public:
     bool isDisplayDateVisible() const { return m_isDisplayDateVisible; }
     QString body() const { return m_rawData.body(); }
     QString sender() const;
+    QColor senderColor() const;
     bool isIncoming() const { return m_rawData.isIncoming(); }
     QList<Attachment> attachments() const { return m_rawData.attachments(); }
     QString richTextBody() const { return m_richTextBody; }
+    bool isSenderVisible() const { return m_isSenderVisible; }
 
     const ConversationMessage &rawData() const { return m_rawData; }
-    void updateShowTime(QDateTime priorMessage, QDateTime now = QDateTime::currentDateTime());
+    void updateShowTime(const ConversationMessage *priorMessage, QDateTime now = QDateTime::currentDateTime());
 
 signals:
     void bodyChanged();
     void displayDateChanged();
+    void isSenderVisibleChanged();
 
 private:
     QString linkify(const QString &source) const;
@@ -66,8 +71,11 @@ private:
     QString m_cachedRecipientList;
     QDateTime m_priorMessageDate {};
     QString m_richTextBody;
-    mutable DateDisplayFormat m_displayFormat { DateDisplayFormat::Unknown };
-    mutable bool m_isDisplayDateVisible { false };
-    mutable QString m_displayDate {};
+    bool m_isDisplayDateVisible { false };
+    bool m_isSenderVisible = false;
+
     mutable QString m_sender;
+    mutable QColor m_senderColor;
+    mutable DateDisplayFormat m_displayFormat { DateDisplayFormat::Unknown };
+    mutable QString m_displayDate {};
 };

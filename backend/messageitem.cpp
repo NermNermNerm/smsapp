@@ -1,6 +1,7 @@
 // clazy:excludeall=qcolor-from-literal
 #include "messageitem.h"
 #include "nameresolver.h"
+#include "singleavatarmodel.h"
 
 MessageItem::MessageItem(const ConversationMessage &message, QObject *parent)
     : m_rawData(message), QObject(parent)
@@ -15,6 +16,11 @@ QString MessageItem::sender() const
         m_sender = NameResolver::phoneNumberToName(addresses.first().address());
     }
     return m_sender;
+}
+
+QColor MessageItem::senderColor() const
+{
+    return SingleAvatarModel::colorForResolvedName(sender());
 }
 
 void MessageItem::update(const ConversationMessage& updated)
@@ -67,10 +73,10 @@ MessageItem::DateDisplayFormat MessageItem::computeDisplayFormat(QDateTime now) 
     return DateDisplayFormat::FullDateTime;
 }
 
-void MessageItem::updateShowTime(QDateTime priorMessage, QDateTime now)
+void MessageItem::updateShowTime(const ConversationMessage *priorMessage, QDateTime now)
 {
     // store input
-    m_priorMessageDate = priorMessage;
+    m_priorMessageDate = priorMessage ? QDateTime::fromMSecsSinceEpoch(priorMessage->date()) : QDateTime();
 
     const QDateTime msgDt = date();
     const qint64 ageSecs = msgDt.secsTo(now);
@@ -79,32 +85,63 @@ void MessageItem::updateShowTime(QDateTime priorMessage, QDateTime now)
     const DateDisplayFormat newFormat = computeDisplayFormat(now);
 
     // compute visibility (neighbor gap rules)
-    bool newVisible = true;
-    if (!priorMessage.isValid()) {
-        newVisible = true;
+    bool newDateVisible = true;
+    if (!priorMessage) {
+        newDateVisible = true;
     } else {
-        const qint64 gapSecs = priorMessage.secsTo(msgDt);
+        const qint64 gapSecs = m_priorMessageDate.secsTo(msgDt);
         if (gapSecs < 0) {
-            newVisible = true; // out-of-order -> show
+            newDateVisible = true; // out-of-order -> show
         } else if (ageSecs < 3600) {
-            newVisible = true; // recent messages show
+            newDateVisible = true; // recent messages show
         } else if (gapSecs < 300) {
-            newVisible = false; // suppress if within 5 minutes
+            newDateVisible = false; // suppress if within 5 minutes
         } else {
-            newVisible = true; // default show
+            newDateVisible = true; // default show
         }
     }
 
     if (newFormat != m_displayFormat // We've changed date formats
-        || newVisible != m_isDisplayDateVisible
+        || newDateVisible != m_isDisplayDateVisible
         || formatDependsOnNow(newFormat)) {
 
         // commit: store format and visibility, clear cached string so displayDate() recomputes lazily
         m_displayFormat = newFormat;
-        m_isDisplayDateVisible = newVisible;
+        m_isDisplayDateVisible = newDateVisible;
         m_displayDate.clear();
 
         emit displayDateChanged();
+    }
+
+    bool isMultiParty = false;
+    auto addresses = m_rawData.addresses();
+    for (int i = 1; i < addresses.size(); ++i) {
+        if (addresses[i].address() != addresses[0].address()) {
+            isMultiParty = true;
+            break;
+        }
+    }
+
+    bool shouldShowSender;
+    if (!isMultiParty || m_rawData.isOutgoing()) {
+         // never show the sender in single-party chats or when it's from the user
+        shouldShowSender = false;
+    }
+    else if (!priorMessage) {
+        shouldShowSender = true; // show the first sender in multiparty chats
+    }
+    else if (priorMessage->isOutgoing()) {
+        shouldShowSender = true;
+    }
+    else {
+        QString party1 = sender();
+        QString party2 = NameResolver::phoneNumberToName(priorMessage->addresses().constFirst().address());
+        shouldShowSender = party1 != party2;
+    }
+
+    if (m_isSenderVisible != shouldShowSender) {
+        m_isSenderVisible = shouldShowSender;
+        emit isSenderVisibleChanged();
     }
 }
 
