@@ -167,7 +167,7 @@ static QString escapeHref(const QString &url)
     QByteArray ba = url.toUtf8();
     QByteArray encoded;
 
-    for (unsigned char c : ba) {
+    for (unsigned char c : std::as_const(ba)) {
         // Safe characters per RFC 3986
         if ((c >= 'A' && c <= 'Z') ||
             (c >= 'a' && c <= 'z') ||

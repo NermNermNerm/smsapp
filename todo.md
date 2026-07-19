@@ -65,8 +65,8 @@ KDE Plugin Asks
       - [x] Outgoing images don't shrink correctly when they are wide - they clip
       - [x] Sending area is popping down even though the message got eaten.
             - [x] Add a message bar that pops up after the message looks doomed allowing cancel
-      - [ ] Add a file-open dialog and a ctrl+o handler
-      - [ ] look into a send-to-phone capability
+      - [-] Add a file-open dialog and a ctrl+o handler
+      - [-] look into a send-to-phone capability
 - [ ] Display Attachments
       - [x] Enable displaying the download links -- do this for all mime types.
       - [x] Enable displaying images

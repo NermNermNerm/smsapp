@@ -121,7 +121,7 @@ void OutgoingAttachmentListModel::setIsDownscaling(bool isDownscaling)
 void OutgoingAttachmentListModel::checkSizeLimit()
 {
     qint64 totalBytes = 0;
-    for (const Item &it : m_items) {
+    for (const Item &it : std::as_const(m_items)) {
         const QString path = it.fileUri.toLocalFile();
         QFileInfo fi(path);
 

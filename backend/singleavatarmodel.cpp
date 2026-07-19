@@ -1,5 +1,4 @@
 // clazy:excludeall=qcolor-from-literal
-// clazy:excludeall=range-loop-detach
 #include "singleavatarmodel.h"
 #include "nameresolver.h"
 
@@ -21,7 +20,7 @@ void SingleAvatarModel::setPhoneNumber(const QString phoneNumber)
     // Note, if phoneNumber is empty, m_resolvedName will be empty as well.
     m_resolvedName = NameResolver::phoneNumberToName(phoneNumber);
     m_initial.clear();
-    for (QChar c : m_resolvedName) {
+    for (QChar c : std::as_const(m_resolvedName)) {
         if (c.isLetter()) {
             m_initial = QString(c).toUpper();
             break;
@@ -30,7 +29,7 @@ void SingleAvatarModel::setPhoneNumber(const QString phoneNumber)
 
     // We set the color based on the phone number, as names could change
     int phoneNumberHash = 0;
-    for (QChar c : m_phoneNumber) {
+    for (QChar c : std::as_const(m_phoneNumber)) {
         if (c.isDigit()) {
             phoneNumberHash = (phoneNumberHash * 10 + c.digitValue()) % 99991; // large prime
         }

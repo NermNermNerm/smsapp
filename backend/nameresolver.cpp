@@ -1,4 +1,3 @@
-// clazy:excludeall=range-loop-detach
 #include "nameresolver.h"
 
 using namespace i18n::phonenumbers;
@@ -108,7 +107,7 @@ void NameResolver::load()
 
     QJsonArray arr = doc.object().value("kpeopledata").toArray();
 
-    for (const QJsonValue &v : arr) {
+    for (const QJsonValue &v : std::as_const(arr)) {
         QJsonObject obj = v.toObject();
 
         const QString name = obj.value("name").toString();

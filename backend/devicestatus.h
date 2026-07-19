@@ -1,4 +1,3 @@
-#include "pch.h"
 #pragma once
 #include "settings.h"
 #include "messageshandler.h"
