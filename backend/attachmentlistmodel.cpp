@@ -1,11 +1,6 @@
 #include "attachmentlistmodel.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
 #include "mimetypes.h"
-#include <QStandardPaths>
-#include <QDesktopServices>
-#include <QFile>
-#include <QUrl>
-#include <QSet>
 #include "messageshandler.h"
 
 static QSet<QString> s_expandedAttachmentIds;

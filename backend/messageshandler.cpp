@@ -1,6 +1,5 @@
 #include "messageshandler.h"
 #include "dbus.h"
-#include <QSharedPointer>
 
 static const QString orgKdeConnect = "org.kde.kdeconnect"; // "org.fake.kdeconnect";
 

@@ -1,10 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QObject>
-#include <QQueue>
-#include <QSet>
-#include <QDateTime>
-#include <QTimer>
-#include <QMutex>
 #include "cachemanager.h"
 #include "attachmentcache.h"
 

@@ -1,10 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QAbstractListModel>
-#include <QMimeDatabase>
-#include <QFileInfo>
-#include <QImage>
-#include <QBuffer>
-#include <QUrl>
 
 class OutgoingAttachmentListModel : public QAbstractListModel {
     Q_OBJECT

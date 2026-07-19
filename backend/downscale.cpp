@@ -1,12 +1,4 @@
 #include "downscale.h"
-#include <QUrl>
-#include <QImage>
-#include <QFileInfo>
-#include <QByteArray>
-#include <QBuffer>
-#include <QTemporaryFile>
-#include <QDir>
-#include <QDebug>
 
 QUrl downscaleImage(const QUrl& sourceUrl)
 {

@@ -1,8 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QString>
-#include <QHash>
-#include <QDBusConnection>
 
 #include "kdeconnect_proxy.h"
 

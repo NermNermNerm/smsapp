@@ -1,7 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QJsonObject>
-#include <QJsonArray>
 #include "conversationmessage.h"
 
 QJsonObject toJson(const Attachment &att);

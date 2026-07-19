@@ -1,6 +1,5 @@
 #include "avatarmodel.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
-#include <QSet>
 
 AvatarModel::AvatarModel(QObject *parent)
     : QObject{parent}

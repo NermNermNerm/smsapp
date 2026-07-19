@@ -1,9 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QAbstractListModel>
-#include <QVector>
-#include <QObject>
-#include <QUrl>
 #include "kdeconnect_interfaces/conversationmessage.h"
 #include "messageshandler.h"
 #include "devicestatus.h"

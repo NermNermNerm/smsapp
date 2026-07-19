@@ -1,6 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QAbstractListModel>
-#include <QObject>
 
 class ConversationHeader;
 class ConversationMessage;

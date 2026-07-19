@@ -1,9 +1,6 @@
 // clazy:excludeall=qcolor-from-literal
 #include "messageitem.h"
 #include "nameresolver.h"
-#include <QSet>
-#include <QColor>
-#include <QRegularExpression>
 
 MessageItem::MessageItem(const ConversationMessage &message, QObject *parent)
     : m_rawData(message), QObject(parent)

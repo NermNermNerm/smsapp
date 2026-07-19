@@ -1,5 +1,4 @@
 #include "mimetypes.h"
-#include <QHash>
 
 // Not really meant for use outside this function, it's global so I can do a forward declaration and keep
 // the huge data table at the end.

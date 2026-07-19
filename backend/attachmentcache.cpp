@@ -1,7 +1,5 @@
 #include "attachmentcache.h"
 #include "mimetypes.h"
-#include <QStandardPaths>
-#include <QDir>
 
 static QString getCacheDir(const QString &deviceId)
 {

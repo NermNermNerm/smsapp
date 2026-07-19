@@ -1,9 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QObject>
-#include <QSystemTrayIcon>
-#include <QIcon>
-#include <QPainter>
 
 class DeviceStatus;
 

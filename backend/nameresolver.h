@@ -1,6 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QString>
-#include <QHash>
 
 class NameResolver
 {

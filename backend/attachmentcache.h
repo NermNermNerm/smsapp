@@ -1,5 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QString>
 #include "kdeconnect_interfaces/conversationmessage.h"
 
 class AttachmentCache

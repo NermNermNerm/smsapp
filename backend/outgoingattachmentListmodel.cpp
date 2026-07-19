@@ -1,12 +1,4 @@
-//clazy:excludeall=range-loop-detach
-#include <QAbstractListModel>
-#include <QMimeDatabase>
-#include <QFileInfo>
-#include <QImage>
-#include <QBuffer>
-#include <QUrl>
 #include "outgoingattachmentListmodel.h"
-#include <QImageReader>
 
 OutgoingAttachmentListModel::OutgoingAttachmentListModel(QObject *parent)
     : QAbstractListModel(parent)

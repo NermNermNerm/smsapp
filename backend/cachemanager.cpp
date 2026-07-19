@@ -1,18 +1,4 @@
 #include "cachemanager.h"
-
-#include <QtAssert>
-#include <QStandardPaths>
-#include <QDir>
-#include <QFile>
-#include <QSaveFile>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QTimer>
-#include <QReadWriteLock>
-#include <QReadLocker>
-#include <QWriteLocker>
-
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 
 CacheManager::CacheManager(const QString &deviceId, QObject *parent)

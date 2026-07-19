@@ -1,8 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QAbstractListModel>
-#include <QObject>
-#include <QSet>
-#include <QTimer>
 
 class MessageItem;
 class ConversationMessage;

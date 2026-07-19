@@ -1,4 +1,3 @@
-#include <QtAssert>
 #include "conversationlistmodel.h"
 #include "conversationheader.h"
 #include "kdeconnect_interfaces/conversationmessage.h"

@@ -1,10 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QString>
-#include <QReadWriteLock>
-#include <QTimer>
 
 #include "kdeconnect_interfaces/conversationmessage.h"
 

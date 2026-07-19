@@ -1,8 +1,5 @@
 #include "conversationmessage_ext.h"
 
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValue>
 
 // -----------------------------------------------------------------------------
 // Attachment

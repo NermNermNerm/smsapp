@@ -1,6 +1,5 @@
+#include "pch.h"
 #pragma once
-#include <QObject>
-#include <QColor>
 
 class SingleAvatarModel : public QObject
 {

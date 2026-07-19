@@ -2,11 +2,6 @@
 #include "messageshandler.h"
 #include "dbus.h"
 
-#include <QTimer>
-#include <QGuiApplication>
-#include <QDBusConnection>
-#include <QDBusReply>
-#include <signal.h>
 
 DeviceStatus::DeviceStatus(QObject *parent)
     : QObject(parent)

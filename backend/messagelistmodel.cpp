@@ -1,17 +1,8 @@
-#include <QGuiApplication>
-#include <QClipboard>
-#include <QTemporaryFile>
-#include <QMimeData>
-#include <QImage>
-#include <QDir>
 #include "messagelistmodel.h"
 #include "messageitem.h"
 #include "kdeconnect_interfaces/conversationmessage.h"
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "backend/messageshandler.h"
-#include <QVector>
-#include <QDebug>
-#include <QtLogging>
 #include "backend/avatarmodel.h"
 #include "backend/conversationheader.h"
 #include "downscale.h"

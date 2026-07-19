@@ -1,10 +1,6 @@
+#include "pch.h"
 #pragma once
 #include "settings.h"
-#include <QObject>
-#include <QString>
-#include <QList>
-#include <QPointer>
-#include <QTimer>
 #include "messageshandler.h"
 
 class MessagesHandler;

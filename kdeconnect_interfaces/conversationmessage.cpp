@@ -6,7 +6,6 @@
 
 #include "conversationmessage.h"
 
-#include <QVariantMap>
 
 // #include "interfaces_conversation_message_debug.h"
 

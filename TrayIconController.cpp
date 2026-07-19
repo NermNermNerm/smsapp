@@ -1,12 +1,5 @@
-#include <QObject>
 #include "TrayIconController.h"
 #include "backend/devicestatus.h"
-#include <QPixmap>
-#include <QRandomGenerator>
-#include <QIcon>
-#include <QMenu>
-#include <QAction>
-#include <QDir>
 
 TrayIconController::TrayIconController(DeviceStatus &deviceStatus, QObject *parent)
     : QObject(parent), m_deviceStatus(deviceStatus)

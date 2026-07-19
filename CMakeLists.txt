@@ -17,6 +17,8 @@ qt_add_executable(appsmsapp
     kdeconnect_proxy.cpp
 )
 
+target_precompile_headers(appsmsapp PRIVATE pch.h)
+
 qt_add_qml_module(appsmsapp
     URI smsapp
     VERSION 1.0

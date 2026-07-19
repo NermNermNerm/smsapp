@@ -1,9 +1,3 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QQuickWindow>
-#include <QPainter>
-#include <QIcon>
 #include "TrayIconController.h"
 #include "backend/nameresolver.h"
 #include "backend/devicestatus.h"

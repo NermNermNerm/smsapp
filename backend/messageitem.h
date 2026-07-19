@@ -1,7 +1,6 @@
+#include "pch.h"
 #pragma once
 
-#include <QObject>
-#include <QDateTime>
 #include "kdeconnect_interfaces/conversationmessage.h"
 
 class ConversationMessage;

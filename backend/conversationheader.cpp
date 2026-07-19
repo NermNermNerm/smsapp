@@ -1,6 +1,5 @@
 #include "conversationheader.h"
 #include "nameresolver.h"
-#include <QDateTime>
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "backend/avatarmodel.h"
 

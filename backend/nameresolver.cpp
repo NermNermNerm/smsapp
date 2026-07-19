@@ -1,13 +1,6 @@
 // clazy:excludeall=range-loop-detach
 #include "nameresolver.h"
 
-#include <QProcess>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QDebug>
-#include <QRegularExpression>
-#include <phonenumbers/phonenumberutil.h>
 using namespace i18n::phonenumbers;
 
 QHash<QString, QString> NameResolver::s_canonicalPhoneNumberToNameMap;
