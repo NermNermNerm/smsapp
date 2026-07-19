@@ -38,9 +38,8 @@ Item {
                 delegate: ItemDelegate {
                     id: delegateItem
                     width: ListView.view.width
-                    height: content.implicitHeight + 16 // Added slightly more padding safely
+                    height: content.implicitHeight + 16
 
-                    // Use paddings instead of breaking layout anchors
                     topPadding: 8
                     bottomPadding: 8
                     leftPadding: 12
@@ -53,8 +52,6 @@ Item {
                     }
 
                     background: Rectangle {
-                        // FIX: If this specific item is selected, make the background transparent
-                        // so the blue highlight layer underneath is visible.
                         color: delegateItem.ListView.isCurrentItem ? "transparent" : "white"
                         border.color: delegateItem.ListView.isCurrentItem ? "transparent" : "#e0e0e0"
                         radius: 4
@@ -72,17 +69,13 @@ Item {
                             spacing: 4
                             Layout.fillWidth: true
 
-                            // FIX: Removed manual anchors.left/right from here.
-                            // ItemDelegate automatically handles positioning its contentItem using paddings.
-
                             Label {
                                 Layout.fillWidth: true
                                 text: object.participants
-                                font.bold: true
+                                font.bold: object.isUnread
                                 font.pointSize: 14
                                 elide: Text.ElideRight
 
-                                // FIX: Flip text color to white when highlighted for legibility
                                 color: delegateItem.ListView.isCurrentItem ? "white" : "#222222"
 
                                 HoverHandler { id: hh2 }
@@ -94,12 +87,12 @@ Item {
                             Label {
                                 Layout.fillWidth: true
                                 text: object.latestMessageBody
+                                font.italic: object.isLatestDraft
                                 font.pointSize: 12
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
                                 elide: Text.ElideRight
 
-                                // FIX: Dynamic text dimming for readability against blue/white
                                 color: delegateItem.ListView.isCurrentItem ? "#e0e0e0" : "#666666"
 
                                 HoverHandler { id: hh }
@@ -113,7 +106,6 @@ Item {
                             text: object.shortFriendlyDate
                             font.pointSize: 10
 
-                            // FIX: Dynamic text dimming
                             color: delegateItem.ListView.isCurrentItem ? "#d0d0d0" : "#999999"
 
                             HoverHandler { id: hhdate }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "draftmessages.h"
+
 class MessageItem;
 class ConversationMessage;
 class MessagesHandler;
@@ -16,7 +18,7 @@ class MessageListModel : public QAbstractListModel
     Q_PROPERTY(bool hasSendFailure READ hasSendFailure WRITE setHasSendFailure NOTIFY hasSendFailureChanged)
 
 public:
-    explicit MessageListModel(QObject *parent = nullptr);
+    explicit MessageListModel(DraftMessages &drafts, QObject *parent = nullptr);
 
     enum Roles {
         ObjectRole = Qt::UserRole + 1
@@ -30,11 +32,11 @@ public:
     QString avatarData() const { return m_avatarData; }
     QString participants() const { return m_participants; }
     bool isSending() const { return m_isSending; }
-    QString draftText() const { return m_draftTexts.value(m_conversationID); }
-    QVector<QString> draftAttachments() const { return m_draftAttachments.value(m_conversationID); }
+    QString draftText() const { return m_drafts.getDraftText(m_conversationID); }
+    QStringList draftAttachments() const { return m_drafts.getDraftAttachments(m_conversationID); }
     void setDevice(MessagesHandler *messagesHandlerForNewDevice);
     void setDraftText(const QString &draftText);
-    void setDraftAttachments(const QVector<QString> &draftAttachments);
+    void setDraftAttachments(const QStringList &draftAttachments);
     bool hasSendFailure() const { return m_hasSendFailure; }
     void setHasSendFailure(bool hasSendFailure);
 
@@ -61,6 +63,7 @@ private:
     void setIsSending(bool isSending);
 
     MessagesHandler *m_messagesHandler = nullptr;
+    DraftMessages& m_drafts;
     qint64 m_conversationID = 0;
     QVector<MessageItem*> m_list;
     QSet<qint64> m_requestedConversations;
@@ -68,7 +71,5 @@ private:
     QString m_avatarData;
     QString m_participants;
     bool m_isSending = false;
-    QHash<qint64, QString> m_draftTexts;
-    QHash<qint64, QVector<QString>> m_draftAttachments;
     bool m_hasSendFailure = false;
 };

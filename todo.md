@@ -1,13 +1,14 @@
 # First Level Heading
 
-KDE Plugin Asks
-
-- [ ] API to wake the phone.  (Current code in DeviceStatus::ping calls forceOnNetworkChange.
-- [ ] Add a request-identifier to requestAllConversations and requestConversation.
-  Replies should include the request identifier
-- [ ] Replies to requestConversation should include the index of the message
-- [ ] requestAllConversations should return the number of threads it's going to send
-  or otherwise indicate when it's reached the end of a request.
+## Headings
+- [x] Trim newlines on messages
+- [x] If draft message, it should be in italics like "You: blah blah"
+- [x] should show whether last message is to or from you
+- [x] Blank messages with just attachments show as 'Image' in headers
+- [ ] remember a last-read date per thread
+- [ ] Fix selection animation
+- [ ] When phone starts unreachable, it doesn't show any cached data
+- [x] Make avatars? for participants
 
 ## Status
 - [ ] Better state icons
@@ -18,19 +19,6 @@ KDE Plugin Asks
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: Failed to initialize QSettings instance. Status code is: 1
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The following application identifiers have not been set: QList("organizationName", "organizationDomain")
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The Settings type from Qt.labs.settings is deprecated and will be removed in a future release. Please use the one from QtCore instead.
-
-"Max message size limit exceeded."
-
-## Headings
-- [ ] Trim newlines on messages
-- [x] Make avatars? for participants
-- [ ] Fix selection animation
-- [ ] Headings should show an indicator that there's a draft message
-- [ ] When phone starts unreachable, it doesn't show any cached data
-- [ ] Blank messages with just attachments show as 'Image' in headers
-- [ ] should show whether last message is to or from you
-- [ ] threads with last-message-transmitted should look distinct from received ones
-- [ ] remember a last-read date per thread
 
 ## Message List
 - [x] Date calculation not done until the 30 second tick
@@ -96,4 +84,13 @@ KDE Plugin Asks
   - [x] Check multi-target messaging
 `
 
+
+## KDE Plugin Asks
+
+- [ ] API to wake the phone.  (Current code in DeviceStatus::ping calls forceOnNetworkChange.
+- [ ] Add a request-identifier to requestAllConversations and requestConversation.
+  Replies should include the request identifier
+- [ ] Replies to requestConversation should include the index of the message
+- [ ] requestAllConversations should return the number of threads it's going to send
+  or otherwise indicate when it's reached the end of a request.
 

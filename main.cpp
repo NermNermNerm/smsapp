@@ -8,6 +8,7 @@
 #include "backend/singleavatarmodel.h"
 #include "backend/attachmentlistmodel.h"
 #include "backend/outgoingattachmentListmodel.h"
+#include "backend/draftmessages.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
@@ -48,8 +49,9 @@ Terminal=false
     qmlRegisterType<OutgoingAttachmentListModel>("Sms", 1, 0, "OutgoingAttachmentListModel");
 
     DeviceStatus deviceStatus;
-    ConversationListModel conversationListModel;
-    MessageListModel messageListModel;
+    DraftMessages drafts;
+    ConversationListModel conversationListModel(drafts);
+    MessageListModel messageListModel(drafts);
 
     QObject::connect(&deviceStatus, &DeviceStatus::handlerChanged,
                      &conversationListModel, [&]() {

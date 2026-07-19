@@ -4,8 +4,8 @@
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "messageshandler.h"
 
-ConversationListModel::ConversationListModel(QObject *parent)
-    : QAbstractListModel{parent}
+ConversationListModel::ConversationListModel(DraftMessages& drafts, QObject *parent)
+    : QAbstractListModel{parent}, m_drafts(drafts)
 {}
 
 void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
@@ -53,7 +53,7 @@ void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevi
         // Build ConversationHeader model items out of that list.
         beginInsertRows(QModelIndex(), 0, sortedConversations.size()-1);
         for (const ConversationMessage *message: sortedConversations) {
-            auto *header = new ConversationHeader(*message, this);
+            auto *header = new ConversationHeader(*message, m_drafts, this);
             m_list.emplaceBack(header);
             m_index.insert(message->threadID(), header);
         }
@@ -97,7 +97,7 @@ void ConversationListModel::onConversationMessageChanged(const ConversationMessa
 {
     auto *associatedHeader = m_index[updatedMessage.threadID()];
     if (associatedHeader == nullptr) { // This is a new conversation
-        auto *newConversation = new ConversationHeader(updatedMessage, this);
+        auto *newConversation = new ConversationHeader(updatedMessage, m_drafts, this);
         int pos = findInsertPosition(QDateTime::fromMSecsSinceEpoch(updatedMessage.date()));
         beginInsertRows(QModelIndex(), pos, pos);
         m_list.insert(pos, newConversation);

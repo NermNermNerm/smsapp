@@ -3,6 +3,7 @@
 class ConversationHeader;
 class ConversationMessage;
 class MessagesHandler;
+class DraftMessages;
 
 /**
  * @brief This class backs up the list of conversations in the UX.  It maintains a list
@@ -13,7 +14,7 @@ class ConversationListModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    explicit ConversationListModel(QObject *parent = nullptr);
+    explicit ConversationListModel(DraftMessages &drafts, QObject *parent = nullptr);
 
     enum Roles {
         ObjectRole = Qt::UserRole + 1
@@ -34,4 +35,5 @@ private:
     QVector<ConversationHeader*> m_list;
     QHash<qint64, ConversationHeader*> m_index;
     MessagesHandler *m_messagesHandler = nullptr;
+    DraftMessages &m_drafts;
 };

@@ -8,12 +8,21 @@
 #include "downscale.h"
 
 // Use QVector internally (Qt6 best practice)
-MessageListModel::MessageListModel(QObject *parent)
-    : QAbstractListModel(parent)
+MessageListModel::MessageListModel(DraftMessages &drafts, QObject *parent)
+    : QAbstractListModel(parent), m_drafts(drafts)
 {
     connect(&m_updateTimesTimer, &QTimer::timeout, this, &MessageListModel::updateTimes);
     m_updateTimesTimer.setInterval(30000);
     m_updateTimesTimer.start();
+
+    connect(&m_drafts, &DraftMessages::draftTextChanged, this, [this](qint64 conversationID) {
+        if (conversationID == this->m_conversationID)
+            emit draftTextChanged();
+    });
+    connect(&m_drafts, &DraftMessages::draftAttachmentsChanged, this, [this](qint64 conversationID) {
+        if (conversationID == this->m_conversationID)
+            emit draftAttachmentsChanged();
+    });
 }
 
 // ---------------------------------------------------------------
@@ -174,8 +183,7 @@ void MessageListModel::sendMessage(const QString &messageText, const QVector<QUr
 void MessageListModel::onMessageDelivered(qint64 conversationID)
 {
     if (conversationID == m_conversationID) {
-        setDraftText({});
-        setDraftAttachments({});
+        m_drafts.clearDraft(m_conversationID);
         setIsSending(false);
     }
 }
@@ -198,15 +206,7 @@ void MessageListModel::setIsSending(bool isSending)
 
 void MessageListModel::setDraftText(const QString &draftText)
 {
-    if (m_draftTexts.value(m_conversationID) != draftText) {
-        if (draftText.isEmpty()) {
-            m_draftTexts.remove(m_conversationID);
-        }
-        else {
-            m_draftTexts[m_conversationID] = draftText;
-        }
-        emit draftTextChanged();
-    }
+    m_drafts.setDraftText(m_conversationID, draftText);
 }
 
 void MessageListModel::setHasSendFailure(bool hasSendFailure)
@@ -217,22 +217,9 @@ void MessageListModel::setHasSendFailure(bool hasSendFailure)
     }
 }
 
-void MessageListModel::setDraftAttachments(const QVector<QString> &draftAttachments)
+void MessageListModel::setDraftAttachments(const QStringList &draftAttachments)
 {
-    bool isChanged;
-    if (draftAttachments.isEmpty()) {
-        isChanged = m_draftAttachments.contains(m_conversationID);
-        m_draftAttachments.remove(m_conversationID);
-    }
-    else {
-        // minimum effort at checking equality.  In fact, I don't think this will ever not work given how we use it.
-        isChanged = draftAttachments.size() != m_draftAttachments[m_conversationID].size();
-        m_draftAttachments.insertOrAssign(m_conversationID, draftAttachments);
-    }
-
-    if (isChanged) {
-        emit draftAttachmentsChanged();
-    }
+    m_drafts.setDraftAttachments(m_conversationID, draftAttachments);
 }
 
 QUrl MessageListModel::turnClipboardIntoAttachment() const

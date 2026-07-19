@@ -3,32 +3,6 @@
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "backend/avatarmodel.h"
 
-QString ConversationHeader::computeParticipants(const ConversationMessage &latestMessage)
-{
-    QStringList names;
-    names.reserve(latestMessage.addresses().size());
-
-    QSet<QString> alreadySeen;
-    for (const auto &address : latestMessage.addresses()) {
-        const QString &phoneNumber = address.address();
-        if (!alreadySeen.contains(phoneNumber)) {
-            alreadySeen.insert(phoneNumber);
-            QString name = NameResolver::phoneNumberToName(phoneNumber);
-            names.append(name.isEmpty() ? phoneNumber : name);
-        }
-    }
-
-    if (names.size() == 1)
-        return names.first();
-
-    if (names.size() == 2)
-        return names[0] + " and " + names[1];
-
-    // Oxford comma style: A, B, and C
-    QString last = names.takeLast();
-    return names.join(", ") + ", and " + last;
-}
-
 static QString shortFriendlyDate(const QDateTime &dt)
 {
     QDateTime now = QDateTime::currentDateTime();
@@ -66,14 +40,46 @@ static QString shortFriendlyDate(const QDateTime &dt)
 }
 
 
-ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage, QObject *parent)
+ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage, DraftMessages &drafts, QObject *parent)
     : QObject{parent}
     , m_latestMessage(latestMessage)
     , m_participants(computeParticipants(latestMessage))
     , m_shortFriendlyDate(::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(latestMessage.date())))
+    , m_drafts(drafts)
 {
     m_avatarData = AvatarModel::getAvatarData(latestMessage);
+
+    connect(&m_drafts, &DraftMessages::draftTextChanged, this, &ConversationHeader::onDraftStatusChanged);
+    connect(&m_drafts, &DraftMessages::draftAttachmentsChanged, this, &ConversationHeader::onDraftStatusChanged);
+    updateState();
 }
+
+QString ConversationHeader::computeParticipants(const ConversationMessage &latestMessage)
+{
+    QStringList names;
+    names.reserve(latestMessage.addresses().size());
+
+    QSet<QString> alreadySeen;
+    for (const auto &address : latestMessage.addresses()) {
+        const QString &phoneNumber = address.address();
+        if (!alreadySeen.contains(phoneNumber)) {
+            alreadySeen.insert(phoneNumber);
+            QString name = NameResolver::phoneNumberToName(phoneNumber);
+            names.append(name.isEmpty() ? phoneNumber : name);
+        }
+    }
+
+    if (names.size() == 1)
+        return names.first();
+
+    if (names.size() == 2)
+        return names[0] + " and " + names[1];
+
+    // Oxford comma style: A, B, and C
+    QString last = names.takeLast();
+    return names.join(", ") + ", and " + last;
+}
+
 
 QDateTime ConversationHeader::date() const
 {
@@ -85,11 +91,6 @@ QString ConversationHeader::participants() const
     return m_participants;
 }
 
-QString ConversationHeader::latestMessageBody() const
-{
-    return m_latestMessage.body();
-}
-
 bool ConversationHeader::isUpdateNeeded(const ConversationMessage &message) {
     return message.threadID() == m_latestMessage.threadID() && !isNewerMessage(m_latestMessage, message);
 }
@@ -98,6 +99,66 @@ void ConversationHeader::update(const ConversationMessage &message)
 {
     m_latestMessage = message;
     m_shortFriendlyDate = ::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(message.date()));
-    emit latestMessageBodyChanged();
     emit dateChanged();
+    updateState();
+}
+
+void ConversationHeader::onDraftStatusChanged(qint64 conversationID)
+{
+    if (conversationID == this->conversationID()) {
+        updateState();
+    }
+}
+
+void ConversationHeader::setIsLatestOutgoing(bool isLatestOutgoing)
+{
+    if (isLatestOutgoing != m_isLatestOutgoing) {
+        m_isLatestOutgoing = isLatestOutgoing;
+        emit isLatestOutgoingChanged();
+    }
+}
+void ConversationHeader::setIsLatestDraft(bool isLatestDraft)
+{
+    if (m_isLatestDraft != isLatestDraft) {
+        m_isLatestDraft = isLatestDraft;
+        emit isLatestDraftChanged();
+    }
+}
+
+void ConversationHeader::updateState()
+{
+    QString body;
+
+    if (m_drafts.containsDraft(conversationID())) {
+        setIsLatestDraft(true);
+        setIsLatestOutgoing(true);
+
+        body = m_drafts.getDraftText(conversationID()).trimmed();
+        if (body.isEmpty()) {
+
+            // We don't /really/ know it's an image, but it's some kind of attachment and it seems
+            //  like too much work to infer if it's an image or not.
+            body = "<image>";
+        }
+
+        body = "You: " + body;
+    }
+    else {
+        setIsLatestDraft(false);
+        setIsLatestOutgoing(m_latestMessage.isOutgoing());
+
+        body = m_latestMessage.body().trimmed();
+        if (body.isEmpty() && !m_latestMessage.attachments().isEmpty()) {
+            //                ^^ This clause should be guaranteed if body is empty; but safety first.
+            body = m_latestMessage.attachments().constFirst().mimeType().startsWith("image/") ? "<image>" : "<file>";
+        }
+        if (m_latestMessage.isOutgoing()) {
+            body = "You: " + body;
+        }
+    }
+
+    if (body != m_body) {
+        m_body = body;
+        emit latestMessageBodyChanged();
+    }
 }
