@@ -31,9 +31,9 @@ Item {
                 highlight: Rectangle {
                     color: "#3498db"
                     radius: 4
-                    Behavior on y { SpringAnimation { spring: 3; damping: 0.2 } }
                 }
                 highlightFollowsCurrentItem: true
+                highlightMoveDuration: 80
 
                 delegate: ItemDelegate {
                     id: delegateItem
@@ -52,11 +52,11 @@ Item {
                     }
 
                     background: Rectangle {
-                        color: delegateItem.ListView.isCurrentItem ? "transparent" : "white"
-                        border.color: delegateItem.ListView.isCurrentItem ? "transparent" : "#e0e0e0"
+                        color: "transparent"
+                        border.color: delegateItem.ListView.isCurrentItem ? "#202020" : "#e0e0e0"
                         radius: 4
 
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: 80 } }
                     }
 
                     contentItem: RowLayout {
@@ -73,7 +73,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: object.participants
                                 font.bold: object.isUnread
-                                font.pointSize: 14
+                                font.pointSize: 12
                                 elide: Text.ElideRight
 
                                 color: delegateItem.ListView.isCurrentItem ? "white" : "#222222"
@@ -86,9 +86,9 @@ Item {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: object.latestMessageBody
+                                text: object.latestMessageBody + "\n" // ensure there's always 2 lines
                                 font.italic: object.isLatestDraft
-                                font.pointSize: 12
+                                font.pointSize: 10
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
                                 elide: Text.ElideRight
