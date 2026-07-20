@@ -12,6 +12,8 @@ class DraftMessages;
 class ConversationListModel : public QAbstractListModel
 {
     Q_OBJECT
+public slots:
+    void setSelectedConversationID(qint64 conversationID);
 
 public:
     explicit ConversationListModel(DraftMessages &drafts, QObject *parent = nullptr);
@@ -36,4 +38,5 @@ private:
     QHash<qint64, ConversationHeader*> m_index;
     MessagesHandler *m_messagesHandler = nullptr;
     DraftMessages &m_drafts;
+    qint64 m_selectedConversationID;
 };

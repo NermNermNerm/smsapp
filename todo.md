@@ -5,20 +5,32 @@
 - [x] If draft message, it should be in italics like "You: blah blah"
 - [x] should show whether last message is to or from you
 - [x] Blank messages with just attachments show as 'Image' in headers
-- [ ] remember a last-read date per thread
-- [ ] Fix selection animation
+- [x] Highlight unread threads
+- [x] Fix selection animation
 - [ ] When phone starts unreachable, it doesn't show any cached data
 - [x] Make avatars? for participants
+- [ ] Changing the message handler should wipe the Drafts dictionary
+- [ ] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
 
 ## Status
 - [ ] Better state icons
 - [ ] Reset KDE button
 - [ ] When phone starts unreachable, it doesn't try to nudge it
+- [ ] Show battery state
 - [ ] Settings:
     qt.qml.propertyCache.append: Member implicitHeight of the object QQuickItem_QML_53 overrides a member of the base object. Consider renaming it or adding final or override specifier
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: Failed to initialize QSettings instance. Status code is: 1
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The following application identifiers have not been set: QList("organizationName", "organizationDomain")
     qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The Settings type from Qt.labs.settings is deprecated and will be removed in a future release. Please use the one from QtCore instead.
+
+## Main Window
+- [ ] Splitter should allow maximizing one side or the other (or just block it from getting too small)
+- [ ] Fix Title (away from Hello World)
+- [x] Remember window size and position
+- [ ] Status bar should hide itself when phone status is green
+      (be visible for ~3 seconds after the window becomes visible or status becomes green)
+- [ ] copy 2FA codes to the clipboard
+
 
 ## Message List
 - [x] Date calculation not done until the 30 second tick
@@ -67,15 +79,6 @@
       - [x] Put mutexes around attachment queue access
       - [x] Consider making all images smaller and having a hover-over enlarge button in the upper right
             and the 'open' button can do that too.
-
-
-## Main Window
-- [ ] Splitter should allow maximizing one side or the other
-- [ ] Fix Title (away from Hello World)
-- [x] Remember window size and position
-- [ ] Status bar should hide itself when phone status is green
-      (be visible for ~3 seconds after the window becomes visible or status becomes green)
-- [ ] copy 2FA codes to the clipboard
 
 ## Test infrastructure
 - [x] Implement simulated message arrival

@@ -24,8 +24,9 @@ Item {
                 clip: true
 
                 onCurrentItemChanged: {
-                    messageListModel.setConversationID(currentItem ? currentItem.conversationID : -1)
-                    console.log("Set conversation id to " + (currentItem ? currentItem.conversationID : -1))
+                    const conversationID = currentItem ? currentItem.conversationID : -1;
+                    messageListModel.setConversationID(conversationID)
+                    conversationListModel.setSelectedConversationID(conversationID);
                 }
 
                 highlight: Rectangle {
@@ -77,6 +78,7 @@ Item {
                                 Layout.fillWidth: true
                                 text: object.latestMessageBody + "\n" // ensure there's always 2 lines
                                 font.italic: object.isLatestDraft
+                                font.bold: object.isUnread
                                 font.pointSize: 10
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 2
@@ -94,6 +96,7 @@ Item {
                         Text {
                             text: object.shortFriendlyDate
                             font.pointSize: 10
+                            font.bold: object.isUnread
 
                             color: delegateItem.ListView.isCurrentItem ? "#d0d0d0" : "#999999"
 

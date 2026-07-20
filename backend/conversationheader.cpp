@@ -162,3 +162,11 @@ void ConversationHeader::updateState()
         emit latestMessageBodyChanged();
     }
 }
+
+void ConversationHeader::setIsUnread(bool isUnread)
+{
+    if (m_isUnread != isUnread) {
+        m_isUnread = isUnread;
+        emit isUnreadChanged();
+    }
+}

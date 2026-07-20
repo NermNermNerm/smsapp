@@ -115,6 +115,10 @@ void ConversationListModel::onConversationMessageChanged(const ConversationMessa
             m_list.move(oldRow, newRow);
             endMoveRows();
         }
+
+        if (updatedMessage.threadID() != m_selectedConversationID) {
+            associatedHeader->setIsUnread(true);
+        }
     }
 }
 
@@ -129,5 +133,14 @@ void ConversationListModel::onConversationDeleted(qint64 conversationId)
         endRemoveRows();
         m_index.remove(conversationId);
         delete associatedHeader;
+    }
+}
+
+void ConversationListModel::setSelectedConversationID(qint64 conversationID)
+{
+    m_selectedConversationID = conversationID;
+    auto *associatedHeader = m_index.value(conversationID);
+    if (associatedHeader) {
+        associatedHeader->setIsUnread(false);
     }
 }
