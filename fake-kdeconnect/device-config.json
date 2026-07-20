@@ -1,0 +1,23 @@
+{
+  "devices": [
+    {
+      "id": "FAKE123",
+      "name": "Pixel 9",
+      "reachable": false,
+      "data": "history_pixel9.json"
+    },
+    {
+      "id": "FAKE456",
+      "name": "Work Phone",
+      "reachable": true,
+      "data": "history_workphone.json"
+    },
+    {
+      "id": "FAKE789",
+      "name": "Tablet",
+      "reachable": true,
+      "data": null
+    }
+  ]
+}
+
