@@ -1,11 +1,12 @@
 #pragma once
+class DeviceStatus;
 
 class DraftMessages : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit DraftMessages(QObject *parent = nullptr) : QObject(parent) {}
+    explicit DraftMessages(DeviceStatus &deviceStatus, QObject *parent = nullptr);
 
     bool containsDraft(qint64 conversationID) const {
         return m_draftTexts.contains(conversationID) || m_draftAttachments.contains(conversationID);

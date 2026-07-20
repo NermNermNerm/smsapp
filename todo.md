@@ -1,5 +1,7 @@
 # First Level Heading
 
+- [ ] Upload it all to github.
+
 ## Headings
 - [x] Trim newlines on messages
 - [x] If draft message, it should be in italics like "You: blah blah"
@@ -9,8 +11,9 @@
 - [x] Fix selection animation
 - [ ] When phone starts unreachable, it doesn't show any cached data
 - [x] Make avatars? for participants
-- [ ] Changing the message handler should wipe the Drafts dictionary
+- [x] Changing the message handler should wipe the Drafts dictionary
 - [ ] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
+- [ ] When connecting to the live phone and i knew there was a message on the 2nd thread (per the old ordering), it didn't download the fresh message until I clicked on the heading.  It could be the top-two threads were undownloaded, 
 
 ## Status
 - [ ] Better state icons

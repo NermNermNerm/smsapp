@@ -49,7 +49,7 @@ Terminal=false
     qmlRegisterType<OutgoingAttachmentListModel>("Sms", 1, 0, "OutgoingAttachmentListModel");
 
     DeviceStatus deviceStatus;
-    DraftMessages drafts;
+    DraftMessages drafts(deviceStatus);
     ConversationListModel conversationListModel(drafts);
     MessageListModel messageListModel(drafts);
 
