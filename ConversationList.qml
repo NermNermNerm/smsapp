@@ -19,7 +19,7 @@ Item {
                 id: conversationList
                 focus: true
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.rightMargin: 8
                 model: conversationListModel
                 clip: true
 
@@ -40,24 +40,13 @@ Item {
                     width: ListView.view.width
                     height: content.implicitHeight + 16
 
-                    topPadding: 8
-                    bottomPadding: 8
-                    leftPadding: 12
-                    rightPadding: 12
-
                     property int conversationID: model.object.conversationID
 
                     onClicked: {
                         conversationList.currentIndex = index;
                     }
 
-                    background: Rectangle {
-                        color: "transparent"
-                        border.color: delegateItem.ListView.isCurrentItem ? "#202020" : "#e0e0e0"
-                        radius: 4
-
-                        Behavior on color { ColorAnimation { duration: 80 } }
-                    }
+                    background: Item {}
 
                     contentItem: RowLayout {
                         Avatar {
