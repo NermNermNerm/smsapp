@@ -164,7 +164,7 @@ Item {
                                 width: Math.min(textBlock.implicitWidth, delegateRoot.maxBubbleContentWidth)
 
                                 // Pass the layout's height down from the text element
-                                property real implicitHeight: textBlock.implicitHeight
+                                implicitHeight: textBlock.implicitHeight
 
                                 Text {
                                     id: textBlock
