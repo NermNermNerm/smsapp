@@ -112,13 +112,6 @@ void FakeKdeConnectDaemon::startInteractive()
     Commands::startInteractiveShell(this);
 }
 
-void FakeKdeConnectDaemon::printPrompt()
-{
-    QTextStream out(stdout);
-    out << "> ";
-    out.flush();
-}
-
 bool FakeKdeConnectDaemon::checkSelected() const
 {
     if (m_selectedIndex < 0 || m_selectedIndex >= m_devices.size()) {

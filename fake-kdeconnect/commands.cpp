@@ -22,16 +22,14 @@ QSocketNotifier *g_notifier = nullptr;
 FakeKdeConnectDaemon *g_daemon = nullptr;
 int g_deviceIndex = 0;
 
-void printPrompt()
+static bool parseUint(const QString &raw, int &out)
 {
-    if (g_daemon)
-        g_daemon->printPrompt();
-}
-
-bool checkSelected()
-{
-    // forward to daemon's checkSelected via public API is not exposed; replicate minimal check if needed
-    // but prefer to call daemon methods for actions that require selection.
+    bool ok = false;
+    out = raw.toInt(&ok);
+    if (!ok || out < 0) {
+        qWarning() << raw << "is not valid (expected non-negative integer)";
+        return false;
+    }
     return true;
 }
 
@@ -62,7 +60,7 @@ void populateFakeKdeDirectory(const QString &numThreadsToReadAsString)
     }
     else {
         bool ok = false;
-        int numThreadsToRead = numThreadsToReadAsString.toInt(&ok);
+        numThreadsToRead = numThreadsToReadAsString.toInt(&ok);
         if (!ok || numThreadsToRead == 0)
         {
             qWarning() << numThreadsToReadAsString << "should be a count of threads to read";
@@ -105,9 +103,8 @@ void populateFakeKdeDirectory(const QString &numThreadsToReadAsString)
     }
 }
 
-void cmdList()
+void cmdList(const QStringList &)
 {
-    if (!g_daemon) return;
     // Access daemon's device vector is private; we can expose a public API or use devices() to list ids.
     auto &configs = g_daemon->getDeviceConfigs();
     for (int i = 0; i < configs.size(); ++i) {
@@ -117,13 +114,11 @@ void cmdList()
 
 void cmdSelect(const QString &idxStr)
 {
-    if (!g_daemon) return;
-    bool ok = false;
-    int newDeviceIndex = idxStr.toInt(&ok);
-    if (!ok || newDeviceIndex < 0 || newDeviceIndex >= g_daemon->getDeviceConfigs().size()) {
-        qWarning() << "Invalid device index";
+    int newDeviceIndex;
+    if (!parseUint(idxStr, newDeviceIndex)) {
         return;
     }
+
     // The original implementation used internal index; to preserve behavior we need a setter.
     // For now, attempt to select by index via DBus or extend daemon API. We'll call a private-like behavior:
     // This simplified implementation will just print selection for compatibility.
@@ -164,12 +159,7 @@ void cmdText(const QStringList &args)
         phoneNumbers.append(number);
     }
 
-    QString body;
-    for (int i = 1; i < args.length(); ++i) {
-        if (!body.isEmpty())
-            body.append(' ');
-        body.append(args[i]);
-    }
+    const QString body = args.mid(1).join(' ');
 
     auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
     auto message = device->makeMessage(phoneNumbers, body, DeviceConfig::Incoming, {});
@@ -178,58 +168,54 @@ void cmdText(const QStringList &args)
     conversationInterface->simulateIncomingMessage(message);
 }
 
-void cmdSend(const QStringList &args)
-{
-    if (args.size() < 2) {
-        qWarning() << "Usage: send <to> <text>";
-        return;
-    }
-    const QString to = args[0];
-    const QString text = args.mid(1).join(' ');
-    qInfo() << "Simulated a text to" << to << ":" << text;
-}
 
-void cmdInterval(const QString &idxStr)
+template<typename Setter, typename Getter>
+static void applyInterval(const QStringList &args,
+                          const char *label,
+                          Setter setter,
+                          Getter getter)
 {
-    bool ok = false;
-    int intervalInMs = idxStr.toInt(&ok);
-    if (!ok || intervalInMs < 0) {
-        qWarning() << "Invalid interval (should be '50' or so.)";
-        return;
-    }
-
     auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
-    g_daemon->getConversationsInterface(device->id)->setInterval(intervalInMs);
-    qInfo() << "Interval for emitting normal traffic set to" << intervalInMs << "ms";
-}
+    auto *iface  = g_daemon->getConversationsInterface(device->id);
 
-void cmdSendInterval(const QString &idxStr)
-{
-    bool ok = false;
-    int intervalInMs = idxStr.toInt(&ok);
-    if (!ok || intervalInMs < 0) {
-        qWarning() << "Invalid interval (should be '50' or so.)";
+    if (args.isEmpty()) {
+        const int val = (iface->*getter)();
+        qInfo() << label << "is" << val << "ms";
         return;
     }
 
-    auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
-    g_daemon->getConversationsInterface(device->id)->setSendInterval(intervalInMs);
-    qInfo() << "Interval for processing outgoing texts set to" << intervalInMs << "ms";
-}
-
-void cmdAttachmentInterval(const QString &idxStr)
-{
-    bool ok = false;
-    int intervalInMs = idxStr.toInt(&ok);
-    if (!ok || intervalInMs < 0) {
-        qWarning() << "Invalid interval (should be '50' or so.)";
+    int val = 0;
+    if (!parseUint(args[0], val))
         return;
-    }
 
-    auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
-    g_daemon->getConversationsInterface(device->id)->setAttachmentInterval(intervalInMs);
-    qInfo() << "Interval for processing outgoing texts set to" << intervalInMs << "ms";
+    (iface->*setter)(val);
+    qInfo() << label << "set to" << val << "ms";
 }
+
+void cmdInterval(const QStringList &args)
+{
+    applyInterval(args,
+                  "Normal traffic interval",
+                  &FakeDeviceConversationsInterface::setInterval,
+                  &FakeDeviceConversationsInterface::interval);
+}
+
+void cmdSendInterval(const QStringList &args)
+{
+    applyInterval(args,
+                  "Outgoing text interval",
+                  &FakeDeviceConversationsInterface::setSendInterval,
+                  &FakeDeviceConversationsInterface::sendInterval);
+}
+
+void cmdAttachmentInterval(const QStringList &args)
+{
+    applyInterval(args,
+                  "Attachment interval",
+                  &FakeDeviceConversationsInterface::setAttachmentInterval,
+                  &FakeDeviceConversationsInterface::attachmentInterval);
+}
+
 
 struct CommandSpec
 {
@@ -244,7 +230,7 @@ struct CommandSpec
 void cmdHelp(const QStringList &args);
 
 static const CommandSpec g_commands[] = {
-    { "list",            0, 0, [](const QStringList &a) { cmdList(); },
+    { "list",            0, 0, cmdList,
      "List fake devices",
      "list" },
 
@@ -276,19 +262,15 @@ static const CommandSpec g_commands[] = {
      "Simulate incoming text message",
      "text <sender>[,<cc>...] <content>" },
 
-    { "send",            2, -1, cmdSend,
-     "Simulate outgoing text message",
-     "send <to> <content>" },
-
-    { "interval",        1, 1, [](const QStringList &a){ cmdInterval(a[0]); },
+    { "interval",        0, 1, cmdInterval,
      "Set normal traffic interval",
      "interval <ms>" },
 
-    { "sendinterval",    1, 1, [](const QStringList &a){ cmdSendInterval(a[0]); },
+    { "sendinterval",    0, 1, cmdSendInterval,
      "Set outgoing text interval",
      "sendinterval <ms>" },
 
-    { "attachmentinterval", 1, 1, [](const QStringList &a){ cmdAttachmentInterval(a[0]); },
+    { "attachmentinterval", 0, 1, cmdAttachmentInterval,
      "Set attachment processing interval",
      "attachmentinterval <ms>" },
 
@@ -301,6 +283,14 @@ static const CommandSpec g_commands[] = {
      "exit" },
 };
 
+static const CommandSpec* findCommand(const QString &cmd)
+{
+    for (const auto &c : g_commands)
+        if (c.name == cmd)
+            return &c;
+    return nullptr;
+}
+
 void cmdHelp(const QStringList &args)
 {
     if (args.isEmpty()) {
@@ -310,16 +300,14 @@ void cmdHelp(const QStringList &args)
         return;
     }
 
-    const QString target = args[0].toLower();
-    for (const auto &c : g_commands) {
-        if (c.name == target) {
-            qInfo().noquote() << c.name << ": " << c.description;
-            qInfo().noquote() << "Usage: " << c.usage;
-            return;
-        }
+    const CommandSpec *spec = findCommand(args[0].toLower());
+    if (!spec) {
+        qWarning() << "Unknown command:" << args[0];
+        return;
     }
 
-    qWarning() << "Unknown command:" << target;
+    qInfo().noquote() << spec->name << ": " << spec->description;
+    qInfo().noquote() << "Usage: " << spec->usage;
 }
 
 void handleCommand()
@@ -333,7 +321,6 @@ void handleCommand()
     }
 
     if (line.isEmpty()) {
-        printPrompt();
         return;
     }
 
@@ -342,17 +329,9 @@ void handleCommand()
     const QStringList args = parts.mid(1);
 
     // lookup
-    const CommandSpec *spec = nullptr;
-    for (const auto &c : g_commands) {
-        if (c.name == cmd) {
-            spec = &c;
-            break;
-        }
-    }
-
+    const CommandSpec *spec = findCommand(cmd);
     if (!spec) {
         qWarning() << "Unknown command:" << cmd;
-        printPrompt();
         return;
     }
 
@@ -360,14 +339,11 @@ void handleCommand()
     const int argc = args.size();
     if (argc < spec->minArgs || (spec->maxArgs != -1 && argc > spec->maxArgs)) {
         qWarning().noquote() << "Usage: " << spec->usage;
-        printPrompt();
         return;
     }
 
     // dispatch
     spec->fn(args);
-
-    printPrompt();
 }
 
 
@@ -380,12 +356,11 @@ void startInteractiveShell(FakeKdeConnectDaemon *daemon)
     if (!daemon) return;
     g_daemon = daemon;
 
+    qInfo() << "Fake daemon started - enter 'help' for a list of commands.";
     if (!g_notifier) {
         g_notifier = new QSocketNotifier(fileno(stdin), QSocketNotifier::Read, daemon);
         QObject::connect(g_notifier, &QSocketNotifier::activated, daemon, [](int){ handleCommand(); });
     }
-
-    printPrompt();
 }
 
 } // namespace Commands

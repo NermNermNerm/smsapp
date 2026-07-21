@@ -35,9 +35,6 @@ public slots:
     // Cancel ongoing activity on the dbus. (Not part of real interface)
     void reset();
 
-    // Expose prompt printing for the commands module
-    void printPrompt();
-
 private:
     bool checkSelected() const;
 

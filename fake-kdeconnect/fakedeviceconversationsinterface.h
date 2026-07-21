@@ -28,8 +28,11 @@ public:
     //  utilize it (because the real daemon spews something of dubious, if any, value.)
     const qint64 nonsenseCountValue = 9876;
 
+    int interval() const { return m_intervalMs; }
     void setInterval(int mSec);
+    int sendInterval() const { return m_sendIntervalMs; }
     void setSendInterval(int mSec);
+    int attachmentInterval() const { return m_attachmentIntervalMs; }
     void setAttachmentInterval(int mSec) { m_attachmentIntervalMs = mSec; }
 
 public:
