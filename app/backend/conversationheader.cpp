@@ -11,7 +11,7 @@ static QString shortFriendlyDate(const QDateTime &dt)
     if (secs < 60 * 60) {
         // Under 1 hour → Xm
         int minutes = secs / 60;
-        return QStringLiteral("%1m").arg(minutes);
+        return minutes < 1 ? "just now" : QStringLiteral("%1m").arg(minutes);
     }
 
     if (secs < 60 * 60 * 4) {
@@ -168,5 +168,14 @@ void ConversationHeader::setIsUnread(bool isUnread)
     if (m_isUnread != isUnread) {
         m_isUnread = isUnread;
         emit isUnreadChanged();
+    }
+}
+
+void ConversationHeader::updateTime()
+{
+    QString newTime = ::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(m_latestMessage.date()));
+    if (newTime != m_shortFriendlyDate) {
+        m_shortFriendlyDate = newTime;
+        emit dateChanged();
     }
 }

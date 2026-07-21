@@ -6,7 +6,13 @@
 
 ConversationListModel::ConversationListModel(DraftMessages& drafts, QObject *parent)
     : QAbstractListModel{parent}, m_drafts(drafts)
-{}
+{
+    connect(&m_30SecondTimeCheckTimer, &QTimer::timeout,
+            this, &ConversationListModel::on30SecondTimeCheckTick);
+
+    m_30SecondTimeCheckTimer.setInterval(30000 /* ms */);
+    m_30SecondTimeCheckTimer.start();
+}
 
 void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
 {
@@ -142,5 +148,12 @@ void ConversationListModel::setSelectedConversationID(qint64 conversationID)
     auto *associatedHeader = m_index.value(conversationID);
     if (associatedHeader) {
         associatedHeader->setIsUnread(false);
+    }
+}
+
+void ConversationListModel::on30SecondTimeCheckTick()
+{
+    for (auto *i: m_list) {
+        i->updateTime();
     }
 }

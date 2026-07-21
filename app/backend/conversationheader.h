@@ -32,6 +32,8 @@ public:
     bool isLatestDraft() const { return m_isLatestDraft; }
     bool isUnread() const { return m_isUnread; }
 
+    void updateTime();
+
     void setIsLatestOutgoing(bool isLatestOutgoing);
     void setIsLatestDraft(bool isLatestDraft);
     void setIsUnread(bool isUnread);

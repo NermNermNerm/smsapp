@@ -33,7 +33,9 @@ private:
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
     void onConversationDeleted(qint64 conversationId);
     int findInsertPosition(const QDateTime &date) const;
+    void on30SecondTimeCheckTick();
 
+    QTimer m_30SecondTimeCheckTimer;
     QVector<ConversationHeader*> m_list;
     QHash<qint64, ConversationHeader*> m_index;
     MessagesHandler *m_messagesHandler = nullptr;

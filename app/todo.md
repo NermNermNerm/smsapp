@@ -1,6 +1,7 @@
 # First Level Heading
 
-- [ ] Upload it all to github.
+- [x] Upload it all to github.
+- [ ] Write a readme
 
 ## Headings
 - [x] Trim newlines on messages
@@ -12,8 +13,8 @@
 - [ ] When phone starts unreachable, it doesn't show any cached data
 - [x] Make avatars? for participants
 - [x] Changing the message handler should wipe the Drafts dictionary
-- [ ] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
-- [ ] When connecting to the live phone and i knew there was a message on the 2nd thread (per the old ordering), it didn't download the fresh message until I clicked on the heading.  It could be the top-two threads were undownloaded, 
+- [x] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
+- [?] When connecting to the live phone and i knew there was a message on the 2nd thread (per the old ordering), it didn't download the fresh message until I clicked on the heading.  It could be the top-two threads were undownloaded, 
 
 ## Status
 - [ ] Better state icons
@@ -87,7 +88,8 @@
 - [x] Implement simulated message arrival
 - [x] Incremental load of messages
 - [x] Full load of messages
-  - [x] Check multi-target messaging
+- [x] Check multi-target messaging
+- [ ] Nice up the command parser and add help.
 `
 
 
