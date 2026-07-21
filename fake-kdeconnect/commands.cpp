@@ -231,14 +231,107 @@ void cmdAttachmentInterval(const QString &idxStr)
     qInfo() << "Interval for processing outgoing texts set to" << intervalInMs << "ms";
 }
 
+struct CommandSpec
+{
+    QString name;
+    int minArgs;
+    int maxArgs;   // use -1 for “no upper bound”
+    void (*fn)(const QStringList &args);
+    QString description;
+    QString usage;
+};
+
+void cmdHelp(const QStringList &args);
+
+static const CommandSpec g_commands[] = {
+    { "list",            0, 0, [](const QStringList &a) { cmdList(); },
+     "List fake devices",
+     "list" },
+
+    { "kdelistdevices",  0, 0, [](const QStringList &a) { cmdKdeListDevices(); },
+     "List real KDE Connect devices",
+     "kdelistdevices" },
+
+    { "kdegetthreads",   1, 1, [](const QStringList &a){ CmdKdeGetThreadIds(a[0]); },
+     "List thread IDs for a KDE device",
+     "kdegetthreads <deviceId>" },
+
+    { "kdepopulate",     0, 1, [](const QStringList &a){ populateFakeKdeDirectory(a.isEmpty() ? "" : a[0]); },
+     "Populate fake KDE directory",
+     "kdepopulate [numThreads]" },
+
+    { "select",          1, 1, [](const QStringList &a){ cmdSelect(a[0]); },
+     "Select a fake device by index",
+     "select <index>" },
+
+    { "on",              0, 0, [](const QStringList &){ cmdOnOff(true); },
+     "Mark selected device reachable",
+     "on" },
+
+    { "off",             0, 0, [](const QStringList &){ cmdOnOff(false); },
+     "Mark selected device unreachable",
+     "off" },
+
+    { "text",            2, -1, cmdText,
+     "Simulate incoming text message",
+     "text <sender>[,<cc>...] <content>" },
+
+    { "send",            2, -1, cmdSend,
+     "Simulate outgoing text message",
+     "send <to> <content>" },
+
+    { "interval",        1, 1, [](const QStringList &a){ cmdInterval(a[0]); },
+     "Set normal traffic interval",
+     "interval <ms>" },
+
+    { "sendinterval",    1, 1, [](const QStringList &a){ cmdSendInterval(a[0]); },
+     "Set outgoing text interval",
+     "sendinterval <ms>" },
+
+    { "attachmentinterval", 1, 1, [](const QStringList &a){ cmdAttachmentInterval(a[0]); },
+     "Set attachment processing interval",
+     "attachmentinterval <ms>" },
+
+    { "help",            0, 1, cmdHelp,
+     "Show help for all commands or one command",
+     "help [command]" },
+
+    { "exit",            0, 0, [](const QStringList &){ QCoreApplication::quit(); },
+     "Exit the shell",
+     "exit" },
+};
+
+void cmdHelp(const QStringList &args)
+{
+    if (args.isEmpty()) {
+        qInfo().noquote() << "Available commands:";
+        for (const auto &c : g_commands)
+            qInfo().noquote() << "  " << c.name << " - " << c.description;
+        return;
+    }
+
+    const QString target = args[0].toLower();
+    for (const auto &c : g_commands) {
+        if (c.name == target) {
+            qInfo().noquote() << c.name << ": " << c.description;
+            qInfo().noquote() << "Usage: " << c.usage;
+            return;
+        }
+    }
+
+    qWarning() << "Unknown command:" << target;
+}
+
 void handleCommand()
 {
     QTextStream in(stdin);
     const QString line = in.readLine().trimmed();
+
     if (line.isNull() && in.atEnd()) {
         QCoreApplication::quit();
         return;
     }
+
     if (line.isEmpty()) {
         printPrompt();
         return;
@@ -246,40 +339,37 @@ void handleCommand()
 
     const QStringList parts = line.split(' ', Qt::SkipEmptyParts);
     const QString cmd = parts[0].toLower();
+    const QStringList args = parts.mid(1);
 
-    if (cmd == "quit" || cmd == "exit") {
-        QCoreApplication::quit();
-        return;
-    } else if (cmd == "list") {
-        cmdList();
-    } else if (cmd == "kdelistdevices") {
-        cmdKdeListDevices();
-    } else if (cmd == "kdegetthreads" && parts.size() >= 2) {
-        CmdKdeGetThreadIds(parts[1]);
-    } else if (cmd == "kdepopulate") {
-        populateFakeKdeDirectory(parts.size() > 1 ? parts[1] : "");
-    } else if (cmd == "select" && parts.size() >= 2) {
-        cmdSelect(parts[1]);
-    } else if (cmd == "on") {
-        cmdOnOff(true);
-    } else if (cmd == "off") {
-        cmdOnOff(false);
-    } else if (cmd == "text") {
-        cmdText(parts.mid(1));
-    } else if (cmd == "send") {
-        cmdSend(parts.mid(1));
-    } else if (cmd == "interval" && parts.size() == 2) {
-        cmdInterval(parts[1]);
-    } else if (cmd == "sendinterval" && parts.size() == 2) {
-        cmdSendInterval(parts[1]);
-    } else if (cmd == "attachmentinterval" && parts.size() == 2) {
-        cmdAttachmentInterval(parts[1]);
-    } else {
-        qInfo() << "Unknown command:" << cmd;
+    // lookup
+    const CommandSpec *spec = nullptr;
+    for (const auto &c : g_commands) {
+        if (c.name == cmd) {
+            spec = &c;
+            break;
+        }
     }
+
+    if (!spec) {
+        qWarning() << "Unknown command:" << cmd;
+        printPrompt();
+        return;
+    }
+
+    // argument count check
+    const int argc = args.size();
+    if (argc < spec->minArgs || (spec->maxArgs != -1 && argc > spec->maxArgs)) {
+        qWarning().noquote() << "Usage: " << spec->usage;
+        printPrompt();
+        return;
+    }
+
+    // dispatch
+    spec->fn(args);
 
     printPrompt();
 }
+
 
 } // anonymous namespace
 
