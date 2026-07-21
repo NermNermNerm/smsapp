@@ -164,6 +164,11 @@ void FakeDeviceConversationsInterface::replyToConversation(
     const QString &message,
     const QVariantList &attachmentUrls) // <- actually local paths!
 {
+    if (!m_deviceConfig->reachable) {
+        qInfo() << Q_FUNC_INFO << "The device is offline.  Ignoring.";
+        return; // silent no-op like real daemon
+    }
+
     qInfo() << "replyToConversation invoked conversationID:" << conversationID << "message: " << message.left(20);
 
     auto conversationMessage = m_deviceConfig->makeMessage(conversationID, message, DeviceConfig::Outgoing, attachmentUrls);
@@ -181,7 +186,10 @@ void FakeDeviceConversationsInterface::sendWithoutConversation(
     const QString &message,
     const QVariantList &attachmentUrls)
 {
-    Q_UNUSED(attachmentUrls)
+    if (!m_deviceConfig->reachable) {
+        qInfo() << Q_FUNC_INFO << "The device is offline.  Ignoring.";
+        return; // silent no-op like real daemon
+    }
 
     QStringList addresses;
     addresses.reserve(addressList.size());
@@ -210,6 +218,11 @@ void FakeDeviceConversationsInterface::requestConversation(
     int start,
     int end)
 {
+    if (!m_deviceConfig->reachable) {
+        qInfo() << Q_FUNC_INFO << "The device is offline.  Ignoring.";
+        return; // silent no-op like real daemon
+    }
+
     qInfo() << "requestConversation" << conversationID << start << end;
     // Gather matching messages
     std::vector<ConversationMessage> result;
@@ -273,6 +286,11 @@ void FakeDeviceConversationsInterface::requestConversation(
 
 void FakeDeviceConversationsInterface::requestAttachmentFile(qlonglong partID, const QString &uniqueIdentifier)
 {
+    if (!m_deviceConfig->reachable) {
+        qInfo() << Q_FUNC_INFO << "The device is offline.  Ignoring.";
+        return; // silent no-op like real daemon
+    }
+
     qInfo() << "requestAttachmentFile" << partID << uniqueIdentifier;
     QString filePath = QDir::homePath() + "/fakekde/" + m_deviceConfig->id + "/" + uniqueIdentifier;
     if (!QFile::exists(filePath)) {
@@ -356,6 +374,12 @@ void FakeDeviceConversationsInterface::processIncomingQueue()
 
 void FakeDeviceConversationsInterface::deliverIncomingMessageNow(const ConversationMessage &m)
 {
+    if (!m_deviceConfig->reachable) {
+        qInfo() << Q_FUNC_INFO << "The device is offline, so not delivering message.";
+        return; // silent no-op like real daemon
+    }
+
+
     const qint64 threadId = m.threadID();
 
     if (!m_knownThreads.contains(threadId)) {
