@@ -9,7 +9,7 @@ ApplicationWindow {
     width: 940
     height: 480
     visible: true
-    title: qsTr("Hello World")
+    title: qsTr("Texts – %1").arg(deviceStatus.preferredDeviceName)
 
     Settings {
         id: windowSettings

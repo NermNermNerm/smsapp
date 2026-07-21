@@ -19,7 +19,6 @@
 ## Status
 - [ ] Better state icons
 - [ ] Reset KDE button
-- [ ] When phone starts unreachable, it doesn't try to nudge it
 - [ ] Show battery state
 - [ ] Settings:
     qt.qml.propertyCache.append: Member implicitHeight of the object QQuickItem_QML_53 overrides a member of the base object. Consider renaming it or adding final or override specifier
@@ -29,7 +28,7 @@
 
 ## Main Window
 - [ ] Splitter should allow maximizing one side or the other (or just block it from getting too small)
-- [ ] Fix Title (away from Hello World)
+- [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
 - [ ] Status bar should hide itself when phone status is green
       (be visible for ~3 seconds after the window becomes visible or status becomes green)
