@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QHash>
+#include <QCoreApplication>
 
 static QHash<QString, QString> s_nameToPhoneNumberMap;
 static bool s_loaded;
@@ -14,7 +15,7 @@ static void load()
         return;
 
     QProcess proc;
-    proc.start("/home/steve/repos/kpeople_lookup/build/kpeople-lookup");
+    proc.start(QCoreApplication::applicationDirPath() + "/../../../kpeople_lookup/build/kpeople-lookup");
 
     if (!proc.waitForFinished(5000)) {
         qFatal("kpeople-lookup failed to run");

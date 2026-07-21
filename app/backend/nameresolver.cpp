@@ -92,7 +92,7 @@ static QString canonicalizeEmail(const QString &raw)
 void NameResolver::load()
 {
     QProcess proc;
-    proc.start("/home/steve/repos/kpeople_lookup/build/kpeople-lookup");   // adjust path if needed
+    proc.start(QCoreApplication::applicationDirPath() + "/../../../kpeople_lookup/build/kpeople-lookup");
 
     if (!proc.waitForFinished(5000)) {
         qFatal("kpeople-lookup failed to run");
