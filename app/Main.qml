@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.settings 1.0
+import QtCore
 import Sms 1.0
 
 ApplicationWindow {

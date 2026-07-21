@@ -37,7 +37,11 @@ Exec=/home/steve/repos/smsapp/build/Desktop_Qt_6_11_1-Debug/appsmsapp
 Icon=/home/steve/repos/smsapp/defaulticon.png
 Terminal=false
  */
+    // We've got settings in main.qml and in settings.cpp.
     QGuiApplication::setDesktopFileName("smsapp");
+    QCoreApplication::setOrganizationName("NermNermNerm");
+    // QCoreApplication::setOrganizationDomain("yourorg.example");
+    QCoreApplication::setApplicationName("SmsApp");
 
     NameResolver::load();
     qmlRegisterType<DeviceStatus>("Sms", 1, 0, "DeviceStatus");
