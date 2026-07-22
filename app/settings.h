@@ -11,6 +11,8 @@ public:
 
     bool autoFixDaemon() const;
     void setAutoFixDaemon(bool enabled);
+    bool isDeviceKnownToHaveSms(const QString &deviceID) const;
+    void setDeviceKnownToHaveSms(const QString &deviceID);
 
 private:
     Settings(bool isUsingFakeDBus);

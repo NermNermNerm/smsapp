@@ -10,14 +10,19 @@
 - [x] Blank messages with just attachments show as 'Image' in headers
 - [x] Highlight unread threads
 - [x] Fix selection animation
-- [ ] When phone starts unreachable, it doesn't show any cached data
+- [x] When phone starts unreachable, it doesn't show any cached data
 - [x] Make avatars? for participants
 - [x] Changing the message handler should wipe the Drafts dictionary
 - [x] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
 - [?] When connecting to the live phone and i knew there was a message on the 2nd thread (per the old ordering), it didn't download the fresh message until I clicked on the heading.  It could be the top-two threads were undownloaded, 
 
-## Status
-- [ ] Better state icons
+## Status bar
+- [ ] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
+      telling the user to pair a device.
+- [ ] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
+      the user to install kde
+
+- [ ] When the phone is unreachable, the send button should be disabled
 - [ ] Reset KDE button
 - [ ] Show battery state
 - [ ] Settings:

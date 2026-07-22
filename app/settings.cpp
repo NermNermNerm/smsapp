@@ -31,3 +31,19 @@ void Settings::setAutoFixDaemon(bool enabled)
 {
     m_settings.setValue("autoFixDaemon", enabled);
 }
+
+bool Settings::isDeviceKnownToHaveSms(const QString &deviceID) const
+{
+    const QStringList list = m_settings.value("devicesWithSms").toStringList();
+    return list.contains(deviceID);
+}
+
+void Settings::setDeviceKnownToHaveSms(const QString &deviceID)
+{
+    QStringList list = m_settings.value("devicesWithSms").toStringList();
+
+    if (!list.contains(deviceID)) {
+        list.append(deviceID);
+        m_settings.setValue("devicesWithSms", list);
+    }
+}

@@ -268,7 +268,7 @@ Item {
                 Layout.fillWidth: true // Automatically claims all leftover space in the row
                 wrapMode: TextArea.Wrap
                 placeholderText: "Type a message"
-                readOnly: messageListModel.isSending
+                readOnly: messageListModel.isSending || deviceStatus.status !== DeviceStatus.Status.DeviceReady
                 text: messageListModel.draftText
 
                 leftPadding: 12
@@ -313,7 +313,7 @@ Item {
                 id: sendButton
                 enabled: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty)
                          && (!outgoingAttachmentListModel.isOversized || (outgoingAttachmentListModel.isAbleToDownscale && outgoingAttachmentListModel.isDownscaling))
-                         && !messageListModel.isSending
+                         && !messageListModel.isSending && deviceStatus.status === DeviceStatus.Status.DeviceReady
                 height: 40
 
                 Layout.preferredWidth: (inputField.text.length > 0 || !outgoingAttachmentListModel.isEmpty) ? 40 : 0
@@ -412,7 +412,7 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
-                    enabled: !messageListModel.isSending
+                    enabled: sendButton.enabled
                     onClicked: root.doSend()
                 }
             }

@@ -120,8 +120,14 @@ bool DeviceStatus::tryRefreshDeviceList()
         if (name.isEmpty())
             continue;
 
-        if (!dev.hasPlugin("kdeconnect_sms"))
+        if (dev.isReachable()) {
+            if (!dev.hasPlugin("kdeconnect_sms"))
+                continue;
+            settings().setDeviceKnownToHaveSms(id);
+        }
+        else if (!settings().isDeviceKnownToHaveSms(id)) {
             continue;
+        }
 
         // Check if already present
         auto it = std::find_if(m_validDevices.begin(), m_validDevices.end(),
