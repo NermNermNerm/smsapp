@@ -6,8 +6,8 @@ class Settings : public QObject
 public:
     static Settings& instance();
 
-    QString preferredDeviceId() const;
-    void setPreferredDeviceId(const QString &id);
+    QString previousSessionDeviceId() const;
+    void setPreviousSessionDeviceId(const QString &id);
 
     bool autoFixDaemon() const;
     void setAutoFixDaemon(bool enabled);

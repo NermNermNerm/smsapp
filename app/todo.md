@@ -25,11 +25,7 @@
 - [ ] When the phone is unreachable, the send button should be disabled
 - [ ] Reset KDE button
 - [ ] Show battery state
-- [ ] Settings:
-    qt.qml.propertyCache.append: Member implicitHeight of the object QQuickItem_QML_53 overrides a member of the base object. Consider renaming it or adding final or override specifier
-    qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: Failed to initialize QSettings instance. Status code is: 1
-    qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The following application identifiers have not been set: QList("organizationName", "organizationDomain")
-    qrc:/qt/qml/smsapp/Main.qml:14:5: QML Settings: The Settings type from Qt.labs.settings is deprecated and will be removed in a future release. Please use the one from QtCore instead.
+- [x] QML/Settings warnings on launch
 
 ## Main Window
 - [ ] Splitter should allow maximizing one side or the other (or just block it from getting too small)

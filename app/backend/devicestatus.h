@@ -15,39 +15,42 @@ public:
     };
 
     enum class Status {
+        /** @brief Indicates that the KDE Service is not properly installed. (not listening on the dbus anyway) */
         DaemonNotRunning,
+
+        /** @brief Dbus messages sent to the kde daemon are not being responded to, but it is running */
         DaemonHung,
+
+        /** @brief The kde service isn't showing any devices that we've talked to before and none that support sms */
         NoSmsDevice,
+
+        /** @brief The device we're supposed to talk to is unreachable. */
         DeviceUnreachable,
+
+        /** @brief The specific device we were told to communicate with is non paired in KDE */
+        DeviceMissing,
+
+        /** @brief Good to go. */
         DeviceReady
     };
     Q_ENUM(Status)
 
-    explicit DeviceStatus(QObject *parent = nullptr);
+    explicit DeviceStatus(const QString &specifiedDeviceId = "", QObject *parent = nullptr);
 
     // List of devices that support SMS
-    Q_PROPERTY(QList<DeviceInfo> validDevices READ validDevices NOTIFY validDevicesChanged)
-
-    Q_PROPERTY(QString preferredDevice READ preferredDevice
-                   WRITE setPreferredDevice NOTIFY preferredDeviceChanged)
-    Q_PROPERTY(QString preferredDeviceName READ preferredDeviceName
-                   NOTIFY preferredDeviceNameChanged)
-
+    Q_PROPERTY(QList<DeviceInfo> otherDevices READ otherDevices NOTIFY otherDevicesChanged)
+    Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-
     Q_PROPERTY(MessagesHandler* handler READ handler NOTIFY handlerChanged)
-
-    Q_PROPERTY(bool autoFixDaemon READ autoFixDaemon
-                   WRITE setAutoFixDaemon NOTIFY autoFixDaemonChanged)
+    Q_PROPERTY(bool autoFixDaemon READ autoFixDaemon WRITE setAutoFixDaemon NOTIFY autoFixDaemonChanged)
 
 public:
     // Accessors
-    QList<DeviceInfo> validDevices() const { return m_validDevices; }
-    QString preferredDevice() const { return settings().preferredDeviceId(); }
-    QString preferredDeviceName() const { return m_preferredDeviceName; }
     Status status() const { return m_status; }
     MessagesHandler* handler() const { return m_handler; }
     bool autoFixDaemon() const {  return settings().autoFixDaemon(); }
+    QList<DeviceInfo> otherDevices() const { return m_otherDevices; }
+    QString deviceName() const { return m_deviceName; }
 
     // Mutators
     void setAutoFixDaemon(bool enabled);
@@ -62,35 +65,35 @@ public:
     }
 
 signals:
-    void validDevicesChanged();
-    void preferredDeviceChanged();
     void statusChanged();
     void handlerChanged();
     void autoFixDaemonChanged();
-    void preferredDeviceNameChanged();
+    void deviceNameChanged();
+    void otherDevicesChanged();
 
 private:
     void poll();
     void onDeviceListChanged();
     bool tryRefreshDeviceList();
-    void trySetupPreferredDevice();
+    void setDeviceName(const QString &name);
 
-    void setPreferredDeviceName(const QString &name);
     void setStatus(Status status);
 
-    // Ensures that m_handler matches what's in preferredDevice() and changes it if needed.
-    void updateHandler();
+    void setupHandler(const QString &deviceId);
 
     Settings &settings() const { return m_settings ? *m_settings : Settings::instance(); }
 
 private:
-    QList<DeviceInfo> m_validDevices;
+    QList<DeviceInfo> m_otherDevices;
     Status m_status = Status::DaemonNotRunning;
     QPointer<MessagesHandler> m_handler;
     QTimer m_pollTimer;
     Settings *m_settings = nullptr;
-    QString m_preferredDeviceName;
     QDateTime m_lastWakeAttempt;
+    QString m_deviceName;
+
+    /** @brief if we were told on the command line what device to interact with, this is it.  Else it's empty */
+    const QString m_specifiedDeviceId;
 
     static DeviceStatus *s_instance;
 

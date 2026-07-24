@@ -136,7 +136,7 @@ Item {
                 }
 
                 Label {
-                    text: deviceStatus.preferredDeviceName
+                    text: deviceStatus.deviceName
                     color: "white"
                     font.pixelSize: 18
                     Layout.fillWidth: true

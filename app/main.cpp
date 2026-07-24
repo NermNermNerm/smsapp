@@ -9,6 +9,7 @@
 #include "backend/attachmentlistmodel.h"
 #include "backend/outgoingattachmentListmodel.h"
 #include "backend/draftmessages.h"
+#include "backend/startupmenumanager.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
@@ -20,6 +21,22 @@ int main(int argc, char *argv[])
     dbus::init();
 
     QGuiApplication app(argc, argv);
+    QCommandLineParser parser;
+    parser.addHelpOption();
+
+    QCommandLineOption deviceOpt(
+        "device",
+        "The KDEConnect device ID of the phone this instance should talk to.",
+        "id"
+        );
+    QCommandLineOption startMinimizedOpt("startMinimized", "Start the application minimized");
+    parser.addOption(deviceOpt);
+
+    parser.process(app);
+    const QString deviceId = parser.value(deviceOpt);
+
+    StartupMenuManager startupMenuManager(deviceId);
+    DeviceStatus deviceStatus(deviceId);
 
     // Force the Linux Window Manager to register this exact string as the WM_CLASS
     app.setApplicationName("appsmsapp");
@@ -52,7 +69,6 @@ Terminal=false
     qmlRegisterType<AttachmentListModel>("Sms", 1, 0, "AttachmentListModel");
     qmlRegisterType<OutgoingAttachmentListModel>("Sms", 1, 0, "OutgoingAttachmentListModel");
 
-    DeviceStatus deviceStatus;
     DraftMessages drafts(deviceStatus);
     ConversationListModel conversationListModel(drafts);
     MessageListModel messageListModel(drafts);
@@ -69,6 +85,7 @@ Terminal=false
     global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
     global_engine.rootContext()->setContextProperty("conversationListModel", &conversationListModel);
     global_engine.rootContext()->setContextProperty("messageListModel", &messageListModel);
+    global_engine.rootContext()->setContextProperty("cliStartMinimized", parser.isSet(startMinimizedOpt));
     QObject::connect(
         &global_engine,
         &QQmlApplicationEngine::objectCreationFailed,

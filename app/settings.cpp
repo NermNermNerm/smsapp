@@ -12,14 +12,14 @@ Settings::Settings(bool isUsingFakeDBus)
 {
 }
 
-QString Settings::preferredDeviceId() const
+QString Settings::previousSessionDeviceId() const
 {
-    return m_settings.value("preferredDeviceId").toString();
+    return m_settings.value("previousSessionDeviceId").toString();
 }
 
-void Settings::setPreferredDeviceId(const QString &id)
+void Settings::setPreviousSessionDeviceId(const QString &id)
 {
-    m_settings.setValue("preferredDeviceId", id);
+    m_settings.setValue("previousSessionDeviceId", id);
 }
 
 bool Settings::autoFixDaemon() const
