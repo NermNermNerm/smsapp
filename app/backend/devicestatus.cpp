@@ -80,9 +80,13 @@ void DeviceStatus::poll()
                 setStatus(Status::DeviceMissing);
             }
         }
-        else if (!previousSessionDeviceId.isEmpty() && knownDeviceIds.contains(previousSessionDeviceId)) {
-            setupHandler(previousSessionDeviceId);
-        }
+    }
+
+    if (m_handler == nullptr
+     && !previousSessionDeviceId.isEmpty()
+     && knownDeviceIds.contains(previousSessionDeviceId)
+     && dbus::device(previousSessionDeviceId).isReachable()) {
+        setupHandler(previousSessionDeviceId);
     }
 
     // Remove devices that no longer exist
@@ -113,8 +117,8 @@ void DeviceStatus::poll()
         settings().setDeviceKnownToHaveSms(id);
 
         if (m_handler == nullptr && m_specifiedDeviceId.isEmpty()) {
-            // If were weren't specifically directed to a device, and the last device we used isn't around,
-            //  go ahead and use it.
+            // If we weren't specifically directed to a device, and the last device we used isn't reachable,
+            //  go ahead and use the first reachable sms-capable device.
             setupHandler(id);
             settings().setPreviousSessionDeviceId(id);
 
@@ -139,6 +143,11 @@ void DeviceStatus::poll()
 
     if (otherDevicesListChanged) {
         emit otherDevicesChanged();
+    }
+
+    // If we couldn't find any reachable devices, but the last device we used is valid, keep trying to use it.
+    if (m_handler == nullptr && !previousSessionDeviceId.isEmpty() && knownDeviceIds.contains(previousSessionDeviceId)) {
+        setupHandler(previousSessionDeviceId);
     }
 
     if (m_handler == nullptr) {
