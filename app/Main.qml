@@ -21,6 +21,7 @@ ApplicationWindow {
         property alias y: mainWindow.y
         property alias width: mainWindow.width
         property alias height: mainWindow.height
+        property int conversationListWidth: fontMetrics.averageCharacterWidth * 75
     }
 
     Component.onCompleted: {
@@ -100,16 +101,16 @@ ApplicationWindow {
                 Layout.rightMargin: 6
             }
 
-            // --- Other Devices Switcher (Subtle Flat Style) ---
-            Repeater {
-                model: deviceStatus.otherDevices
-                delegate: ToolButton {
-                    text: modelData.name
-                    font.pixelSize: 12
-                    implicitHeight: 28
-                    onClicked: deviceStatus.setPreferredDevice(modelData.id)
-                }
-            }
+            // --- TODO: Other Devices Switcher (Subtle Flat Style) ---
+            // Repeater {
+            //     model: deviceStatus.otherDevices
+            //     delegate: ToolButton {
+            //         text: modelData.name <- actually a phone picture, colored, with a tooltip with the name
+            //         font.pixelSize: 12
+            //         implicitHeight: 28
+            //         onClicked: <-- launch another instance of the app with the modelData.deviceid
+            //     }
+            // }
 
             // Flexible Spacer (pushes controls to the right)
             Item {
@@ -205,14 +206,21 @@ ApplicationWindow {
             visible: deviceStatus.deviceName !== ""
 
             ConversationList {
+                id: conversationList
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                SplitView.preferredWidth: 300
-                SplitView.minimumWidth: 200
-                SplitView.maximumWidth: 500
+                SplitView.preferredWidth: windowSettings.conversationListWidth
+                SplitView.minimumWidth: 100 * Screen.devicePixelRatio
+
+                onWidthChanged: {
+                    if (width > 0) {
+                        windowSettings.conversationListWidth = width
+                    }
+                }
             }
 
             MessageList {
+                SplitView.minimumWidth: 100 * Screen.devicePixelRatio
                 Layout.fillWidth: true
                 Layout.fillHeight: true
             }

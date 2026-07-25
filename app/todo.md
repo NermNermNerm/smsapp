@@ -31,7 +31,7 @@
       the user to install kde
 - [ ] Multiphone
   - [ ] Show other phone launcher buttons
-- [ ] Splitter should allow maximizing one side or the other (or just block it from getting too small)
+- [x] Splitter should be banned from maximizing to one side or the other and should remember its setting
 - [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
 
