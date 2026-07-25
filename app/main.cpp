@@ -29,8 +29,9 @@ int main(int argc, char *argv[])
         "The KDEConnect device ID of the phone this instance should talk to.",
         "id"
         );
-    QCommandLineOption startMinimizedOpt("startMinimized", "Start the application minimized");
     parser.addOption(deviceOpt);
+    QCommandLineOption startMinimizedOpt("startMinimized", "Start the application minimized");
+    parser.addOption(startMinimizedOpt);
 
     parser.process(app);
     const QString deviceId = parser.value(deviceOpt);

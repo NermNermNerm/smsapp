@@ -21,6 +21,9 @@
 - [ ] copy 2FA codes to the clipboard
 - [ ] Multiphone
   - [ ] Use different background colors for different specified phones
+- [ ] Show an indicator when new messages are there
+- [ ] Tooltip should show whether there are messages or not
+- [ ] Clicking on the tooltip should open the app
 
 ## Main Window
 - [ ] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date

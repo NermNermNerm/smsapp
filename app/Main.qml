@@ -21,7 +21,7 @@ ApplicationWindow {
         property alias y: mainWindow.y
         property alias width: mainWindow.width
         property alias height: mainWindow.height
-        property int conversationListWidth: fontMetrics.averageCharacterWidth * 75
+        property int conversationListWidth: 200
     }
 
     Component.onCompleted: {
@@ -58,6 +58,7 @@ ApplicationWindow {
 
         // Background Drag & Double-Click Handler
         MouseArea {
+            id: moveWindowMouseArea
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
 
@@ -117,7 +118,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
 
-            // --- Settings Button ---
+            // TODO:  Settings Button ---
             // ToolButton {
             //     text: "⚙"
             //     font.pixelSize: 14
@@ -182,18 +183,57 @@ ApplicationWindow {
         }
     }
 
+
     // -------------------------------------------------------------------------
     // Main Content Area
     // -------------------------------------------------------------------------
     ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.margins: 16
+        spacing: 12
+
         anchors {
             top: titleBar.bottom
             left: parent.left
             right: parent.right
             bottom: parent.bottom
         }
-        anchors.margins: 16
-        spacing: 12
+
+        Rectangle {
+            id: unreachableWarning
+            Layout.fillWidth: true
+            visible: deviceStatus.status === DeviceStatus.DeviceUnreachable
+            color: "#FFF2AC" // Gentle warning yellow (or use your theme color)
+
+            // Binding height to the inner label + padding
+            implicitHeight: warningText.implicitHeight + 16
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: "#E6C200" // Subtle accent bottom border
+            }
+
+            Text {
+                id: warningText
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    leftMargin: 16
+                    rightMargin: 16
+                    topMargin: 8
+                }
+                text: qsTr("The phone is not reachable. If it's nearby, try unlocking it and checking the KDE Connect App. " +
+                           "Sending messages is unavailable and the conversations shown below may not be up-to-date.")
+                wrapMode: Text.Wrap
+                font.pixelSize: 12
+                color: "#5C4900"
+            }
+        }
 
         SplitView {
             id: split
