@@ -214,6 +214,90 @@ ApplicationWindow {
         }
     }
 
+    // Top
+    MouseArea {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: 6
+        cursorShape: Qt.SizeVerCursor
+        onPressed: mainWindow.startSystemResize(Qt.TopEdge)
+    }
+
+    // Bottom
+    MouseArea {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 6
+        cursorShape: Qt.SizeVerCursor
+        onPressed: mainWindow.startSystemResize(Qt.BottomEdge)
+    }
+
+    // Left
+    MouseArea {
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 6
+        cursorShape: Qt.SizeHorCursor
+        onPressed: mainWindow.startSystemResize(Qt.LeftEdge)
+    }
+
+    // Right
+    MouseArea {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 6
+        cursorShape: Qt.SizeHorCursor
+        onPressed: mainWindow.startSystemResize(Qt.RightEdge)
+    }
+
+    // Top-Left
+    MouseArea {
+        anchors.left: parent.left
+        anchors.top: parent.top
+        width: 12
+        height: 12
+        cursorShape: Qt.SizeFDiagCursor
+        onPressed: mainWindow.startSystemResize(Qt.TopEdge | Qt.LeftEdge)
+        z: 9999
+    }
+
+    // Top-Right
+    MouseArea {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        width: 12
+        height: 12
+        cursorShape: Qt.SizeBDiagCursor
+        onPressed: mainWindow.startSystemResize(Qt.TopEdge | Qt.RightEdge)
+        z: 9999
+    }
+
+    // Bottom-Left
+    MouseArea {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        width: 12
+        height: 12
+        cursorShape: Qt.SizeBDiagCursor
+        onPressed: mainWindow.startSystemResize(Qt.BottomEdge | Qt.LeftEdge)
+        z: 9999
+    }
+
+    // Bottom-Right
+    MouseArea {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        width: 12
+        height: 12
+        cursorShape: Qt.SizeFDiagCursor
+        onPressed: mainWindow.startSystemResize(Qt.BottomEdge | Qt.RightEdge)
+        z: 9999
+    }
+
     // Dummy settings dialog placeholder
     Dialog {
         id: settingsDialog
