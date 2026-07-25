@@ -38,7 +38,6 @@ qt_add_qml_module(appsmsapp
     SOURCES settings.h settings.cpp
     RESOURCES todo.md
     QML_FILES Main.qml
-    QML_FILES
     QML_FILES ConversationList.qml
     QML_FILES MessageList.qml
     QML_FILES Avatar.qml
@@ -70,6 +69,7 @@ qt_add_resources(appsmsapp "app_resources"
         icons/download.svg
         icons/open-file.svg
         icons/open-folder.svg
+        icons/error.svg
 )
 
 # Just to make it visible in the ide

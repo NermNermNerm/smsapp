@@ -24,11 +24,11 @@ public:
         /** @brief The kde service isn't showing any devices that we've talked to before and none that support sms */
         NoSmsDevice,
 
-        /** @brief The device we're supposed to talk to is unreachable. */
-        DeviceUnreachable,
-
         /** @brief The specific device we were told to communicate with is non paired in KDE */
         DeviceMissing,
+
+        /** @brief The device we're supposed to talk to is unreachable. */
+        DeviceUnreachable,
 
         /** @brief Good to go. */
         DeviceReady

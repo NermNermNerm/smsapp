@@ -96,7 +96,11 @@ void DeviceStatus::poll()
             m_otherDevices.removeAt(i);
             otherDevicesListChanged = true;
         }
+
+        // Our logic should prevent the current device from ever getting into the other devices list.
+        Q_ASSERT(m_handler == nullptr || id != m_handler->deviceID());
     }
+
 
     // Add or update devices that exist
     for (const QString &id : std::as_const(knownDeviceIds)) {
@@ -119,25 +123,26 @@ void DeviceStatus::poll()
         if (m_handler == nullptr && m_specifiedDeviceId.isEmpty()) {
             // If we weren't specifically directed to a device, and the last device we used isn't reachable,
             //  go ahead and use the first reachable sms-capable device.
-            setupHandler(id);
-            settings().setPreviousSessionDeviceId(id);
-
             // TODO: In the future, it'd be good to ensure that no other instance of the app is
             //   working against this device.
+            setupHandler(id);
+            settings().setPreviousSessionDeviceId(id);
+            setDeviceName(name);
         }
+        else {
+            // Check if already present
+            auto it = std::find_if(m_otherDevices.begin(), m_otherDevices.end(),
+                                   [&](const DeviceInfo &d) { return d.id == id; });
 
-        // Check if already present
-        auto it = std::find_if(m_otherDevices.begin(), m_otherDevices.end(),
-                               [&](const DeviceInfo &d) { return d.id == id; });
-
-        if (it == m_otherDevices.end()) {
-            // New device
-            m_otherDevices.append(DeviceInfo{id, name});
-            otherDevicesListChanged = true;
-        } else if (it->name != name) {
-            // Name changed
-            it->name = name;
-            otherDevicesListChanged = true;
+            if (it == m_otherDevices.end()) {
+                // New device
+                m_otherDevices.append(DeviceInfo{id, name});
+                otherDevicesListChanged = true;
+            } else if (it->name != name) {
+                // Name changed
+                it->name = name;
+                otherDevicesListChanged = true;
+            }
         }
     }
 
@@ -148,6 +153,7 @@ void DeviceStatus::poll()
     // If we couldn't find any reachable devices, but the last device we used is valid, keep trying to use it.
     if (m_handler == nullptr && !previousSessionDeviceId.isEmpty() && knownDeviceIds.contains(previousSessionDeviceId)) {
         setupHandler(previousSessionDeviceId);
+        setDeviceName(dbus::device(previousSessionDeviceId).name());
     }
 
     if (m_handler == nullptr) {
@@ -167,6 +173,10 @@ void DeviceStatus::poll()
             dbus::daemon().forceOnNetworkChange();
             m_lastWakeAttempt = now;
         }
+    }
+
+    if (m_handler != nullptr) {
+        setStatus(dbus::device(m_handler->deviceID()).isReachable() ? Status::DeviceReady : Status::DeviceUnreachable);
     }
 }
 

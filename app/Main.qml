@@ -92,7 +92,7 @@ ApplicationWindow {
 
             // --- Active Phone Name ---
             Label {
-                text: deviceStatus.deviceName
+                text: deviceStatus.deviceName !== "" ? deviceStatus.deviceName : qsTr("No SMS Device Available")
                 font.bold: true
                 font.pixelSize: 13
                 color: theme.titleBarButtonTextColor
@@ -117,13 +117,13 @@ ApplicationWindow {
             }
 
             // --- Settings Button ---
-            ToolButton {
-                text: "⚙"
-                font.pixelSize: 14
-                implicitWidth: 34
-                implicitHeight: parent.height
-                onClicked: settingsDialog.open()
-            }
+            // ToolButton {
+            //     text: "⚙"
+            //     font.pixelSize: 14
+            //     implicitWidth: 34
+            //     implicitHeight: parent.height
+            //     onClicked: settingsDialog.open()
+            // }
 
             // --- Window Control Buttons ---
             Row {
@@ -199,6 +199,11 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
+            // Name will be null in all the "totally failed to work" cases.  If it's not null,
+            // it means that we're pretty sure the phone is just offline and users can use the cached
+            // data until it comes back.
+            visible: deviceStatus.deviceName !== ""
+
             ConversationList {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -211,6 +216,55 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
             }
+        }
+
+        RowLayout {
+            id: error
+            visible: deviceStatus.deviceName === ""
+            Layout.fillWidth: true
+
+            Image {
+                height: 48
+                width: 48
+                source: "qrc:/icons/error.svg"
+            }
+            Text {
+                visible: deviceStatus.status === DeviceStatus.DaemonNotRunning
+                Layout.fillWidth: true
+                text: qsTr("The KDE Daemon is not running (or at least it's not responding to commands sent " +
+                           "to it via dbus).  Perhaps you just need to install it?")
+                wrapMode: Text.Wrap
+            }
+            Text {
+                visible: deviceStatus.status === DeviceStatus.DaemonHung
+                Layout.fillWidth: true
+                text: qsTr("The KDE Daemon doesn't appear to be responding to messages; it might be hung. " +
+                           "You might try kicking it with `pkill kdeconnected`.  It can be sufficiently " +
+                           "hung up that it won't even respond to `pkill -9...`, in which case reboot.")
+                wrapMode: Text.Wrap
+            }
+            Text {
+                visible: deviceStatus.status === DeviceStatus.NoSmsDevice
+                Layout.fillWidth: true
+                text: qsTr("No phone (or SMS-capable device) could be found. Have you paired your phone " +
+                           "with KDE Connect? If not, do that. Otherwise, is it maybe just offline? " +
+                           "Unlock the phone and check if it's connected with KDE Connect by opening " +
+                           "the KDE Connect app on the phone.")
+                wrapMode: Text.Wrap
+            }
+            Text {
+                visible: deviceStatus.status === DeviceStatus.DeviceMissing
+                Layout.fillWidth: true
+                text: qsTr("The phone this process is configured to talk to is no longer paired with KDE. " +
+                           "Maybe you should remove this startup shortcut?  Or perhaps re-pair your phone?")
+                wrapMode: Text.Wrap
+            }
+        }
+
+        Item {
+            id: errorFiller
+            Layout.fillHeight: true
+            visible: deviceStatus.deviceName === ""
         }
     }
 
@@ -296,14 +350,5 @@ ApplicationWindow {
         cursorShape: Qt.SizeFDiagCursor
         onPressed: mainWindow.startSystemResize(Qt.BottomEdge | Qt.RightEdge)
         z: 9999
-    }
-
-    // Dummy settings dialog placeholder
-    Dialog {
-        id: settingsDialog
-        modal: true
-        title: "Settings"
-        standardButtons: Dialog.Ok
-        visible: false
     }
 }

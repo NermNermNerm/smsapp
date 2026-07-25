@@ -16,27 +16,27 @@
 - [x] Just-arrived messages say '0m' and there should be a 30-second timer to redraw dates.
 - [?] When connecting to the live phone and i knew there was a message on the 2nd thread (per the old ordering), it didn't download the fresh message until I clicked on the heading.  It could be the top-two threads were undownloaded, 
 
-## Status bar
-- [ ] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
-      telling the user to pair a device.
-- [ ] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
-      the user to install kde
-
-- [ ] When the phone is unreachable, the send button should be disabled
-- [ ] Reset KDE button
-- [ ] Show battery state
+## Status bar/Tray
 - [x] QML/Settings warnings on launch
+- [ ] copy 2FA codes to the clipboard
+- [ ] Multiphone
+  - [ ] Use different background colors for different specified phones
 
 ## Main Window
+- [ ] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
+- [ ] Show battery state instead of green dot for phone connected
+- [x] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
+      telling the user to pair a device.
+- [x] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
+      the user to install kde
+- [ ] Multiphone
+  - [ ] Show other phone launcher buttons
 - [ ] Splitter should allow maximizing one side or the other (or just block it from getting too small)
 - [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
-- [ ] Status bar should hide itself when phone status is green
-      (be visible for ~3 seconds after the window becomes visible or status becomes green)
-- [ ] copy 2FA codes to the clipboard
-
 
 ## Message List
+- [x] When the phone is unreachable, the send button should be disabled
 - [x] Date calculation not done until the 30 second tick
 - [x] Date not centered
 - [x] From-Me blocks are not right aligned
