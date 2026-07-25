@@ -38,7 +38,7 @@ qt_add_qml_module(appsmsapp
     SOURCES settings.h settings.cpp
     RESOURCES todo.md
     QML_FILES Main.qml
-    QML_FILES StatusBar.qml
+    QML_FILES
     QML_FILES ConversationList.qml
     QML_FILES MessageList.qml
     QML_FILES Avatar.qml
@@ -54,6 +54,7 @@ qt_add_qml_module(appsmsapp
     SOURCES backend/downscale.h backend/downscale.cpp
     SOURCES backend/draftmessages.h backend/draftmessages.cpp
     SOURCES backend/startupmenumanager.h backend/startupmenumanager.cpp
+    QML_FILES AppTheme.qml
 )
 
 # Add general Qt resources *after* the QML module

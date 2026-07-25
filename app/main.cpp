@@ -83,6 +83,7 @@ Terminal=false
 
     QQmlApplicationEngine global_engine;
     global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
+    global_engine.rootContext()->setContextProperty("specifiedDeviceId", deviceId);
     global_engine.rootContext()->setContextProperty("conversationListModel", &conversationListModel);
     global_engine.rootContext()->setContextProperty("messageListModel", &messageListModel);
     global_engine.rootContext()->setContextProperty("cliStartMinimized", parser.isSet(startMinimizedOpt));
