@@ -27,7 +27,7 @@
 
 ## Main Window
 - [x] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
-- [ ] Show battery state instead of green dot for phone connected
+- [x] Show battery state instead of green dot for phone connected
 - [ ] Add a pin-to-start option
 - [x] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
       telling the user to pair a device.

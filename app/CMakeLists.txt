@@ -5,7 +5,7 @@ project(smsapp VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets Svg)
 find_library(PHONENUMBER_LIB phonenumber)
 message(STATUS "PHONENUMBER_LIB = ${PHONENUMBER_LIB}")
 
@@ -97,6 +97,7 @@ target_link_libraries(appsmsapp
         Qt6::DBus
         Qt6::Widgets
         Qt6::Gui
+        Qt6::Svg
         ${PHONENUMBER_LIB}
 )
 

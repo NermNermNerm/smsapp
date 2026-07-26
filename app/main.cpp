@@ -80,7 +80,7 @@ Terminal=false
         messageListModel.setDevice(deviceStatus.handler());
     });
 
-    TrayIconController tray(deviceStatus);
+    TrayIconController tray(app, deviceStatus);
 
     QQmlApplicationEngine global_engine;
     global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
