@@ -23,6 +23,7 @@ add_executable(fake-kdeconnect
   commands.h commands.cpp
   harvester.h harvester.cpp
   nameresolver.h nameresolver.cpp
+  fakekdeconnectbattery.h fakekdeconnectbattery.cpp
 )
 target_link_libraries(fake-kdeconnect PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::DBus Qt${QT_VERSION_MAJOR}::Gui)
 

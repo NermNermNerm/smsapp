@@ -11,6 +11,14 @@
 #ifndef KDECONNECT_PROXY_H
 #define KDECONNECT_PROXY_H
 
+#include <QtCore/QObject>
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
+#include <QtCore/QMap>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QVariant>
+#include <QtDBus/QtDBus>
 
 /*
  * Proxy class for interface org.freedesktop.DBus.Introspectable
@@ -397,29 +405,31 @@ Q_SIGNALS: // SIGNALS
 };
 
 /*
- * Proxy class for interface org.kde.kdeconnect.device.contacts
+ * Proxy class for interface org.kde.kdeconnect.device.battery
  */
-class OrgKdeKdeconnectDeviceContactsInterface: public QDBusAbstractInterface
+class OrgKdeKdeconnectDeviceBatteryInterface: public QDBusAbstractInterface
 {
     Q_OBJECT
 public:
     static inline const char *staticInterfaceName()
-    { return "org.kde.kdeconnect.device.contacts"; }
+    { return "org.kde.kdeconnect.device.battery"; }
 
 public:
-    OrgKdeKdeconnectDeviceContactsInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = nullptr);
+    OrgKdeKdeconnectDeviceBatteryInterface(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = nullptr);
 
-    ~OrgKdeKdeconnectDeviceContactsInterface();
+    ~OrgKdeKdeconnectDeviceBatteryInterface();
+
+    Q_PROPERTY(int charge READ charge)
+    inline int charge() const
+    { return qvariant_cast< int >(property("charge")); }
+
+    Q_PROPERTY(bool isCharging READ isCharging)
+    inline bool isCharging() const
+    { return qvariant_cast< bool >(property("isCharging")); }
 
 public Q_SLOTS: // METHODS
-    inline QDBusPendingReply<> synchronizeRemoteWithLocal()
-    {
-        QList<QVariant> argumentList;
-        return asyncCallWithArgumentList(QStringLiteral("synchronizeRemoteWithLocal"), argumentList);
-    }
-
 Q_SIGNALS: // SIGNALS
-    void localCacheSynchronized(const QStringList &newContacts);
+    void refreshed(bool isCharging, int charge);
 };
 
 /*
@@ -599,7 +609,7 @@ namespace org {
       using daemon = ::OrgKdeKdeconnectDaemonInterface;
       using device = ::OrgKdeKdeconnectDeviceInterface;
 //       namespace device {
-        using contacts = ::OrgKdeKdeconnectDeviceContactsInterface;
+        using battery = ::OrgKdeKdeconnectDeviceBatteryInterface;
         using conversations = ::OrgKdeKdeconnectDeviceConversationsInterface;
         using sms = ::OrgKdeKdeconnectDeviceSmsInterface;
         using telephony = ::OrgKdeKdeconnectDeviceTelephonyInterface;

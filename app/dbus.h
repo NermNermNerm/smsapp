@@ -127,4 +127,23 @@ inline org::kde::kdeconnect::telephony& telephony(const QString &id)
     return *cache[id];
 }
 
+//
+// Battery proxy singletons
+//
+inline org::kde::kdeconnect::battery& battery(const QString &id)
+{
+    static QHash<QString, org::kde::kdeconnect::battery*> cache;
+
+    if (!cache.contains(id)) {
+        cache[id] = new org::kde::kdeconnect::battery(
+            serviceName,
+            deviceBasePath + id + "/battery",
+            bus(),
+            nullptr
+            );
+    }
+    return *cache[id];
+}
+
+
 } // namespace dbus

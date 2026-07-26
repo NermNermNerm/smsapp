@@ -83,13 +83,20 @@ ApplicationWindow {
 
             // --- Status Dot ---
             Rectangle {
+                visible: deviceStatus.status !== DeviceStatus.DeviceReady
                 width: 10
                 height: 10
                 radius: 5
                 Layout.alignment: Qt.AlignVCenter
-                color: deviceStatus.status === DeviceStatus.DeviceReady ? theme.statusOk
-                      : deviceStatus.status === DeviceStatus.DeviceUnreachable ? theme.statusWarn
-                      : theme.statusError
+                color: deviceStatus.status === DeviceStatus.DeviceUnreachable ? theme.statusWarn : theme.statusError
+            }
+
+            BatteryIndicator {
+                visible: deviceStatus.status === DeviceStatus.DeviceReady
+                showText: false
+                height: 16
+                isCharging: deviceStatus.isCharging
+                charge: deviceStatus.batteryCharge
             }
 
             // --- Active Phone Name ---

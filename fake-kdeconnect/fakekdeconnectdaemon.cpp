@@ -2,6 +2,7 @@
 #include "fakekdeconnectdaemon.h"
 #include "fakekdeconnectdevice.h"
 #include "fakedeviceconversationsinterface.h"
+#include "fakekdeconnectbattery.h"
 #include "commands.h"
 
 #include <QDBusConnection>
@@ -69,8 +70,23 @@ bool FakeKdeConnectDaemon::registerOnDBus()
             delete convObj;
             return false;
         }
-
         m_fakeConversations[devInfo->id] = convObj;
+
+        const QString batteryPath =
+            QString("/modules/kdeconnect/devices/%1/battery").arg(devInfo->id);
+        auto *batteryObj = new FakeKdeConnectBattery(this);
+        if (!bus.registerObject(batteryPath,
+                                batteryObj,
+                                QDBusConnection::ExportAllProperties |
+                                    QDBusConnection::ExportAllSlots |
+                                    QDBusConnection::ExportAllSignals |
+                                    QDBusConnection::ExportAdaptors)) {
+            qCritical() << "Failed to register battery object at " << batteryPath
+                        << ": " << bus.lastError().message();
+            delete batteryObj;
+            return false;
+        }
+        m_fakeBattery[devInfo->id] = batteryObj;
     }
 
     return true;

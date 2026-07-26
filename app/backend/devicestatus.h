@@ -37,12 +37,13 @@ public:
 
     explicit DeviceStatus(const QString &specifiedDeviceId = "", QObject *parent = nullptr);
 
-    // List of devices that support SMS
-    Q_PROPERTY(QList<DeviceInfo> otherDevices READ otherDevices NOTIFY otherDevicesChanged)
-    Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
-    Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(MessagesHandler* handler READ handler NOTIFY handlerChanged)
-    Q_PROPERTY(bool autoFixDaemon READ autoFixDaemon WRITE setAutoFixDaemon NOTIFY autoFixDaemonChanged)
+    Q_PROPERTY(QList<DeviceInfo> otherDevices READ otherDevices NOTIFY otherDevicesChanged FINAL)
+    Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged FINAL)
+    Q_PROPERTY(Status status READ status NOTIFY statusChanged FINAL)
+    Q_PROPERTY(MessagesHandler* handler READ handler NOTIFY handlerChanged FINAL)
+    Q_PROPERTY(bool autoFixDaemon READ autoFixDaemon WRITE setAutoFixDaemon NOTIFY autoFixDaemonChanged FINAL)
+    Q_PROPERTY(int batteryCharge READ batteryCharge NOTIFY batteryChargeChanged FINAL)
+    Q_PROPERTY(bool isCharging READ isCharging NOTIFY isChargingChanged FINAL)
 
 public:
     // Accessors
@@ -51,6 +52,8 @@ public:
     bool autoFixDaemon() const {  return settings().autoFixDaemon(); }
     QList<DeviceInfo> otherDevices() const { return m_otherDevices; }
     QString deviceName() const { return m_deviceName; }
+    int batteryCharge() const { return m_batteryCharge; }
+    bool isCharging() const { return m_isCharging; }
 
     // Mutators
     void setAutoFixDaemon(bool enabled);
@@ -70,6 +73,8 @@ signals:
     void autoFixDaemonChanged();
     void deviceNameChanged();
     void otherDevicesChanged();
+    void batteryChargeChanged();
+    void isChargingChanged();
 
 private:
     void poll();
@@ -91,6 +96,8 @@ private:
     Settings *m_settings = nullptr;
     QDateTime m_lastWakeAttempt;
     QString m_deviceName;
+    int m_batteryCharge; // 0-100
+    bool m_isCharging;
 
     /** @brief if we were told on the command line what device to interact with, this is it.  Else it's empty */
     const QString m_specifiedDeviceId;

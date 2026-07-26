@@ -18,16 +18,17 @@
 
 ## Status bar/Tray
 - [x] QML/Settings warnings on launch
+- [ ] Show an indicator when new messages are there
+- [ ] Tooltip should show whether there are messages or not
+- [ ] Clicking on the tray icon should open the app
 - [ ] copy 2FA codes to the clipboard
 - [ ] Multiphone
   - [ ] Use different background colors for different specified phones
-- [ ] Show an indicator when new messages are there
-- [ ] Tooltip should show whether there are messages or not
-- [ ] Clicking on the tooltip should open the app
 
 ## Main Window
-- [ ] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
+- [x] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
 - [ ] Show battery state instead of green dot for phone connected
+- [ ] Add a pin-to-start option
 - [x] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
       telling the user to pair a device.
 - [x] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
@@ -92,7 +93,9 @@
 - [x] Incremental load of messages
 - [x] Full load of messages
 - [x] Check multi-target messaging
-- [ ] Nice up the command parser and add help.
+- [x] Nice up the command parser and add help.
+- [ ] Multiphone
+      - [ ] Add commands to create a new device
 `
 
 

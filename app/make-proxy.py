@@ -68,6 +68,11 @@ def build_combined_xml(device_id: str) -> ET.Element:
         introspect(f"{DAEMON_PATH}/devices/{device_id}/sms")
     )
 
+    print("Introspecting Battery...")
+    battery_xml = parse_introspection(
+        introspect(f"{DAEMON_PATH}/devices/{device_id}/battery")
+    )
+
     # Telephony is where incoming SMS notifications live now
     telephony_xml = None
     telephony_path = f"{DAEMON_PATH}/devices/{device_id}/telephony"
@@ -96,7 +101,7 @@ def build_combined_xml(device_id: str) -> ET.Element:
         elif child.tag == "node":
             name = child.attrib.get("name", "")
             # Skip stub nodes; we’ll attach real sms/telephony below
-            if name in ("sms", "telephony"):
+            if name in ("sms", "telephony", "battery"):
                 continue
             device_node.append(child)
 
@@ -104,6 +109,11 @@ def build_combined_xml(device_id: str) -> ET.Element:
     sms_node = ET.SubElement(device_node, "node", {"name": "sms"})
     for child in sms_xml:
         sms_node.append(child)
+
+    # Attach real Battery node
+    battery_node = ET.SubElement(device_node, "node", {"name": "battery"})
+    for child in battery_xml:
+        battery_node.append(child)
 
     # Attach telephony node if present
     if telephony_xml is not None:

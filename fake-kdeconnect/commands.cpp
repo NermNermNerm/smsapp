@@ -2,6 +2,7 @@
 #include "commands.h"
 #include "fakedeviceconversationsinterface.h"
 #include "fakekdeconnectdaemon.h"
+#include "fakekdeconnectbattery.h"
 #include "deviceconfig.h"
 #include "harvester.h"
 #include "dbus.h"
@@ -216,6 +217,25 @@ void cmdAttachmentInterval(const QStringList &args)
                   &FakeDeviceConversationsInterface::attachmentInterval);
 }
 
+void cmdCharge(const QString &rawLevel)
+{
+    int level;
+    if (!parseUint(rawLevel, level)) {
+        return;
+    }
+
+    auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
+    auto *iface  = g_daemon->getBatteryInterface(device->id);
+    iface->setLevel(level);
+}
+
+void cmdCharging(double rate)
+{
+    auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
+    auto *iface  = g_daemon->getBatteryInterface(device->id);
+    iface->setChargeRate(rate);
+}
+
 
 struct CommandSpec
 {
@@ -273,6 +293,18 @@ static const CommandSpec g_commands[] = {
     { "attachmentinterval", 0, 1, cmdAttachmentInterval,
      "Set attachment processing interval",
      "attachmentinterval <ms>" },
+
+    { "charge",          1, 1, [](const QStringList &a){ cmdCharge(a[0]); },
+     "Set the charge level of the battery of the current device",
+     "charge <0..100>" },
+
+    { "charging",        0, 0, [](const QStringList &a){ cmdCharging(1); },
+     "Sets the phone to charge at 1%/minute",
+     "charging" },
+
+    { "discharging",        0, 0, [](const QStringList &a){ cmdCharging(-0.25); },
+     "Sets the phone to discharge at 1% every 4 minutes",
+     "discharging" },
 
     { "help",            0, 1, cmdHelp,
      "Show help for all commands or one command",

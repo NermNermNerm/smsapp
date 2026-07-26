@@ -178,6 +178,20 @@ void DeviceStatus::poll()
     if (m_handler != nullptr) {
         setStatus(dbus::device(m_handler->deviceID()).isReachable() ? Status::DeviceReady : Status::DeviceUnreachable);
     }
+
+    if (m_status == Status::DeviceReady) {
+        int newBatteryCharge = dbus::battery(m_handler->deviceID()).charge();
+        if (m_batteryCharge != newBatteryCharge) {
+            m_batteryCharge = newBatteryCharge;
+            emit batteryChargeChanged();
+        }
+
+        bool newIsCharging = dbus::battery(m_handler->deviceID()).isCharging();
+        if (m_isCharging != newIsCharging) {
+            m_isCharging = newIsCharging;
+            emit isChargingChanged();
+        }
+    }
 }
 
 // DBus signal handler for when a new device might be available.

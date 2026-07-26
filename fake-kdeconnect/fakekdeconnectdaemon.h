@@ -8,6 +8,7 @@
 #include "deviceconfig.h"
 
 class FakeDeviceConversationsInterface;
+class FakeKdeConnectBattery;
 
 class FakeKdeConnectDaemon : public QObject {
     Q_OBJECT
@@ -26,6 +27,7 @@ public:
 
     std::vector<std::unique_ptr<DeviceConfig>> &getDeviceConfigs() { return m_devices; };
     FakeDeviceConversationsInterface *getConversationsInterface(const QString &deviceID) { return m_fakeConversations[deviceID]; }
+    FakeKdeConnectBattery *getBatteryInterface(const QString &deviceID) { return m_fakeBattery[deviceID]; }
 
 public slots:
     QStringList devices();
@@ -42,4 +44,5 @@ private:
     std::vector<std::unique_ptr<DeviceConfig>> m_devices;
     int m_selectedIndex = -1;
     QHash<QString, FakeDeviceConversationsInterface*> m_fakeConversations;
+    QHash<QString, FakeKdeConnectBattery*> m_fakeBattery;
 };
