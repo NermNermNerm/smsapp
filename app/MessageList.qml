@@ -174,9 +174,11 @@ Item {
                                     wrapMode: TextEdit.Wrap
                                     textFormat: TextEdit.RichText
 
+                                    // Shenanigans!  There is no linkColor property in a text area, and this is
+                                    //  the only way I can figure to make it happen that actually works.
                                     text: object.richTextBody
+                                        .replace("<a href=", "<a style=\"color: " + color + "\" href=")
                                     color: object.isIncoming ? "#222222" : "#ffffff"
-                                    // linkColor: object.isIncoming ? "#222222" : "#ffffff"
 
                                     width: parent.width
                                     horizontalAlignment: object.isIncoming ? Text.AlignLeft : Text.AlignRight

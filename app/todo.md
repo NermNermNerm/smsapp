@@ -40,7 +40,7 @@
 - [x] Remember window size and position
 
 ## Message List
-- [ ] Can't copy/paste from messages
+- [x] Can't copy/paste from messages
 - [x] When the phone is unreachable, the send button should be disabled
 - [x] Date calculation not done until the 30 second tick
 - [x] Date not centered
