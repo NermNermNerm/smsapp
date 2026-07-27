@@ -1,5 +1,4 @@
 # First Level Heading
-\n    <svg xmlns="http://www.w3.org/2000/svg"\n         width="64" height="64" viewBox="0 0 64 64">\n\n      <rect x="10" y="4" width="44" height="56" rx="5" ry="5"\n            fill="#ffffff" fill-opacity="0.85"/>\n\n      <rect x="14" y="10" width="36" height="42" rx="3" ry="3"\n            fill="#0000ff"
 
 - [x] Upload it all to github.
 - [ ] Write a readme
@@ -41,6 +40,7 @@
 - [x] Remember window size and position
 
 ## Message List
+- [ ] Can't copy/paste from messages
 - [x] When the phone is unreachable, the send button should be disabled
 - [x] Date calculation not done until the 30 second tick
 - [x] Date not centered

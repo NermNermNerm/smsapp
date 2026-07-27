@@ -166,21 +166,71 @@ Item {
                                 // Pass the layout's height down from the text element
                                 implicitHeight: textBlock.implicitHeight
 
-                                Text {
+                                TextEdit {
                                     id: textBlock
-                                    textFormat: Text.StyledText
+
+                                    readOnly: true
+                                    selectByMouse: true
+                                    wrapMode: TextEdit.Wrap
+                                    textFormat: TextEdit.RichText
+
                                     text: object.richTextBody
                                     color: object.isIncoming ? "#222222" : "#ffffff"
-                                    linkColor: object.isIncoming ? "#222222" : "#ffffff"
+                                    // linkColor: object.isIncoming ? "#222222" : "#ffffff"
 
-                                    // Stretch to fill the Item parent width calculated above
                                     width: parent.width
-
-                                    // Only wrap if the text is actually forced to take up the max width
-                                    wrapMode: textBlock.implicitWidth > delegateRoot.maxBubbleContentWidth ? Text.Wrap : Text.NoWrap
-
                                     horizontalAlignment: object.isIncoming ? Text.AlignLeft : Text.AlignRight
+
+                                    // Remove the ugly focus border
+                                    activeFocusOnPress: false
+                                    focus: false
+
                                     onLinkActivated: (link) => Qt.openUrlExternally(link)
+
+                                    onSelectionStartChanged: {
+                                        // console.log("onSelectionStartChanged " + selectionStart);
+                                        textBlock.forceActiveFocus()
+                                    }
+
+                                    onSelectionEndChanged: {
+                                        // console.log("onSelectionEndChanged " + selectionEnd);
+                                        textBlock.forceActiveFocus()
+                                    }
+
+                                    Keys.onPressed: (event) => {
+                                        // console.log("Keys.onPressed");
+                                        if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
+                                            if (textBlock.selectedText.length > 0)
+                                                textBlock.copy()
+                                            event.accepted = true
+                                        }
+                                    }
+
+                                    // Right-click handler
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.RightButton
+                                        onClicked: (mouse) => {
+                                            // console.log("MouseArea.onClicked");
+                                            if (mouse.button === Qt.RightButton)
+                                                contextMenu.popup(mouse.x, mouse.y)
+                                        }
+                                        onPressed: {
+                                            // console.log("MouseArea.onPressed");
+                                            textBlock.forceActiveFocus()
+                                        }
+                                    }
+                                }
+
+                                Menu {
+                                    id: contextMenu
+                                    MenuItem {
+                                        text: "Copy"
+                                        onTriggered: {
+                                            if (textBlock.selectedText.length > 0)
+                                                textBlock.copy()
+                                        }
+                                    }
                                 }
                             }
                         }
