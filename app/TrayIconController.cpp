@@ -6,11 +6,12 @@
 TrayIconController::TrayIconController(QGuiApplication &app, DeviceStatus &deviceStatus, QObject *parent)
     : QObject(parent), m_deviceStatus(deviceStatus), m_app(app)
 {
-    QObject::connect(&m_deviceStatus, &DeviceStatus::statusChanged,
+    connect(&m_deviceStatus, &DeviceStatus::statusChanged,
                      this, &TrayIconController::onDeviceStatusChanged);
-    QObject::connect(&m_deviceStatus, &DeviceStatus::handlerChanged,
+    connect(&m_deviceStatus, &DeviceStatus::handlerChanged,
                      this, &TrayIconController::onMessagesHandlerChanged);
-
+    connect(&m_tray, &QSystemTrayIcon::activated,
+            this, &TrayIconController::onTrayActivated);
     connect(qApp, &QGuiApplication::applicationStateChanged,
             this, &TrayIconController::onAppStateChanged);
     m_lastActiveTime = QDateTime::currentDateTime(); // not utc, incoming messages are local time.
@@ -199,3 +200,16 @@ void TrayIconController::refreshIcon()
     m_tray.setToolTip(toolTipText);
     m_tray.setIcon(icon);
 }
+
+void TrayIconController::onTrayActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    if (reason == QSystemTrayIcon::Trigger) {
+        const auto windows = m_app.allWindows();
+        if (!windows.isEmpty()) {
+            QWindow *w = windows.first();
+            w->raise();
+            w->requestActivate();
+        }
+    }
+}
+

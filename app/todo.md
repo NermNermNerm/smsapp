@@ -1,4 +1,5 @@
 # First Level Heading
+\n    <svg xmlns="http://www.w3.org/2000/svg"\n         width="64" height="64" viewBox="0 0 64 64">\n\n      <rect x="10" y="4" width="44" height="56" rx="5" ry="5"\n            fill="#ffffff" fill-opacity="0.85"/>\n\n      <rect x="14" y="10" width="36" height="42" rx="3" ry="3"\n            fill="#0000ff"
 
 - [x] Upload it all to github.
 - [ ] Write a readme
@@ -18,9 +19,9 @@
 
 ## Status bar/Tray
 - [x] QML/Settings warnings on launch
-- [ ] Show an indicator when new messages are there
-- [ ] Tooltip should show whether there are messages or not
-- [ ] Clicking on the tray icon should open the app
+- [x] Show an indicator when new messages are there
+- [x] Tooltip should show whether there are messages or not
+- [x] Clicking on the tray icon should open the app
 - [ ] copy 2FA codes to the clipboard
 - [ ] Multiphone
   - [ ] Use different background colors for different specified phones

@@ -18,7 +18,7 @@ private:
     void onMessageArrived();
     void onAppStateChanged(Qt::ApplicationState state);
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
-
+    void onTrayActivated(QSystemTrayIcon::ActivationReason reason);
 
     DeviceStatus &m_deviceStatus;
     QSystemTrayIcon m_tray;
