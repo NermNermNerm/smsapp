@@ -1,4 +1,5 @@
 #pragma once
+#include "backend/devicestatus.h"
 
 class DeviceStatus;
 class ConversationMessage;
@@ -12,6 +13,7 @@ public:
 
 private:
     void refreshIcon();
+    void onDeviceStatusChanged();
     void onMessagesHandlerChanged();
     void onMessageArrived();
     void onAppStateChanged(Qt::ApplicationState state);
@@ -22,6 +24,9 @@ private:
     QSystemTrayIcon m_tray;
     bool m_handlerIsAttached = false;
     QDateTime m_lastActiveTime;
-    bool m_hasNewMessages = false;
+    QDateTime m_lastReachableTime = {};
+    int m_numNewMessages = 0;
+    QString m_lastMessageFrom;
     QGuiApplication &m_app;
+    DeviceStatus::Status m_lastStatus;
 };

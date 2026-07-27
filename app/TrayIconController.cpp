@@ -1,34 +1,49 @@
 #include "TrayIconController.h"
 #include "backend/devicestatus.h"
 #include <QtSvg/QSvgRenderer>
-#include <QApplication>
+#include "backend/nameresolver.h"
 
 TrayIconController::TrayIconController(QGuiApplication &app, DeviceStatus &deviceStatus, QObject *parent)
     : QObject(parent), m_deviceStatus(deviceStatus), m_app(app)
 {
     QObject::connect(&m_deviceStatus, &DeviceStatus::statusChanged,
-                     this, &TrayIconController::refreshIcon);
+                     this, &TrayIconController::onDeviceStatusChanged);
     QObject::connect(&m_deviceStatus, &DeviceStatus::handlerChanged,
                      this, &TrayIconController::onMessagesHandlerChanged);
 
     connect(qApp, &QGuiApplication::applicationStateChanged,
             this, &TrayIconController::onAppStateChanged);
     m_lastActiveTime = QDateTime::currentDateTime(); // not utc, incoming messages are local time.
-    m_hasNewMessages = false;
+    m_numNewMessages = 0;
+    m_lastReachableTime = {};
     refreshIcon();
     m_tray.show();
+    m_lastStatus = m_deviceStatus.status();
+    Q_ASSERT(m_lastStatus != DeviceStatus::Status::DeviceReady);
+}
+
+void TrayIconController::onDeviceStatusChanged()
+{
+    auto newStatus = m_deviceStatus.status();
+    Q_ASSERT(newStatus != m_lastStatus);
+    if (m_lastStatus == DeviceStatus::Status::DeviceReady) {
+        m_lastReachableTime = QDateTime::currentDateTime();
+    }
+    m_lastStatus = newStatus;
+    refreshIcon();
 }
 
 void TrayIconController::onAppStateChanged(Qt::ApplicationState state)
 {
     if (state == Qt::ApplicationActive) {
         // app just became active
-        m_hasNewMessages = false;
-        refreshIcon();
+        m_numNewMessages = 0;
+        m_lastMessageFrom = "";
     } else {
         // app just lost focus
         m_lastActiveTime = QDateTime::currentDateTime();
     }
+    refreshIcon();
 }
 
 void TrayIconController::onMessagesHandlerChanged()
@@ -42,10 +57,11 @@ void TrayIconController::onMessagesHandlerChanged()
 
 void TrayIconController::onConversationMessageChanged(const ConversationMessage &updatedMessage)
 {
-    if (!m_hasNewMessages
-     && m_app.applicationState() != Qt::ApplicationActive
+    if (m_app.applicationState() != Qt::ApplicationActive
      && updatedMessage.date() > m_lastActiveTime.toMSecsSinceEpoch()) {
-        m_hasNewMessages = true;
+        auto messages = updatedMessage.addresses();
+        m_lastMessageFrom = NameResolver::phoneNumberToName(messages.first().address());
+        ++m_numNewMessages;
         refreshIcon();
     }
 }
@@ -97,14 +113,14 @@ static QIcon makeTrayIcon(const QColor &background,
             fill="#ffffff" fill-opacity="0.85"/>
 
       <rect x="14" y="10" width="36" height="42" rx="3" ry="3"
-            fill="%2" fill-opacity="0.9"/>
+            fill="%1" fill-opacity="0.9"/>
 
       <rect x="22" y="54" width="20" height="4" rx="2" ry="2"
             fill="#202020"/>
 
-      <circle cx="46" cy="48" r="8" fill="%3"/>
+      <circle cx="46" cy="48" r="8" fill="%2"/>
 
-      %4
+      %3
     </svg>
     )")
     .arg(screenFill, dotColor, sparkle);
@@ -118,27 +134,68 @@ static QIcon makeTrayIcon(const QColor &background,
     return icon;
 }
 
+static QString formatTime(const QDateTime &dt)
+{
+    Q_ASSERT(dt.isValid());
+
+    if (dt.secsTo(QDateTime::currentDateTime()) < 24 * 3600)
+        return QLocale().toString(dt.time(), QLocale::ShortFormat);
+    else
+        return QLocale().toString(dt.date(), QLocale::ShortFormat);
+}
+
 void TrayIconController::refreshIcon()
 {
     static const QColor nonSpecificPhoneColor = QColor("blue");
 
-    QIcon icon = makeTrayIcon(nonSpecificPhoneColor, m_deviceStatus.deviceName() == "", m_deviceStatus.status() == DeviceStatus::Status::DeviceReady, m_hasNewMessages);
+    QIcon icon = makeTrayIcon(nonSpecificPhoneColor,
+                              (m_deviceStatus.deviceName().isEmpty()),
+                              (m_deviceStatus.status() == DeviceStatus::Status::DeviceReady),
+                              m_numNewMessages > 0);
 
-    // text builder:
-/*
-Pixel 7
-Connected, 78% (Charging)
-3 new messages since 2:14 PM
-Last message from John Doe
+    QString deviceName = m_deviceStatus.deviceName();
 
-iPhone 12
-Phone unreachable since 2:14pm
-2 new messages since 10:13am
+    QString toolTipText;
+    if (deviceName.isEmpty()) {
+        toolTipText = QStringLiteral("Can't connect to the phone!\nOpen app for details.");
+    } else {
+        toolTipText = deviceName % "\n";
 
-Can't connect to phone!
-Open app for details.
- */
+        //
+        // Connection + battery
+        //
+        if (m_deviceStatus.status() == DeviceStatus::Status::DeviceReady) {
+            if (m_deviceStatus.isCharging()) {
+                toolTipText += QObject::tr("Connected — %1% and charging\n")
+                                   .arg(m_deviceStatus.batteryCharge());
+            } else {
+                toolTipText += QObject::tr("Connected — %1%\n")
+                                   .arg(m_deviceStatus.batteryCharge());
+            }
+        } else if (m_lastReachableTime.isValid()){
+            toolTipText += QObject::tr("Phone unreachable since %1\n").arg(formatTime(m_lastReachableTime));
+        }
+        else {
+            toolTipText += QObject::tr("Phone unreachable since startup\n");
+        }
 
-    m_tray.setToolTip("zomg the tooltip works");
+        //
+        // New‑message summary
+        //
+        if (m_app.applicationState() != Qt::ApplicationActive) {
+            auto sinceTime = formatTime(m_lastActiveTime);
+            if (m_numNewMessages == 0) {
+                toolTipText += QObject::tr("No new messages since %1").arg(sinceTime);
+            } else if (m_numNewMessages == 1) {
+                toolTipText += QObject::tr("1 new message since %1\nLast message from %2")
+                .arg(sinceTime, m_lastMessageFrom);
+            } else {
+                toolTipText += QObject::tr("%1 new messages since %2\nLast message from %3")
+                .arg(m_numNewMessages).arg(sinceTime, m_lastMessageFrom);
+            }
+        }
+    }
+
+    m_tray.setToolTip(toolTipText);
     m_tray.setIcon(icon);
 }
