@@ -55,6 +55,7 @@ qt_add_qml_module(appsmsapp
     SOURCES backend/startupmenumanager.h backend/startupmenumanager.cpp
     QML_FILES AppTheme.qml
     QML_FILES BatteryIndicator.qml
+    SOURCES instancemanager.h instancemanager.cpp
 )
 
 # Add general Qt resources *after* the QML module

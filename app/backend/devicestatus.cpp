@@ -1,7 +1,7 @@
 #include "devicestatus.h"
 #include "messageshandler.h"
 #include "dbus.h"
-
+#include "instancemanager.h"
 
 DeviceStatus::DeviceStatus(const QString &specifiedDeviceId, QObject *parent)
     : QObject(parent), m_specifiedDeviceId(specifiedDeviceId)
@@ -202,6 +202,8 @@ void DeviceStatus::onDeviceListChanged()
 
 void DeviceStatus::setupHandler(const QString &deviceId)
 {
+    InstanceManager::claimOrExit(deviceId);
+
     Q_ASSERT(m_handler == nullptr);
     m_handler = new MessagesHandler(deviceId, this);
     emit handlerChanged();
