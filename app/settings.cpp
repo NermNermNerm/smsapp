@@ -65,7 +65,7 @@ QColor Settings::getColorForDevice(const QString &deviceID)
     }
 
     QSet<QString> used;
-    for (const QString &k : m_settings.childKeys()) {
+    for (const QString &k : m_settings.allKeys()) {
         if (!k.startsWith("deviceColors/"))
             continue;
 
