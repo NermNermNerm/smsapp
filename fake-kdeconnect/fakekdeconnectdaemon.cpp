@@ -51,44 +51,53 @@ bool FakeKdeConnectDaemon::registerOnDBus()
 
     // Register each device and its conversations interface
     for (auto& devInfo : std::as_const(m_devices)) {
-
-        const QString devicePath =
-            QString("/modules/kdeconnect/devices/%1").arg(devInfo->id);
-
-        // Device object
-        auto *deviceObj = new FakeKdeConnectDevice(devInfo.get(), this);
-        auto *convObj = new FakeDeviceConversationsInterface(devInfo.get(), deviceObj);
-        if (!bus.registerObject(devicePath,
-                                deviceObj,
-                                QDBusConnection::ExportAllProperties |
-                                    QDBusConnection::ExportAllSlots |
-                                    QDBusConnection::ExportAllSignals |
-                                    QDBusConnection::ExportAdaptors)) {
-            qCritical() << "Failed to register device object at " << devicePath
-                        << ": " << bus.lastError().message();
-            delete deviceObj;
-            delete convObj;
+        if (!registerDevice(devInfo.get())) {
             return false;
         }
-        m_fakeConversations[devInfo->id] = convObj;
-
-        const QString batteryPath =
-            QString("/modules/kdeconnect/devices/%1/battery").arg(devInfo->id);
-        auto *batteryObj = new FakeKdeConnectBattery(this);
-        if (!bus.registerObject(batteryPath,
-                                batteryObj,
-                                QDBusConnection::ExportAllProperties |
-                                    QDBusConnection::ExportAllSlots |
-                                    QDBusConnection::ExportAllSignals |
-                                    QDBusConnection::ExportAdaptors)) {
-            qCritical() << "Failed to register battery object at " << batteryPath
-                        << ": " << bus.lastError().message();
-            delete batteryObj;
-            return false;
-        }
-        m_fakeBattery[devInfo->id] = batteryObj;
     }
 
+    return true;
+}
+
+bool FakeKdeConnectDaemon::registerDevice(DeviceConfig *devInfo) {
+    auto bus = QDBusConnection::sessionBus();
+
+    const QString devicePath =
+        QString("/modules/kdeconnect/devices/%1").arg(devInfo->id);
+
+    // Device object
+    auto *deviceObj = new FakeKdeConnectDevice(devInfo, this);
+    auto *convObj = new FakeDeviceConversationsInterface(devInfo, deviceObj);
+    if (!bus.registerObject(devicePath,
+                            deviceObj,
+                            QDBusConnection::ExportAllProperties |
+                                QDBusConnection::ExportAllSlots |
+                                QDBusConnection::ExportAllSignals |
+                                QDBusConnection::ExportAdaptors)) {
+        qCritical() << "Failed to register device object at " << devicePath
+                    << ": " << bus.lastError().message();
+        delete deviceObj;
+        delete convObj;
+        return false;
+    }
+    m_fakeDevices[devInfo->id] = deviceObj;
+    m_fakeConversations[devInfo->id] = convObj;
+
+    const QString batteryPath =
+        QString("/modules/kdeconnect/devices/%1/battery").arg(devInfo->id);
+    auto *batteryObj = new FakeKdeConnectBattery(this);
+    if (!bus.registerObject(batteryPath,
+                            batteryObj,
+                            QDBusConnection::ExportAllProperties |
+                                QDBusConnection::ExportAllSlots |
+                                QDBusConnection::ExportAllSignals |
+                                QDBusConnection::ExportAdaptors)) {
+        qCritical() << "Failed to register battery object at " << batteryPath
+                    << ": " << bus.lastError().message();
+        delete batteryObj;
+        return false;
+    }
+    m_fakeBattery[devInfo->id] = batteryObj;
     return true;
 }
 
@@ -136,3 +145,69 @@ bool FakeKdeConnectDaemon::checkSelected() const
     }
     return true;
 }
+
+int FakeKdeConnectDaemon::newDevice(const DeviceConfig &config)
+{
+    auto *myCopy = new DeviceConfig(config);
+    m_devices.emplace_back(myCopy);
+    myCopy->save();
+    registerDevice(myCopy);
+    emit deviceAdded(config.id);
+    emit deviceListChanged();
+    return m_devices.size()-1;
+}
+
+void FakeKdeConnectDaemon::removeDevice(int deviceIndex)
+{
+    auto *cfg = m_devices[deviceIndex].get();
+    const QString id = cfg->id;
+
+    cfg->remove();
+
+    auto bus = QDBusConnection::sessionBus();
+
+    const QString devicePath =
+        QString("/modules/kdeconnect/devices/%1").arg(id);
+    const QString batteryPath =
+        QString("/modules/kdeconnect/devices/%1/battery").arg(id);
+
+    // Unregister DBus objects first
+    bus.unregisterObject(devicePath);
+    bus.unregisterObject(batteryPath);
+
+    // Delete QObjects (convObj is child of deviceObj)
+    delete m_fakeDevices[id];
+    delete m_fakeBattery[id];
+
+    // Remove from maps
+    m_fakeDevices.remove(id);
+    m_fakeConversations.remove(id);   // no delete
+    m_fakeBattery.remove(id);
+
+    // Remove from vector
+    auto it = m_devices.begin();
+    std::advance(it, deviceIndex);
+    m_devices.erase(it);
+
+    emit deviceRemoved(id);
+    emit deviceListChanged();
+}
+
+int FakeKdeConnectDaemon::restoreDevice(const QString &id)
+{
+    auto *myCopy = DeviceConfig::restore(id);
+    if (myCopy == nullptr)
+        return -1;
+
+    m_devices.emplace_back(myCopy);
+    const int index = m_devices.size() - 1;
+
+    registerDevice(myCopy);
+
+    emit deviceAdded(id);
+    emit deviceListChanged();
+
+    return index;
+}
+
+

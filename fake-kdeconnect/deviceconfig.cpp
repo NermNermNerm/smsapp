@@ -5,6 +5,48 @@
 #include <QMimeDatabase>
 #include <QImage>
 #include <QBuffer>
+#include <QRandomGenerator>
+
+static std::unique_ptr<DeviceConfig> loadSingle(const QString &jsonPath)
+{
+    QFile f(jsonPath);
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+
+    QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+    f.close();
+    if (!doc.isObject())
+        return {};
+
+    QJsonObject obj = doc.object();
+
+    auto cfg = std::make_unique<DeviceConfig>();
+    cfg->id        = obj.value("id").toString();
+    cfg->name      = obj.value("name").toString();
+    cfg->reachable = obj.value("reachable").toBool();
+
+    // Load SMS only if the normal file exists
+    QString baseDir = QDir::homePath() + "/fakekde";
+    QString smsPath = baseDir + "/" + cfg->id + "_sms.json";
+
+    QFile smsFile(smsPath);
+    if (smsFile.exists() && smsFile.open(QIODevice::ReadOnly)) {
+        QJsonDocument smsDoc = QJsonDocument::fromJson(smsFile.readAll());
+        smsFile.close();
+
+        if (smsDoc.isObject()) {
+            QJsonArray arr = smsDoc.object().value("messages").toArray();
+            cfg->smsMessages.reserve(arr.size());
+            for (const QJsonValue &v : arr) {
+                if (v.isObject())
+                    cfg->smsMessages.emplaceBack(messageFromJson(v.toObject()));
+            }
+        }
+    }
+
+    return cfg;
+}
+
 
 std::vector<std::unique_ptr<DeviceConfig>> DeviceConfig::load()
 {
@@ -13,78 +55,23 @@ std::vector<std::unique_ptr<DeviceConfig>> DeviceConfig::load()
     QString baseDir = QDir::homePath() + "/fakekde";
     QDir dir(baseDir);
 
-    if (!dir.exists()) {
-        qWarning() << "Fake KDE directory does not exist:" << baseDir;
+    if (!dir.exists())
         return devices;
-    }
 
-    // Only look for "<deviceid>.json" (not "_sms.json")
     QStringList files = dir.entryList(QStringList() << "*.json", QDir::Files);
 
-    for (const QString &file : files)
-    {
-        if (file.endsWith("_sms.json"))
+    for (const QString &file : files) {
+        if (file.endsWith("_sms.json") || file.endsWith("_old.json"))
             continue;
 
-        QString deviceJsonPath = dir.filePath(file);
-
-        //
-        // Load <deviceid>.json (required)
-        //
-        QFile deviceFile(deviceJsonPath);
-        if (!deviceFile.open(QIODevice::ReadOnly)) {
-            qWarning() << "Cannot open" << deviceJsonPath;
-            return devices;
-        }
-
-        QJsonDocument deviceDoc = QJsonDocument::fromJson(deviceFile.readAll());
-        deviceFile.close();
-
-        if (!deviceDoc.isObject()) {
-            qWarning() << "Invalid JSON in" << deviceJsonPath;
-            return devices;
-        }
-
-        QJsonObject deviceObj = deviceDoc.object();
-
-        auto config = std::make_unique<DeviceConfig>();
-        config->id = deviceObj.value("id").toString();
-        config->name = deviceObj.value("name").toString();
-        config->reachable = deviceObj.value("reachable").toBool();
-
-        //
-        // Load <deviceid>_sms.json (optional)
-        //
-        QString smsJsonPath =
-            dir.filePath(file.left(file.size() - 5) + "_sms.json");
-
-        QFile smsFile(smsJsonPath);
-        if (smsFile.exists() && smsFile.open(QIODevice::ReadOnly)) {
-
-            QJsonDocument smsDoc =
-                QJsonDocument::fromJson(smsFile.readAll());
-            smsFile.close();
-
-            if (smsDoc.isObject()) {
-                QJsonArray arr =
-                    smsDoc.object().value("messages").toArray();
-
-                config->smsMessages.reserve(arr.size());
-
-                for (const QJsonValue &v : arr) {
-                    if (v.isObject()) {
-                        config->smsMessages.emplaceBack(messageFromJson(v.toObject()));
-                    }
-                }
-            }
-        }
-
-        devices.push_back(std::move(config));
+        QString jsonPath = dir.filePath(file);
+        auto cfg = loadSingle(jsonPath);
+        if (cfg)
+            devices.push_back(std::move(cfg));
     }
 
     return devices;
 }
-
 
 
 void DeviceConfig::save()
@@ -142,6 +129,71 @@ void DeviceConfig::save()
         }
     }
 }
+
+DeviceConfig DeviceConfig::create(const QString &deviceName)
+{
+    DeviceConfig result;
+    result.name = deviceName;
+    result.reachable = true;
+
+    QString baseDir = QDir::homePath() + "/fakekde";
+    QDir dir(baseDir);
+
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            qWarning() << "Cannot create fakekde directory:" << baseDir;
+            Q_ASSERT(false);
+            return result;
+        }
+    }
+
+    QString id;
+    for (;;) {
+        int r = QRandomGenerator::global()->bounded(1000, 10000);  // 4‑digit random
+        id = "fake" + QString::number(r);
+
+        QString path = baseDir + "/" + id + ".json";
+        if (!QFile::exists(path)) {
+            result.id = id;
+            break;
+        }
+    }
+
+    return result;
+}
+
+void DeviceConfig::remove()
+{
+    QString baseDir = QDir::homePath() + "/fakekde";
+
+    QString jsonPath    = baseDir + "/" + id + ".json";
+    QString oldJsonPath = baseDir + "/" + id + "_old.json";
+
+    QFile::remove(oldJsonPath);
+    QFile::rename(jsonPath, oldJsonPath);
+}
+
+DeviceConfig *DeviceConfig::restore(const QString &id)
+{
+    QString baseDir = QDir::homePath() + "/fakekde";
+
+    QString oldJsonPath = baseDir + "/" + id + "_old.json";
+    QString jsonPath    = baseDir + "/" + id + ".json";
+
+    if (!QFile::exists(oldJsonPath))
+        return nullptr;
+
+    auto cfg = loadSingle(oldJsonPath);
+    if (!cfg)
+        return nullptr;
+
+    QFile::remove(jsonPath);
+    QFile::rename(oldJsonPath, jsonPath);
+
+    return cfg.release();
+}
+
+
 
 
 ConversationMessage DeviceConfig::makeMessage(const QStringList &addresses, const QString &body, Direction direction, const QVariantList &attachmentUrls)

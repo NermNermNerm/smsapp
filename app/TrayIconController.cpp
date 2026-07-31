@@ -135,6 +135,35 @@ static QIcon makeTrayIcon(const QColor &background,
     return icon;
 }
 
+// This is shared with DeviceStatus in a crappy way because I'm not sure what the a good way to share
+// this svg partial should be.
+QImage makeButtonImage(const QColor &background)
+{
+    // Final SVG template
+    QString svg = QString(R"(
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="64" height="64" viewBox="0 0 64 64">
+
+      <rect x="10" y="4" width="44" height="56" rx="5" ry="5"
+            fill="#ffffff" fill-opacity="0.85"/>
+
+      <rect x="14" y="10" width="36" height="42" rx="3" ry="3"
+            fill="%1" fill-opacity="0.9"/>
+
+      <rect x="22" y="54" width="20" height="4" rx="2" ry="2"
+            fill="#202020"/>
+    </svg>
+    )").arg(background.name());
+
+    QSvgRenderer renderer(svg.toUtf8());
+    QImage img(64, 64, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+
+    QPainter p(&img);
+    renderer.render(&p);
+    return img;
+}
+
 static QString formatTime(const QDateTime &dt)
 {
     Q_ASSERT(dt.isValid());
@@ -147,9 +176,12 @@ static QString formatTime(const QDateTime &dt)
 
 void TrayIconController::refreshIcon()
 {
-    static const QColor nonSpecificPhoneColor = QColor("blue");
+    QColor phoneColor = QColor("blue");
+    if (m_deviceStatus.handler()) {
+        phoneColor = Settings::instance().getColorForDevice(m_deviceStatus.handler()->deviceID());
+    }
 
-    QIcon icon = makeTrayIcon(nonSpecificPhoneColor,
+    QIcon icon = makeTrayIcon(phoneColor,
                               (m_deviceStatus.deviceName().isEmpty()),
                               (m_deviceStatus.status() == DeviceStatus::Status::DeviceReady),
                               m_numNewMessages > 0);

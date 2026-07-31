@@ -7,6 +7,7 @@
 #include "harvester.h"
 #include "dbus.h"
 #include "nameresolver.h"
+#include "fakekdeconnectdevice.h"
 
 #include <QSocketNotifier>
 #include <QTextStream>
@@ -98,9 +99,50 @@ void populateFakeKdeDirectory(const QString &numThreadsToReadAsString)
             config.smsMessages += msgs;
             ++threadsReadSoFar;
         }
+        config.save();
 
         qInfo() << "Wrote fake device" << config.id
                 << "with" << config.smsMessages.size() << "messages";
+    }
+}
+
+void cmdCreate(const QString &deviceName)
+{
+    DeviceConfig newGuy = DeviceConfig::create(deviceName);
+    g_deviceIndex = g_daemon->newDevice(newGuy);
+    qInfo() << "Created and selected a fake device" << newGuy.id << QString("named '%1'").arg(deviceName);
+}
+
+void cmdRemove()
+{
+    auto &configs = g_daemon->getDeviceConfigs();
+    if (configs.size() == 0) {
+        qInfo() << "There are no devices to delete";
+        return;
+    }
+
+    g_daemon->removeDevice(g_deviceIndex);
+    g_deviceIndex = 0;
+    if (configs.size() == 0) {
+        qInfo() << "There are no devices left";
+    }
+    else {
+        qInfo() << configs[g_deviceIndex].get()->name << "is the new selected device";
+    }
+}
+
+void cmdRestore(const QString &deviceId)
+{
+    qWarning() << "This command will crash if you're restoring a device you removed in this session."
+               << "If that happens, just restart and it should be put back.";
+    int newIndex = g_daemon->restoreDevice(deviceId);
+    if (newIndex < 0) {
+        qInfo() << "No record of a device with id" << deviceId << "could be found.";
+    }
+    else {
+        g_deviceIndex = newIndex;
+        auto &configs = g_daemon->getDeviceConfigs();
+        qInfo() << configs[g_deviceIndex].get()->name << "is the new selected device";
     }
 }
 
@@ -131,13 +173,14 @@ void cmdOnOff(bool on)
 {
     // This function needs to toggle the selected device reachable flag.
     // For parity with original, we would call into daemon to mutate m_devices.
-    auto *device = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
-    if (device->reachable == on) {
-        qInfo() << device->name << "is already" << (on ? "on" : "off");
+    auto *deviceConfig = g_daemon->getDeviceConfigs()[g_deviceIndex].get();
+    if (deviceConfig->reachable == on) {
+        qInfo() << deviceConfig->name << "is already" << (on ? "on" : "off");
     }
     else {
-        device->reachable = on;
-        qInfo() << "Toggling" << device->name << (on ? "on" : "off");
+        auto *deviceInterface = g_daemon->getDeviceInterface(deviceConfig->id);
+        deviceInterface->setReachable(on);
+        qInfo() << "Toggling" << deviceConfig->name << (on ? "on" : "off");
     }
 }
 
@@ -236,7 +279,6 @@ void cmdCharging(double rate)
     iface->setChargeRate(rate);
 }
 
-
 struct CommandSpec
 {
     QString name;
@@ -293,6 +335,18 @@ static const CommandSpec g_commands[] = {
     { "attachmentinterval", 0, 1, cmdAttachmentInterval,
      "Set attachment processing interval",
      "attachmentinterval <ms>" },
+
+    { "create",          1, -1, [](const QStringList &a){ cmdCreate(a.join(' ')); },
+     "Creates a new device",
+     "create <device-name>" },
+
+    { "remove",          0, 0, [](const QStringList &a){ cmdRemove(); },
+     "Removes the selected device",
+     "remove" },
+
+    { "restore",        1, 1, [](const QStringList &a){ cmdRestore(a[0]); },
+     "Restores the previously removed device with the given id - to get device ids, `ls ~/fakekde/*_old.json` the id is the '*' part.",
+     "restore <device-id>" },
 
     { "charge",          1, 1, [](const QStringList &a){ cmdCharge(a[0]); },
      "Set the charge level of the battery of the current device",

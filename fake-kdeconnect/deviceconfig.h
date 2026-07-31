@@ -11,6 +11,9 @@ struct DeviceConfig {
 
     static std::vector<std::unique_ptr<DeviceConfig>> load();
     void save();
+    static DeviceConfig create(const QString &name);
+    void remove();
+    static DeviceConfig *restore(const QString &id);
 
     enum Direction {
         Incoming,

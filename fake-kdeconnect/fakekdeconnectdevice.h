@@ -15,8 +15,19 @@ public:
     bool isReachable() const;
     QString name() const;
 
+    void setReachable(bool isReachable);
+
 public slots:
     bool hasPlugin(const QString &plugin_name) const;
+
+signals:
+    void nameChanged(const QString &name); // not implemented
+    void pairStateChanged(int pairState); // not implemented
+    void pairingFailed(const QString &error); // not implemented
+    void pluginsChanged();
+    void reachableChanged(bool reachable);
+    void statusIconNameChanged(); // not implemented
+    void typeChanged(const QString &type); // not implemented
 
 private:
     DeviceConfig *m_info;

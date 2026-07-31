@@ -109,16 +109,30 @@ ApplicationWindow {
                 Layout.rightMargin: 6
             }
 
-            // --- TODO: Other Devices Switcher (Subtle Flat Style) ---
-            // Repeater {
-            //     model: deviceStatus.otherDevices
-            //     delegate: ToolButton {
-            //         text: modelData.name <- actually a phone picture, colored, with a tooltip with the name
-            //         font.pixelSize: 12
-            //         implicitHeight: 28
-            //         onClicked: <-- launch another instance of the app with the modelData.deviceid
-            //     }
-            // }
+
+            // Flexible Spacer (pushes other devices to the middle)
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: deviceStatus.otherDevices
+
+                delegate: ToolButton {
+                    implicitWidth: 40
+                    implicitHeight: 40
+
+                    contentItem: Image {
+                        anchors.centerIn: parent
+                        source: modelData.buttonIconUrl
+                    }
+
+                    ToolTip.visible: hovered
+                    ToolTip.text: `Starts the SMS App for '${modelData.name}'`
+
+                    onClicked: deviceStatus.launchOtherDevice(modelData.id)
+                }
+            }
 
             // Flexible Spacer (pushes controls to the right)
             Item {

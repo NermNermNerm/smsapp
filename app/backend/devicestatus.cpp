@@ -136,7 +136,7 @@ void DeviceStatus::poll()
 
             if (it == m_otherDevices.end()) {
                 // New device
-                m_otherDevices.append(DeviceInfo{id, name});
+                m_otherDevices.append(DeviceInfo{id, name, makeButtonImageUrl(id)});
                 otherDevicesListChanged = true;
             } else if (it->name != name) {
                 // Name changed
@@ -245,3 +245,32 @@ void DeviceStatus::rebootDaemon()
 
     // Hopefully it'll resolve in the next poll.
 }
+
+void DeviceStatus::launchOtherDevice(const QString &id)
+{
+    // Path to the currently running executable
+    const QString exe = QCoreApplication::applicationFilePath();
+
+    // Arguments for the new instance
+    QStringList args;
+    args << "--device" << id;
+
+    // Launch detached so it runs independently
+    QProcess::startDetached(exe, args);
+}
+
+QString DeviceStatus::makeButtonImageUrl(const QString &id) const
+{
+    // SHENANIGANS!  I don't see a way to make this better - we want a slightly-customized icon
+    //   and nothing better seems to be presenting itself.
+
+    // from TrayIconController, which has most of the code for generating the svg.
+    extern QImage makeButtonImage(const QColor &background);
+    QImage image = makeButtonImage(settings().getColorForDevice(id));
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    return "data:image/png;base64," + bytes.toBase64();
+}
+

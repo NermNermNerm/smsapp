@@ -4,6 +4,7 @@
 - [ ] Write a readme
 
 ## Headings
+- [ ] Search
 - [x] Trim newlines on messages
 - [x] If draft message, it should be in italics like "You: blah blah"
 - [x] should show whether last message is to or from you
@@ -24,8 +25,12 @@
 - [ ] copy 2FA codes to the clipboard
 - [ ] Multiphone
   - [ ] Use different background colors for different specified phones
+- [ ] Delete cache data from devices that are no longer there
+- [ ] (Probably) the KDE Deamon doesn't update itself after coming back from sleep
 
 ## Main Window
+- [ ] When you halt the fake kde daemon, the status goes red but it doesn't blank the screen...  Is that bad?
+      At the least there should be a tooltip over the red line.
 - [x] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
 - [x] Show battery state instead of green dot for phone connected
 - [ ] Add a pin-to-start option
@@ -35,11 +40,17 @@
       the user to install kde
 - [ ] Multiphone
   - [ ] Show other phone launcher buttons
+  - [ ] Use different main window background colors per phone too
 - [x] Splitter should be banned from maximizing to one side or the other and should remember its setting
 - [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
+- [ ] Settings
+  - [ ] Phone icon color
+  - [ ] Dark-mode
+  - [ ] UI Scale
 
 ## Message List
+- [ ] Search
 - [x] Can't copy/paste from messages
 - [x] When the phone is unreachable, the send button should be disabled
 - [x] Date calculation not done until the 30 second tick

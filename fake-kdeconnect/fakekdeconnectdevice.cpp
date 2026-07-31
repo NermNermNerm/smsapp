@@ -21,3 +21,13 @@ bool FakeKdeConnectDevice::hasPlugin(const QString &plugin) const {
     // non-text-enabled devices.
     return m_info->reachable;
 }
+
+void FakeKdeConnectDevice::setReachable(bool isReachable)
+{
+    if (m_info->reachable != isReachable) {
+        m_info->reachable = isReachable;
+        emit reachableChanged(isReachable);
+        emit pluginsChanged();
+        m_info->save();
+    }
+}

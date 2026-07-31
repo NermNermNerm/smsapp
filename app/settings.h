@@ -14,6 +14,9 @@ public:
     bool isDeviceKnownToHaveSms(const QString &deviceID) const;
     void setDeviceKnownToHaveSms(const QString &deviceID);
 
+    QColor getColorForDevice(const QString &deviceID);
+    void setColorForDevice(const QString &deviceID, QColor color);
+
 private:
     Settings(bool isUsingFakeDBus);
     QSettings m_settings;

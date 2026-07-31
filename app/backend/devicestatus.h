@@ -3,17 +3,24 @@
 #include "messageshandler.h"
 
 class MessagesHandler;
+struct DeviceInfo {
+    Q_GADGET
+    Q_PROPERTY(QString id MEMBER id)
+    Q_PROPERTY(QString name MEMBER name)
+    Q_PROPERTY(QString buttonIconUrl MEMBER buttonIconUrl)
+
+public:
+    QString id;
+    QString name;
+    QString buttonIconUrl;
+};
+
 
 class DeviceStatus : public QObject
 {
     Q_OBJECT
 
 public:
-    struct DeviceInfo {
-        QString id;
-        QString name;
-    };
-
     enum class Status {
         /** @brief Indicates that the KDE Service is not properly installed. (not listening on the dbus anyway) */
         DaemonNotRunning,
@@ -59,13 +66,14 @@ public:
     void setAutoFixDaemon(bool enabled);
     void setPreferredDevice(const QString &id);
 
-    // User-triggered action
-    Q_INVOKABLE void rebootDaemon();
-
     static DeviceStatus *instance() {
         Q_ASSERT(DeviceStatus::s_instance != nullptr);
         return DeviceStatus::s_instance;
     }
+
+public slots:
+    void rebootDaemon();
+    void launchOtherDevice(const QString &id);
 
 signals:
     void statusChanged();
@@ -81,11 +89,9 @@ private:
     void onDeviceListChanged();
     bool tryRefreshDeviceList();
     void setDeviceName(const QString &name);
-
     void setStatus(Status status);
-
     void setupHandler(const QString &deviceId);
-
+    QString makeButtonImageUrl(const QString &id) const;
     Settings &settings() const { return m_settings ? *m_settings : Settings::instance(); }
 
 private:
