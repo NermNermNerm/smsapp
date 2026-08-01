@@ -72,6 +72,9 @@ void DeviceStatus::poll()
         if (!m_specifiedDeviceId.isEmpty()) {
             if (knownDeviceIds.contains(m_specifiedDeviceId)) {
                 // If we've been told what device to connect to, and the device is still paired, use it regardless of its state.
+                if (!InstanceManager::claimOrExit(m_specifiedDeviceId)) {
+                    return;
+                }
                 setupHandler(m_specifiedDeviceId);
             }
             else {
@@ -86,6 +89,9 @@ void DeviceStatus::poll()
      && !previousSessionDeviceId.isEmpty()
      && knownDeviceIds.contains(previousSessionDeviceId)
      && dbus::device(previousSessionDeviceId).isReachable()) {
+        if (!InstanceManager::claimOrExit(previousSessionDeviceId)) {
+            return;
+        }
         setupHandler(previousSessionDeviceId);
     }
 
@@ -125,6 +131,9 @@ void DeviceStatus::poll()
             //  go ahead and use the first reachable sms-capable device.
             // TODO: In the future, it'd be good to ensure that no other instance of the app is
             //   working against this device.
+            if (!InstanceManager::claimOrExit(id)) {
+                return;
+            }
             setupHandler(id);
             settings().setPreviousSessionDeviceId(id);
             setDeviceName(name);
@@ -152,6 +161,9 @@ void DeviceStatus::poll()
 
     // If we couldn't find any reachable devices, but the last device we used is valid, keep trying to use it.
     if (m_handler == nullptr && !previousSessionDeviceId.isEmpty() && knownDeviceIds.contains(previousSessionDeviceId)) {
+        if (!InstanceManager::claimOrExit(previousSessionDeviceId)) {
+            return;
+        }
         setupHandler(previousSessionDeviceId);
         setDeviceName(dbus::device(previousSessionDeviceId).name());
     }
@@ -202,8 +214,6 @@ void DeviceStatus::onDeviceListChanged()
 
 void DeviceStatus::setupHandler(const QString &deviceId)
 {
-    InstanceManager::claimOrExit(deviceId);
-
     Q_ASSERT(m_handler == nullptr);
     m_handler = new MessagesHandler(deviceId, this);
     emit handlerChanged();

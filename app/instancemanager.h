@@ -5,17 +5,14 @@ class InstanceManager : public QObject {
 public:
     /**
      * @brief If no other instance is managing the given deviceId, register
-     *        a DBus service for it and return.
+     *        a DBus service for it and return true.
      *
      *        If another instance is already managing it, ask it to raise its
-     *        window and exit the app.
+     *        window and exit the app and return false.  (Exiting does not
+     *        happen immediately.)
      */
-    static void claimOrExit(const QString &deviceId);
+    static bool claimOrExit(const QString &deviceId);
 
 public slots:
-    void RaiseWindow() {
-        const auto windows = QGuiApplication::allWindows();
-        if (!windows.isEmpty())
-            windows.first()->requestActivate();
-    }
+    void activateApp();
 };
