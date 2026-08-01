@@ -2,7 +2,7 @@
 
 static QString serviceNameFor(const QString &deviceId)
 {
-    return QStringLiteral("org.nermnermnerm.smsapp.instance.%1").arg(deviceId);
+    return QStringLiteral("org.nermnermnerm.smsapp.instance._%1").arg(deviceId);
 }
 
 bool InstanceManager::claimOrExit(const QString &deviceId)
@@ -31,7 +31,8 @@ bool InstanceManager::claimOrExit(const QString &deviceId)
     // Otherwise, claim the device by registering the DBus service
     if (!bus.registerService(serviceName)) {
         // Race condition or DBus failure — safest fallback is to exit
-        qInfo() << "Another process is already taking care of this phone.";
+        qInfo() << "Failed to register the service: " << bus.lastError().name()
+                << bus.lastError().message();
         QCoreApplication::exit(0);
         return false;
     }

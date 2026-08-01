@@ -249,7 +249,9 @@ ApplicationWindow {
                     topMargin: 8
                 }
                 text: qsTr("The phone is not reachable. If it's nearby, try unlocking it and checking the KDE Connect App. " +
-                           "Sending messages is unavailable and the conversations shown below may not be up-to-date.")
+                           "Sending messages is unavailable and the conversations shown below may not be up-to-date." +
+                           "If it's unreachable because you've replaced the phone, you should go into KDE Connect and " +
+                           "unpair the device.")
                 wrapMode: Text.Wrap
                 font.pixelSize: 12
                 color: "#5C4900"

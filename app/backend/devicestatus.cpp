@@ -66,33 +66,22 @@ void DeviceStatus::poll()
     }
 
     QString previousSessionDeviceId = settings().previousSessionDeviceId();
+    QString deviceIdToUse = m_handler ? m_handler->deviceID() : "";
 
     // We've established that we can talk to kde, now try and hook a handler if we need to
-    if (m_handler == nullptr) {
-        if (!m_specifiedDeviceId.isEmpty()) {
-            if (knownDeviceIds.contains(m_specifiedDeviceId)) {
-                // If we've been told what device to connect to, and the device is still paired, use it regardless of its state.
-                if (!InstanceManager::claimOrExit(m_specifiedDeviceId)) {
-                    return;
-                }
-                setupHandler(m_specifiedDeviceId);
-            }
-            else {
-                // If we've been told what device to connect to, and the device is gone, we're going to a world
-                // where the user has to stop the app and get a new plan.
-                setStatus(Status::DeviceMissing);
-            }
-        }
+    if (deviceIdToUse.isEmpty()
+     && !m_specifiedDeviceId.isEmpty()
+     && knownDeviceIds.contains(m_specifiedDeviceId)) {
+        // If we've been told what device to connect to, and the device is still paired, use it regardless of its state.
+        deviceIdToUse = m_specifiedDeviceId;
     }
 
-    if (m_handler == nullptr
+    if (deviceIdToUse.isEmpty()
+     && m_specifiedDeviceId.isEmpty()
      && !previousSessionDeviceId.isEmpty()
      && knownDeviceIds.contains(previousSessionDeviceId)
      && dbus::device(previousSessionDeviceId).isReachable()) {
-        if (!InstanceManager::claimOrExit(previousSessionDeviceId)) {
-            return;
-        }
-        setupHandler(previousSessionDeviceId);
+        deviceIdToUse = previousSessionDeviceId;
     }
 
     // Remove devices that no longer exist
@@ -107,7 +96,6 @@ void DeviceStatus::poll()
         Q_ASSERT(m_handler == nullptr || id != m_handler->deviceID());
     }
 
-
     // Add or update devices that exist
     for (const QString &id : std::as_const(knownDeviceIds)) {
         auto &dev = dbus::device(id);
@@ -117,7 +105,7 @@ void DeviceStatus::poll()
             continue;
         }
 
-        if (m_handler != nullptr && m_handler->deviceID() == id) {
+        if (deviceIdToUse == id) {
             setDeviceName(name);
             continue;
         }
@@ -126,17 +114,14 @@ void DeviceStatus::poll()
         if (!hasSms) continue;
         settings().setDeviceKnownToHaveSms(id);
 
-        if (m_handler == nullptr && m_specifiedDeviceId.isEmpty()) {
+        if (deviceIdToUse.isEmpty() && m_specifiedDeviceId.isEmpty()) {
             // If we weren't specifically directed to a device, and the last device we used isn't reachable,
             //  go ahead and use the first reachable sms-capable device.
-            // TODO: In the future, it'd be good to ensure that no other instance of the app is
-            //   working against this device.
-            if (!InstanceManager::claimOrExit(id)) {
-                return;
-            }
-            setupHandler(id);
+            deviceIdToUse = id;
             settings().setPreviousSessionDeviceId(id);
-            setDeviceName(name);
+
+            // TODO: Consider - should we not use it if we know another
+            //   instance of the app is using it?
         }
         else {
             // Check if already present
@@ -160,17 +145,22 @@ void DeviceStatus::poll()
     }
 
     // If we couldn't find any reachable devices, but the last device we used is valid, keep trying to use it.
-    if (m_handler == nullptr && !previousSessionDeviceId.isEmpty() && knownDeviceIds.contains(previousSessionDeviceId)) {
-        if (!InstanceManager::claimOrExit(previousSessionDeviceId)) {
-            return;
-        }
-        setupHandler(previousSessionDeviceId);
-        setDeviceName(dbus::device(previousSessionDeviceId).name());
+    if (deviceIdToUse.isEmpty()
+     && m_specifiedDeviceId.isEmpty()
+     && !previousSessionDeviceId.isEmpty()
+     && knownDeviceIds.contains(previousSessionDeviceId)) {
+        deviceIdToUse = previousSessionDeviceId;
     }
 
-    if (m_handler == nullptr) {
+    if (deviceIdToUse.isEmpty()) {
         // TODO: If another instance of the app is running, perhaps we should just throw that to the front?
-        setStatus(Status::NoSmsDevice);
+        setStatus(m_specifiedDeviceId.isEmpty() ? Status::DeviceMissing : Status::NoSmsDevice);
+    }
+    else if (m_handler == nullptr) {
+        if (!InstanceManager::claimOrExit(deviceIdToUse)) {
+            return;
+        }
+        setupHandler(deviceIdToUse);
     }
 
     if (qApp->applicationState() == Qt::ApplicationActive

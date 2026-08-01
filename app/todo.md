@@ -23,8 +23,8 @@
 - [x] Tooltip should show whether there are messages or not
 - [x] Clicking on the tray icon should open the app
 - [ ] copy 2FA codes to the clipboard
-- [ ] Multiphone
-  - [ ] Use different background colors for different specified phones
+- [x] Multiphone
+  - [x] Use different background colors for different specified phones
 - [ ] Delete cache data from devices that are no longer there
 - [ ] (Probably) the KDE Deamon doesn't update itself after coming back from sleep
 
@@ -33,14 +33,14 @@
       At the least there should be a tooltip over the red line.
 - [x] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
 - [x] Show battery state instead of green dot for phone connected
-- [ ] Add a pin-to-start option
+- [ ] Add a pin-to-start option (SEE BELOW
 - [x] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
       telling the user to pair a device.
 - [x] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
       the user to install kde
-- [ ] Multiphone
-  - [ ] Show other phone launcher buttons
-  - [ ] Use different main window background colors per phone too
+- [x] Multiphone
+  - [x] Show other phone launcher buttons
+  - [x] Use different main window background colors per phone too
 - [x] Splitter should be banned from maximizing to one side or the other and should remember its setting
 - [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
@@ -106,9 +106,26 @@
 - [x] Full load of messages
 - [x] Check multi-target messaging
 - [x] Nice up the command parser and add help.
-- [ ] Multiphone
-      - [ ] Add commands to create a new device
-`
+- [x] Multiphone
+      - [x] Add commands to create a new device
+
+
+I'm thinking poll would test:
+
+* Am I invoked without a specific id?
+* Is there a startup-menu option to launch the app without a --deviceid?
+* Are there more than one sms-capable phones?
+
+If that happens, it raises a boolean flag, which triggers a yellow banner on the main menu that says "Hey, it looks like you're a multi-phone user, is that a permanent thing?"  If the user says "Yes", it recreates the start menu item to use the current device.
+
+We could also have the converse:
+
+* Am I invoked *with* a specific id?
+* Is there a startup-menu option to invoke this id?
+* Are all the devices other than myself known not to be sms-capable?
+
+Then it could raise a flag that says "Hey, it looks like you've only got one phone going on now, should I reconfigure for that?"
+
 
 
 ## KDE Plugin Asks
