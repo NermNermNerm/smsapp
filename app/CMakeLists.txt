@@ -55,6 +55,7 @@ qt_add_qml_module(appsmsapp
     QML_FILES AppTheme.qml
     QML_FILES BatteryIndicator.qml
     SOURCES instancemanager.h instancemanager.cpp
+    SOURCES installer.h installer.cpp
 )
 
 # Add general Qt resources *after* the QML module
@@ -73,6 +74,7 @@ qt_add_resources(appsmsapp "app_resources"
         icons/error.svg
         icons/unpinned.svg
         icons/pinned.svg
+        icons/start-menu-icon.png
 )
 
 # Just to make it visible in the ide

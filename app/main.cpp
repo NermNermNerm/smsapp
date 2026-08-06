@@ -10,12 +10,15 @@
 #include "backend/outgoingattachmentListmodel.h"
 #include "backend/draftmessages.h"
 #include "backend/startupmenumanager.h"
+#include "installer.h"
 
 static QQmlApplicationEngine *global_engine = nullptr;
 static QQuickWindow *my_qml_window = nullptr;
 
 int main(int argc, char *argv[])
 {
+    Installer::ensureInstalled(argv);
+
     // Do this first because we want it done before accessing any settings -- which settings we load
     // depends on whether we're using the fake or real back-end.
     dbus::init();
@@ -38,23 +41,9 @@ int main(int argc, char *argv[])
 
     DeviceStatus deviceStatus(deviceId);
 
-    // Force the Linux Window Manager to register this exact string as the WM_CLASS
+    // I'm really not sure what any of this is doing and it's probably not right.
     app.setApplicationName("appsmsapp");
     app.setDesktopFileName("smsapp");
-
-    // For setting the icon and all that, this relies on the existance of:
-    //  ~/.local/share/applications/smsapp.desktop.  The "smsapp" on the
-    //  setDesktopFileName corresponds to the 'smsapp' in the file.
-    //  The contents of the file are:
-/*
-[Desktop Entry]
-Type=Application
-Name=SMS Mirror
-Exec=/home/steve/repos/smsapp/build/Desktop_Qt_6_11_1-Debug/appsmsapp
-Icon=/home/steve/repos/smsapp/defaulticon.png
-Terminal=false
- */
-    // We've got settings in main.qml and in settings.cpp.
     QGuiApplication::setDesktopFileName("smsapp");
     QCoreApplication::setOrganizationName("NermNermNerm");
     QCoreApplication::setApplicationName("SmsApp");

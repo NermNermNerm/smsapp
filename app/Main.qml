@@ -241,7 +241,7 @@ ApplicationWindow {
             id: unreachableWarning
             Layout.fillWidth: true
             visible: deviceStatus.status === DeviceStatus.DeviceUnreachable
-            color: "#FFF2AC" // Gentle warning yellow (or use your theme color)
+            color: "#FFF2AC" // Gentle warning yellow
 
             // Binding height to the inner label + padding
             implicitHeight: warningText.implicitHeight + 16

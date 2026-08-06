@@ -1,9 +1,8 @@
 # First Level Heading
 
 ## General
-- [ ] Bug: not remembering header width
 - [ ] Write a readme
-- [ ] self-install, after done run:  execve(argv[0], argv, environ);
+- [x] self-install, after done run:  execve(argv[0], argv, environ);
 - [ ] copy 2FA codes to the clipboard
 - [ ] Delete cache data from devices that are no longer there
 - [ ] The KDE Deamon doesn't update itself after coming back from sleep; we should force that
@@ -21,12 +20,12 @@
 - [ ] Start new threads
 
 ## Pin to start
-- [ ] Make the text fixture able to do devices that don't support sms
-- [ ] Add a pin-to-start button -- note that pin-to-start should specify --device iff # of sms devices > 1
+- [ ] Make the test fixture able to do devices that don't support sms (And make list show id's while you're at it.)
+- [x] Add a pin-to-start button -- note that pin-to-start should specify --device iff # of sms devices > 1
 - [ ] Add an "--autostart" flag; If --autostart flag exists, start minimized.
-- [ ] If invoked with --autostart and KDE says the device doesn't exist and we're sure that KDE is booted, exit and delete the autostart entry
-- [ ] If invoked with --autostart and --device and there's only one sms-capable device, delete the --device from the autostart entry.
-- [ ] If invoked with --autostart and not --device and there's more than one sms-capable device, add the --device flag to the autostart.
+- [x] If invoked with --autostart and KDE says the device doesn't exist and we're sure that KDE is booted, exit and delete the autostart entry
+- [x] If --device and there's only one sms-capable device, delete the --device from the autostart entry.
+- [x] If not --device and there's more than one sms-capable device, add the --device flag to the autostart.
 
 ## UX
 - [ ] Let user choose phone icon color
