@@ -58,12 +58,6 @@ bool StartupMenuManager::isPinned() const
         return false;
     }
 
-    if (!m_isMultiModeValid) {
-        m_isMultiMode = !deviceStatus().otherDevices().empty();
-        m_isMultiModeValid = true;
-        qInfo() << "StartupMenuManager::isPinned set m_isMultiMode to " << m_isMultiMode;
-    }
-
     m_isPinned = QFile::exists(autostartFileFor(deviceStatus().handler()->deviceID()))
                  || (deviceStatus().specifiedDeviceId().isEmpty() && QFile::exists(autostartFileFor("")));
     m_isPinnedIsValid = true;
