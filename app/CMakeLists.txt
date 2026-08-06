@@ -13,7 +13,6 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(appsmsapp
     main.cpp
-
     kdeconnect_proxy.cpp
 )
 
@@ -72,6 +71,8 @@ qt_add_resources(appsmsapp "app_resources"
         icons/open-file.svg
         icons/open-folder.svg
         icons/error.svg
+        icons/unpinned.svg
+        icons/pinned.svg
 )
 
 # Just to make it visible in the ide

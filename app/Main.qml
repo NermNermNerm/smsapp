@@ -139,19 +139,35 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
 
-            // TODO:  Settings Button ---
-            // ToolButton {
-            //     text: "⚙"
-            //     font.pixelSize: 14
-            //     implicitWidth: 34
-            //     implicitHeight: parent.height
-            //     onClicked: settingsDialog.open()
-            // }
 
             // --- Window Control Buttons ---
             Row {
                 Layout.fillHeight: true
                 spacing: 0
+
+                // TODO:  Settings Button ---
+                // ToolButton {
+                //     text: "⚙"
+                //     font.pixelSize: 14
+                //     implicitWidth: 34
+                //     implicitHeight: parent.height
+                //     onClicked: settingsDialog.open()
+                // }
+
+                // Pin to start
+                ToolButton {
+                    id: pinToStart
+                    contentItem: Image {
+                        anchors.centerIn: parent
+                        source: startupMenuManager.isPinned ? "qrc:/icons/pinned.svg" : "qrc:/icons/unpinned.svg"
+                    }
+
+                    font.pixelSize: 11
+                    implicitWidth: 34
+                    implicitHeight: titleBar.height
+                    onClicked: startupMenuManager.isPinned = !startupMenuManager.isPinned
+                }
+
 
                 // Minimize
                 ToolButton {

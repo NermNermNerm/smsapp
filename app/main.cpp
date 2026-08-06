@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
     parser.process(app);
     const QString deviceId = parser.value(deviceOpt);
 
-    StartupMenuManager startupMenuManager(deviceId);
     DeviceStatus deviceStatus(deviceId);
 
     // Force the Linux Window Manager to register this exact string as the WM_CLASS
@@ -58,7 +57,6 @@ Terminal=false
     // We've got settings in main.qml and in settings.cpp.
     QGuiApplication::setDesktopFileName("smsapp");
     QCoreApplication::setOrganizationName("NermNermNerm");
-    // QCoreApplication::setOrganizationDomain("yourorg.example");
     QCoreApplication::setApplicationName("SmsApp");
 
     NameResolver::load();
@@ -69,6 +67,7 @@ Terminal=false
     qmlRegisterType<SingleAvatarModel>("Sms", 1, 0, "SingleAvatarModel");
     qmlRegisterType<AttachmentListModel>("Sms", 1, 0, "AttachmentListModel");
     qmlRegisterType<OutgoingAttachmentListModel>("Sms", 1, 0, "OutgoingAttachmentListModel");
+    qmlRegisterType<StartupMenuManager>("Sms", 1, 0, "StartupMenuManager");
 
     DraftMessages drafts(deviceStatus);
     ConversationListModel conversationListModel(drafts);
@@ -84,6 +83,7 @@ Terminal=false
 
     QQmlApplicationEngine global_engine;
     global_engine.rootContext()->setContextProperty("deviceStatus", &deviceStatus);
+    global_engine.rootContext()->setContextProperty("startupMenuManager", StartupMenuManager::instance());
     global_engine.rootContext()->setContextProperty("specifiedDeviceId", deviceId);
     global_engine.rootContext()->setContextProperty("conversationListModel", &conversationListModel);
     global_engine.rootContext()->setContextProperty("messageListModel", &messageListModel);
@@ -99,4 +99,3 @@ Terminal=false
 
     return QGuiApplication::exec();
 }
-

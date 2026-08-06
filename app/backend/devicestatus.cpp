@@ -59,16 +59,9 @@ void DeviceStatus::poll()
 
     QStringList knownDeviceIds = reply.value();
     bool otherDevicesListChanged = false;
-
-    if (!m_specifiedDeviceId.isEmpty() && !knownDeviceIds.contains(m_specifiedDeviceId)) {
-        setStatus(Status::DeviceMissing);
-        return;
-    }
-
     QString previousSessionDeviceId = settings().previousSessionDeviceId();
     QString deviceIdToUse = m_handler ? m_handler->deviceID() : "";
 
-    // We've established that we can talk to kde, now try and hook a handler if we need to
     if (deviceIdToUse.isEmpty()
      && !m_specifiedDeviceId.isEmpty()
      && knownDeviceIds.contains(m_specifiedDeviceId)) {
@@ -81,6 +74,12 @@ void DeviceStatus::poll()
      && !previousSessionDeviceId.isEmpty()
      && knownDeviceIds.contains(previousSessionDeviceId)
      && dbus::device(previousSessionDeviceId).isReachable()) {
+        // ^ Note how we only use the previous phone if it's reachable here.  Next we iterate through
+        // all the devices seeing if there's a reachable phone.  That means we prefer any reachable
+        // phone over the previous unreachable phone.  That's bad if the user invokes the app with the
+        // intention of using it like they have before with the old phone, but now they have a new
+        // work phone or something, but the 99% case is they just got a new phone and didn't bother
+        // unpairing the old one from KDE Connect.
         deviceIdToUse = previousSessionDeviceId;
     }
 
@@ -120,8 +119,10 @@ void DeviceStatus::poll()
             deviceIdToUse = id;
             settings().setPreviousSessionDeviceId(id);
 
-            // TODO: Consider - should we not use it if we know another
-            //   instance of the app is using it?
+            // Note - we could test and see if another instance is already managing this device here,
+            // but if we're in that case, we're in a "multi-device" scenario, and we'll end up deciding
+            // to pop up the other instance of the app later, and from that app, the user can choose
+            // exactly which other device launches.  So we're not doing that.
         }
         else {
             // Check if already present
@@ -153,8 +154,18 @@ void DeviceStatus::poll()
     }
 
     if (deviceIdToUse.isEmpty()) {
-        // TODO: If another instance of the app is running, perhaps we should just throw that to the front?
-        setStatus(m_specifiedDeviceId.isEmpty() ? Status::DeviceMissing : Status::NoSmsDevice);
+        if (m_specifiedDeviceId.isEmpty()) {
+            setStatus(Status::NoSmsDevice);
+        }
+        else {
+            qInfo() << "The specified device doesn't exist and we are (almost certainly) being launched from startup; exiting now";
+            setStatus(Status::DeviceMissing);
+            // There's no need for ceremony - if we get here, the user unpaired the device; the intent is clear.
+            startupManager().removeAutoStart(m_specifiedDeviceId);
+            // TODO: Call the cache manager and tell it to clear out the cache for this phone.
+            QCoreApplication::exit(0);
+            return;
+        }
     }
     else if (m_handler == nullptr) {
         if (!InstanceManager::claimOrExit(deviceIdToUse)) {

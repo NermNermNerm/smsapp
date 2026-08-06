@@ -1,10 +1,42 @@
 # First Level Heading
 
-- [x] Upload it all to github.
+## General
+- [ ] Bug: not remembering header width
 - [ ] Write a readme
+- [ ] self-install, after done run:  execve(argv[0], argv, environ);
+- [ ] copy 2FA codes to the clipboard
+- [ ] Delete cache data from devices that are no longer there
+- [ ] The KDE Deamon doesn't update itself after coming back from sleep; we should force that
+- [ ] When you halt the fake kde daemon, the status goes red but it doesn't blank the screen...  Is that bad?
+      At the least there should be a tooltip over the red dot.
+- [ ] Fix issue where animated gifs loaded late don't animate sometimes
+- [ ] Add attachments with Ctrl+O
+- [ ] Add a phone locator button...  But where?
+- [ ] Emoji menu
+- [x] Upload it all to github.
+
+## Search
+- [ ] Need to be able to search contacts and threads.
+- [ ] Add contacts to conversations
+- [ ] Start new threads
+
+## Pin to start
+- [ ] Make the text fixture able to do devices that don't support sms
+- [ ] Add a pin-to-start button -- note that pin-to-start should specify --device iff # of sms devices > 1
+- [ ] Add an "--autostart" flag; If --autostart flag exists, start minimized.
+- [ ] If invoked with --autostart and KDE says the device doesn't exist and we're sure that KDE is booted, exit and delete the autostart entry
+- [ ] If invoked with --autostart and --device and there's only one sms-capable device, delete the --device from the autostart entry.
+- [ ] If invoked with --autostart and not --device and there's more than one sms-capable device, add the --device flag to the autostart.
+
+## UX
+- [ ] Let user choose phone icon color
+- [ ] Dark-mode
+- [ ] UI Scale
+- [ ] Localization
+- [ ] Background that matches phone icon color
+
 
 ## Headings
-- [ ] Search
 - [x] Trim newlines on messages
 - [x] If draft message, it should be in italics like "You: blah blah"
 - [x] should show whether last message is to or from you
@@ -22,18 +54,12 @@
 - [x] Show an indicator when new messages are there
 - [x] Tooltip should show whether there are messages or not
 - [x] Clicking on the tray icon should open the app
-- [ ] copy 2FA codes to the clipboard
 - [x] Multiphone
   - [x] Use different background colors for different specified phones
-- [ ] Delete cache data from devices that are no longer there
-- [ ] (Probably) the KDE Deamon doesn't update itself after coming back from sleep
 
 ## Main Window
-- [ ] When you halt the fake kde daemon, the status goes red but it doesn't blank the screen...  Is that bad?
-      At the least there should be a tooltip over the red line.
 - [x] Show a yellow bar when the phone is unreachable, warning the user that it's not up-to-date
 - [x] Show battery state instead of green dot for phone connected
-- [ ] Add a pin-to-start option (SEE BELOW
 - [x] When no phone is reachable and there is no preferred device, it should create a message that takes over the screen
       telling the user to pair a device.
 - [x] When KDE Appears to be down, and no phone is configured, it should take over the screen with a message telling
@@ -44,13 +70,8 @@
 - [x] Splitter should be banned from maximizing to one side or the other and should remember its setting
 - [x] Fix Title (away from Hello World)
 - [x] Remember window size and position
-- [ ] Settings
-  - [ ] Phone icon color
-  - [ ] Dark-mode
-  - [ ] UI Scale
 
 ## Message List
-- [ ] Search
 - [x] Can't copy/paste from messages
 - [x] When the phone is unreachable, the send button should be disabled
 - [x] Date calculation not done until the 30 second tick
@@ -93,7 +114,6 @@
       - [x] Enable drag&drop files into the send-message
       - [x] Enable cut&paste images
       - [x] Initialize state from cache correctly in setAttachments
-      - [ ] Fix issue where animated gifs loaded late don't animate sometimes
       - [x] MakeMessagesHandler should have a 'checkForCachedItemsInQueue' method instead of the
             thing that we have now that just looks at stuff at the head.
       - [x] Put mutexes around attachment queue access

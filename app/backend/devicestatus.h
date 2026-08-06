@@ -1,6 +1,7 @@
 #pragma once
 #include "settings.h"
 #include "messageshandler.h"
+#include "startupmenumanager.h"
 
 class MessagesHandler;
 struct DeviceInfo {
@@ -61,10 +62,11 @@ public:
     QString deviceName() const { return m_deviceName; }
     int batteryCharge() const { return m_batteryCharge; }
     bool isCharging() const { return m_isCharging; }
+    QString specifiedDeviceId() const { return m_specifiedDeviceId; }
+    bool isMultiDeviceMode() const { return false; /* TOOD: */ }
 
     // Mutators
     void setAutoFixDaemon(bool enabled);
-    void setPreferredDevice(const QString &id);
 
     static DeviceStatus *instance() {
         Q_ASSERT(DeviceStatus::s_instance != nullptr);
@@ -92,9 +94,10 @@ private:
     void setStatus(Status status);
     void setupHandler(const QString &deviceId);
     QString makeButtonImageUrl(const QString &id) const;
+    void handleDevice();
     Settings &settings() const { return m_settings ? *m_settings : Settings::instance(); }
+    StartupMenuManager &startupManager() const { return *StartupMenuManager::instance(); }
 
-private:
     QList<DeviceInfo> m_otherDevices;
     Status m_status = Status::DaemonNotRunning;
     QPointer<MessagesHandler> m_handler;

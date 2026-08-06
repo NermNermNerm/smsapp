@@ -1,33 +1,36 @@
 #pragma once
 
+class DeviceStatus;
+
 /**
  * @brief Manages creation and removal of XDG autostart entries.
- *
- * This class enforces a single‑mode autostart policy:
- *
- * - If the user wants per‑device startup, we create one autostart entry
- *   per device, each using --device=<id>.
- *
- * - If the user wants generic startup (no device specified), we create
- *   exactly one autostart entry with no --device argument.
- *
- * These modes are mutually exclusive. Creating a per‑device entry
- * automatically removes the generic entry, and creating a generic entry
- * removes all per‑device entries.
  */
 class StartupMenuManager : public QObject
 {
     Q_OBJECT
 
-public:
-    explicit StartupMenuManager(const QString &deviceId,
-                                QObject *parent = nullptr);
+    Q_PROPERTY(bool isPinned READ isPinned WRITE setIsPinned NOTIFY isPinnedChanged FINAL)
 
-public slots:
-    bool hasStartupApplicationsEntry();
-    void registerStartupApplicationsEntry();
-    void removeStartupApplicationsEntry();
+public:
+    static StartupMenuManager *instance();
+
+    void removeAutoStart(const QString &deviceId = "");
+    bool isPinned() const;
+    void setIsPinned(bool isPinned);
+
+signals:
+    void isPinnedChanged();
 
 private:
-    QString m_deviceId;
+    explicit StartupMenuManager(QObject *parent = nullptr);
+    void setMultiMode();
+    void ensureFileStateMatchesInMemoryState() const;
+
+    mutable bool m_isPinned = false;
+    mutable bool m_isPinnedIsValid = false;
+    mutable bool m_isMultiModeValid = false;
+    mutable bool m_isMultiMode = false;
+
+    static StartupMenuManager *s_instance;
+    DeviceStatus &deviceStatus() const;
 };
