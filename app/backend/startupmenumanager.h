@@ -1,6 +1,7 @@
 #pragma once
 
 class DeviceStatus;
+class Main;
 
 /**
  * @brief Manages creation and removal of XDG autostart entries.
@@ -12,7 +13,7 @@ class StartupMenuManager : public QObject
     Q_PROPERTY(bool isPinned READ isPinned WRITE setIsPinned NOTIFY isPinnedChanged FINAL)
 
 public:
-    static StartupMenuManager *instance();
+    static StartupMenuManager &instance();
 
     void removeAutoStart(const QString &deviceId = "");
     bool isPinned() const;
@@ -31,6 +32,6 @@ private:
     mutable bool m_isMultiModeValid = false;
     mutable bool m_isMultiMode = false;
 
-    static StartupMenuManager *s_instance;
     DeviceStatus &deviceStatus() const;
+    Main &main() const;
 };

@@ -4,8 +4,8 @@
 
 Settings& Settings::instance()
 {
-    static Settings s(dbus::isUsingFakeDBus());
-    return s;
+    static auto *s = new Settings(dbus::isUsingFakeDBus());
+    return *s;
 }
 
 Settings::Settings(bool isUsingFakeDBus)

@@ -3,28 +3,36 @@
 #include "kdeconnect_interfaces/conversationmessage.h"
 #include "kdeconnect_interfaces/conversationmessage_ext.h"
 #include "messageshandler.h"
+#include "backend/devicestatus.h"
 
-ConversationListModel::ConversationListModel(DraftMessages& drafts, QObject *parent)
-    : QAbstractListModel{parent}, m_drafts(drafts)
+ConversationListModel::ConversationListModel(QObject *parent)
+    : QAbstractListModel{parent}
 {
     connect(&m_30SecondTimeCheckTimer, &QTimer::timeout,
             this, &ConversationListModel::on30SecondTimeCheckTick);
+
+    connect(&DeviceStatus::instance(), &DeviceStatus::handlerChanged,
+            this, &ConversationListModel::onMessageHandlerChanged);
 
     m_30SecondTimeCheckTimer.setInterval(30000 /* ms */);
     m_30SecondTimeCheckTimer.start();
 }
 
-void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
+DeviceStatus &ConversationListModel::deviceStatus() const {
+    return DeviceStatus::instance();
+}
+
+void ConversationListModel::onMessageHandlerChanged()
 {
-    Q_ASSERT(messagesHandlerForNewDevice);
+    MessagesHandler *messagesHandler = deviceStatus().handler();
+    Q_ASSERT(messagesHandler);
 
     // Hook up message handlers to the new guy
     // The old m_messagesHandler, if it ever existed, should have been deleted before this,
     // meaning there's no need to disconnect from the old one.
-    m_messagesHandler = messagesHandlerForNewDevice;
-    QObject::connect(m_messagesHandler, &MessagesHandler::conversationMessageChanged,
+    QObject::connect(messagesHandler, &MessagesHandler::conversationMessageChanged,
                      this, &ConversationListModel::onConversationMessageChanged);
-    QObject::connect(m_messagesHandler, &MessagesHandler::conversationDeleted,
+    QObject::connect(messagesHandler, &MessagesHandler::conversationDeleted,
                      this, &ConversationListModel::onConversationDeleted);
 
     // Clear old data
@@ -37,7 +45,7 @@ void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevi
     // Populate the list from the cache
     //   First calculate all the latest messages from each thread
     QMap<qint64, const ConversationMessage *> latestMessageInThread;
-    const auto allConversationMessages = m_messagesHandler->getAllConversationMessages();
+    const auto allConversationMessages = messagesHandler->getAllConversationMessages();
     for (const ConversationMessage & message: allConversationMessages) {
         const ConversationMessage *existingMessage = latestMessageInThread[message.threadID()];
         if (!existingMessage || isNewerMessage(message, *existingMessage)) {
@@ -59,7 +67,7 @@ void ConversationListModel::setDevice(MessagesHandler *messagesHandlerForNewDevi
         // Build ConversationHeader model items out of that list.
         beginInsertRows(QModelIndex(), 0, sortedConversations.size()-1);
         for (const ConversationMessage *message: sortedConversations) {
-            auto *header = new ConversationHeader(*message, m_drafts, this);
+            auto *header = new ConversationHeader(*message, this);
             m_list.emplaceBack(header);
             m_index.insert(message->threadID(), header);
         }
@@ -103,7 +111,7 @@ void ConversationListModel::onConversationMessageChanged(const ConversationMessa
 {
     auto *associatedHeader = m_index[updatedMessage.threadID()];
     if (associatedHeader == nullptr) { // This is a new conversation
-        auto *newConversation = new ConversationHeader(updatedMessage, m_drafts, this);
+        auto *newConversation = new ConversationHeader(updatedMessage, this);
         int pos = findInsertPosition(QDateTime::fromMSecsSinceEpoch(updatedMessage.date()));
         beginInsertRows(QModelIndex(), pos, pos);
         m_list.insert(pos, newConversation);
@@ -153,7 +161,13 @@ void ConversationListModel::setSelectedConversationID(qint64 conversationID)
 
 void ConversationListModel::on30SecondTimeCheckTick()
 {
-    for (auto *i: m_list) {
+    for (auto *i: std::as_const(m_list)) {
         i->updateTime();
     }
+}
+
+ConversationListModel &ConversationListModel::instance()
+{
+    static auto *inst = new ConversationListModel();
+    return *inst;
 }

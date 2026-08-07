@@ -19,7 +19,7 @@ class ConversationHeader : public QObject
     Q_PROPERTY(bool isUnread READ isUnread NOTIFY isUnreadChanged)
 
 public:
-    explicit ConversationHeader(const ConversationMessage &latestMessage, DraftMessages &drafts, QObject *parent = nullptr);
+    explicit ConversationHeader(const ConversationMessage &latestMessage, QObject *parent = nullptr);
 
     static QString computeParticipants(const ConversationMessage &latestMessage);
 
@@ -57,12 +57,12 @@ signals:
 private:
     void onDraftStatusChanged(qint64 conversationID);
     void updateState();
+    DraftMessages &drafts() const;
 
     ConversationMessage m_latestMessage;
     QString m_avatarData;
     QString m_participants;
     QString m_shortFriendlyDate;
-    DraftMessages &m_drafts;
 
     QString m_latestMessageBody;
     bool m_isLatestOutgoing = false;

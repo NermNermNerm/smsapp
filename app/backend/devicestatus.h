@@ -4,6 +4,7 @@
 #include "startupmenumanager.h"
 
 class MessagesHandler;
+class Main;
 struct DeviceInfo {
     Q_GADGET
     Q_PROPERTY(QString id MEMBER id)
@@ -43,8 +44,6 @@ public:
     };
     Q_ENUM(Status)
 
-    explicit DeviceStatus(const QString &specifiedDeviceId = "", QObject *parent = nullptr);
-
     Q_PROPERTY(QList<DeviceInfo> otherDevices READ otherDevices NOTIFY otherDevicesChanged FINAL)
     Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged FINAL)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged FINAL)
@@ -62,16 +61,12 @@ public:
     QString deviceName() const { return m_deviceName; }
     int batteryCharge() const { return m_batteryCharge; }
     bool isCharging() const { return m_isCharging; }
-    QString specifiedDeviceId() const { return m_specifiedDeviceId; }
     bool isMultiDeviceMode() const { return false; /* TOOD: */ }
 
     // Mutators
     void setAutoFixDaemon(bool enabled);
 
-    static DeviceStatus *instance() {
-        Q_ASSERT(DeviceStatus::s_instance != nullptr);
-        return DeviceStatus::s_instance;
-    }
+    static DeviceStatus &instance();
 
 public slots:
     void rebootDaemon();
@@ -87,6 +82,10 @@ signals:
     void isChargingChanged();
 
 private:
+    explicit DeviceStatus(QObject *parent = nullptr);
+
+    Main &main() const;
+
     void poll();
     void onDeviceListChanged();
     bool tryRefreshDeviceList();
@@ -96,7 +95,7 @@ private:
     QString makeButtonImageUrl(const QString &id) const;
     void handleDevice();
     Settings &settings() const { return m_settings ? *m_settings : Settings::instance(); }
-    StartupMenuManager &startupManager() const { return *StartupMenuManager::instance(); }
+    StartupMenuManager &startupManager() const { return StartupMenuManager::instance(); }
 
     QList<DeviceInfo> m_otherDevices;
     Status m_status = Status::DaemonNotRunning;
@@ -107,11 +106,6 @@ private:
     QString m_deviceName;
     int m_batteryCharge; // 0-100
     bool m_isCharging;
-
-    /** @brief if we were told on the command line what device to interact with, this is it.  Else it's empty */
-    const QString m_specifiedDeviceId;
-
-    static DeviceStatus *s_instance;
 
 
     // Check device status using this as the rough interval - note that if the MessagesHandler has had

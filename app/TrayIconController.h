@@ -10,6 +10,9 @@ class TrayIconController : public QObject
 
 public:
     explicit TrayIconController(QGuiApplication &app, DeviceStatus &deviceStatus, QObject *parent = nullptr);
+    static TrayIconController *instance();
+
+    void showToast(const QString &message, int durationInMs);
 
 private:
     void refreshIcon();
@@ -29,4 +32,6 @@ private:
     QString m_lastMessageFrom;
     QGuiApplication &m_app;
     DeviceStatus::Status m_lastStatus;
+
+    static TrayIconController *s_instance;
 };

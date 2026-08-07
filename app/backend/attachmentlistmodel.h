@@ -35,7 +35,7 @@ public:
         bool isExpanded = false;
     };
 
-    explicit AttachmentListModel(MessagesHandler *messageHandler = DeviceStatus::instance()->handler(), QObject *parent = nullptr);
+    explicit AttachmentListModel(MessagesHandler *messageHandler = DeviceStatus::instance().handler(), QObject *parent = nullptr);
 
     QList<Attachment> attachments() const { return m_attachments; }
     void setAttachments(const QList<Attachment> &list);

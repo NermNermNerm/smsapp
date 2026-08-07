@@ -13,7 +13,6 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(appsmsapp
     main.cpp
-    kdeconnect_proxy.cpp
 )
 
 target_precompile_headers(appsmsapp PRIVATE pch.h)
@@ -21,6 +20,8 @@ target_precompile_headers(appsmsapp PRIVATE pch.h)
 qt_add_qml_module(appsmsapp
     URI smsapp
     VERSION 1.0
+    SOURCES main.h
+    SOURCES kdeconnect_proxy.cpp kdeconnect_proxy.h
     SOURCES TrayIconController.h
     SOURCES TrayIconController.cpp
     SOURCES kdeconnect_interfaces/conversationmessage.h kdeconnect_interfaces/conversationmessage.cpp
@@ -56,6 +57,7 @@ qt_add_qml_module(appsmsapp
     QML_FILES BatteryIndicator.qml
     SOURCES instancemanager.h instancemanager.cpp
     SOURCES installer.h installer.cpp
+    SOURCES backend/otpscanner.h backend/otpscanner.cpp
 )
 
 # Add general Qt resources *after* the QML module
@@ -75,6 +77,7 @@ qt_add_resources(appsmsapp "app_resources"
         icons/unpinned.svg
         icons/pinned.svg
         icons/start-menu-icon.png
+        sounds/otp-copied.mp3
 )
 
 # Just to make it visible in the ide

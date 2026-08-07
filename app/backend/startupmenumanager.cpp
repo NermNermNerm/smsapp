@@ -1,5 +1,6 @@
 #include "startupmenumanager.h"
 #include "backend/devicestatus.h"
+#include "main.h"
 
 static QString autostartDir()
 {
@@ -33,6 +34,7 @@ static void writeDesktopFile(const QString &path, const QString &deviceId)
     out << "Name=" << name << "\n";
     out << "Exec=\"" << exe << "\"";
 
+    out << " --startMinimized";
     if (!deviceId.isEmpty())
         out << " --device=" << deviceId;
 
@@ -59,7 +61,7 @@ bool StartupMenuManager::isPinned() const
     }
 
     m_isPinned = QFile::exists(autostartFileFor(deviceStatus().handler()->deviceID()))
-                 || (deviceStatus().specifiedDeviceId().isEmpty() && QFile::exists(autostartFileFor("")));
+                 || (main().specifiedDeviceId().isEmpty() && QFile::exists(autostartFileFor("")));
     m_isPinnedIsValid = true;
     qInfo() << "StartupMenuManager::isPinned set m_isPinned to " << m_isPinned;
     return m_isPinned;
@@ -105,7 +107,7 @@ void StartupMenuManager::ensureFileStateMatchesInMemoryState() const
         return; // Too early in the cycle yet...
     }
 
-    if ((!m_isPinned && deviceStatus().specifiedDeviceId().isEmpty()) || m_isMultiMode) {
+    if ((!m_isPinned && main().specifiedDeviceId().isEmpty()) || m_isMultiMode) {
         QFile::remove(autostartFileFor(""));
         qInfo() << "StartupMenuManager::ensureFileStateMatchesInMemoryState removed " << autostartFileFor("");
     }
@@ -130,13 +132,16 @@ void StartupMenuManager::removeAutoStart(const QString &deviceId)
 
 DeviceStatus &StartupMenuManager::deviceStatus() const
 {
-    return *DeviceStatus::instance();
+    return DeviceStatus::instance();
 }
 
-StartupMenuManager *StartupMenuManager::s_instance = nullptr;
-StartupMenuManager *StartupMenuManager::instance()
+Main &StartupMenuManager::main() const
 {
-    if (s_instance == nullptr)
-        s_instance = new StartupMenuManager();
-    return s_instance;
+    return Main::instance();
+}
+
+StartupMenuManager &StartupMenuManager::instance()
+{
+    static auto *inst = new StartupMenuManager();
+    return *inst;
 }

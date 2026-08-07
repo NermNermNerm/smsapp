@@ -6,7 +6,7 @@ class DraftMessages : public QObject
     Q_OBJECT
 
 public:
-    explicit DraftMessages(DeviceStatus &deviceStatus, QObject *parent = nullptr);
+    static DraftMessages &instance();
 
     bool containsDraft(qint64 conversationID) const {
         return m_draftTexts.contains(conversationID) || m_draftAttachments.contains(conversationID);
@@ -61,6 +61,8 @@ signals:
     void draftAttachmentsChanged(qint64 conversationID);
 
 private:
+    explicit DraftMessages(QObject *parent = nullptr);
+
     QHash<qint64, QString> m_draftTexts;
     QHash<qint64, QStringList> m_draftAttachments;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "draftmessages.h"
+#include "devicestatus.h"
 
 class MessageItem;
 class ConversationMessage;
@@ -18,7 +19,7 @@ class MessageListModel : public QAbstractListModel
     Q_PROPERTY(bool hasSendFailure READ hasSendFailure WRITE setHasSendFailure NOTIFY hasSendFailureChanged)
 
 public:
-    explicit MessageListModel(DraftMessages &drafts, QObject *parent = nullptr);
+    static MessageListModel &instance();
 
     enum Roles {
         ObjectRole = Qt::UserRole + 1
@@ -32,9 +33,8 @@ public:
     QString avatarData() const { return m_avatarData; }
     QString participants() const { return m_participants; }
     bool isSending() const { return m_isSending; }
-    QString draftText() const { return m_drafts.getDraftText(m_conversationID); }
-    QStringList draftAttachments() const { return m_drafts.getDraftAttachments(m_conversationID); }
-    void setDevice(MessagesHandler *messagesHandlerForNewDevice);
+    QString draftText() const { return drafts().getDraftText(m_conversationID); }
+    QStringList draftAttachments() const { return drafts().getDraftAttachments(m_conversationID); }
     void setDraftText(const QString &draftText);
     void setDraftAttachments(const QStringList &draftAttachments);
     bool hasSendFailure() const { return m_hasSendFailure; }
@@ -54,7 +54,12 @@ signals:
     void hasSendFailureChanged();
 
 private:
+    explicit MessageListModel(QObject *parent = nullptr);
+    DraftMessages& drafts() const { return DraftMessages::instance(); }
+    DeviceStatus& deviceStatus() const { return DeviceStatus::instance(); }
+
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
+    void onMessagesHandlerChanged();
     void addOrUpdate(const ConversationMessage &date);
     void updateTimes();
 
@@ -62,8 +67,6 @@ private:
     void onMessageDeliveryFailed(qint64 conversationID);
     void setIsSending(bool isSending);
 
-    MessagesHandler *m_messagesHandler = nullptr;
-    DraftMessages& m_drafts;
     qint64 m_conversationID = 0;
     QVector<MessageItem*> m_list;
     QSet<qint64> m_requestedConversations;

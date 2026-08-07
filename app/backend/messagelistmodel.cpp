@@ -8,22 +8,29 @@
 #include "downscale.h"
 
 // Use QVector internally (Qt6 best practice)
-MessageListModel::MessageListModel(DraftMessages &drafts, QObject *parent)
-    : QAbstractListModel(parent), m_drafts(drafts)
+MessageListModel::MessageListModel(QObject *parent)
+    : QAbstractListModel(parent)
 {
     connect(&m_updateTimesTimer, &QTimer::timeout, this, &MessageListModel::updateTimes);
     m_updateTimesTimer.setInterval(30000);
     m_updateTimesTimer.start();
 
-    connect(&m_drafts, &DraftMessages::draftTextChanged, this, [this](qint64 conversationID) {
+    connect(&drafts(), &DraftMessages::draftTextChanged, this, [this](qint64 conversationID) {
         if (conversationID == this->m_conversationID)
             emit draftTextChanged();
     });
-    connect(&m_drafts, &DraftMessages::draftAttachmentsChanged, this, [this](qint64 conversationID) {
+    connect(&drafts(), &DraftMessages::draftAttachmentsChanged, this, [this](qint64 conversationID) {
         if (conversationID == this->m_conversationID)
             emit draftAttachmentsChanged();
     });
+    connect(&deviceStatus(), &DeviceStatus::handlerChanged, this, &MessageListModel::onMessagesHandlerChanged);
 }
+
+MessageListModel &MessageListModel::instance() {
+    static auto *inst = new MessageListModel();
+    return *inst;
+}
+
 
 // ---------------------------------------------------------------
 // Required overrides
@@ -62,14 +69,12 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     };
 }
 
-void MessageListModel::setDevice(MessagesHandler *messagesHandlerForNewDevice)
+void MessageListModel::onMessagesHandlerChanged()
 {
-    // The old m_messagesHandler, if it ever existed, should have been deleted before this,
-    // meaning there's no need to disconnect from the old one.
-    m_messagesHandler = messagesHandlerForNewDevice;
-    connect(m_messagesHandler, &MessagesHandler::conversationMessageChanged, this, &MessageListModel::onConversationMessageChanged);
-    connect(m_messagesHandler, &MessagesHandler::messageDelivered, this, &MessageListModel::onMessageDelivered);
-    connect(m_messagesHandler, &MessagesHandler::messageDeliveryFailed, this, &MessageListModel::onMessageDeliveryFailed);
+    // this signal only happens once, when handler() becomes non-null.
+    connect(deviceStatus().handler(), &MessagesHandler::conversationMessageChanged, this, &MessageListModel::onConversationMessageChanged);
+    connect(deviceStatus().handler(), &MessagesHandler::messageDelivered, this, &MessageListModel::onMessageDelivered);
+    connect(deviceStatus().handler(), &MessagesHandler::messageDeliveryFailed, this, &MessageListModel::onMessageDeliveryFailed);
 
     setConversationID(-1);
 }
@@ -91,9 +96,12 @@ void MessageListModel::setConversationID(qint64 conversationID)
         return;
     }
 
+    auto messagesHandler = deviceStatus().handler();
+    Q_ASSERT(messagesHandler != nullptr);
+
     // Populate the list from the cache
     //   First calculate all the latest messages from each thread
-    const auto allConversationMessages = m_messagesHandler->getConversationMessages(conversationID);
+    const auto allConversationMessages = deviceStatus().handler()->getConversationMessages(conversationID);
     for (const ConversationMessage & message: allConversationMessages) {
         addOrUpdate(message);
     }
@@ -101,7 +109,7 @@ void MessageListModel::setConversationID(qint64 conversationID)
     if (!m_requestedConversations.contains(conversationID))
     {
         m_requestedConversations.insert(conversationID);
-        m_messagesHandler->requestConversationItems(conversationID);
+        messagesHandler->requestConversationItems(conversationID);
     }
 
     QString avatarData = "";
@@ -123,7 +131,7 @@ void MessageListModel::setConversationID(qint64 conversationID)
 
     emit draftTextChanged();
     emit draftAttachmentsChanged();
-    setIsSending(m_messagesHandler->hasUndeliveredOutgoing(m_conversationID));
+    setIsSending(messagesHandler->hasUndeliveredOutgoing(m_conversationID));
 }
 
 void MessageListModel::onConversationMessageChanged(const ConversationMessage &updatedMessage)
@@ -176,14 +184,14 @@ void MessageListModel::sendMessage(const QString &messageText, const QVector<QUr
         Q_ASSERT(attachmentsToSend.count() == 1);
         attachmentsToSend[0] = downscaleImage(attachmentsToSend[0]);
     }
-    m_messagesHandler->sendMessage(m_conversationID, messageText, attachmentsToSend);
+    deviceStatus().handler()->sendMessage(m_conversationID, messageText, attachmentsToSend);
     setIsSending(true);
 }
 
 void MessageListModel::onMessageDelivered(qint64 conversationID)
 {
     if (conversationID == m_conversationID) {
-        m_drafts.clearDraft(m_conversationID);
+        drafts().clearDraft(m_conversationID);
         setIsSending(false);
     }
 }
@@ -206,7 +214,7 @@ void MessageListModel::setIsSending(bool isSending)
 
 void MessageListModel::setDraftText(const QString &draftText)
 {
-    m_drafts.setDraftText(m_conversationID, draftText);
+    drafts().setDraftText(m_conversationID, draftText);
 }
 
 void MessageListModel::setHasSendFailure(bool hasSendFailure)
@@ -219,7 +227,7 @@ void MessageListModel::setHasSendFailure(bool hasSendFailure)
 
 void MessageListModel::setDraftAttachments(const QStringList &draftAttachments)
 {
-    m_drafts.setDraftAttachments(m_conversationID, draftAttachments);
+    drafts().setDraftAttachments(m_conversationID, draftAttachments);
 }
 
 QUrl MessageListModel::turnClipboardIntoAttachment() const

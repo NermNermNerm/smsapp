@@ -40,18 +40,21 @@ static QString shortFriendlyDate(const QDateTime &dt)
 }
 
 
-ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage, DraftMessages &drafts, QObject *parent)
+ConversationHeader::ConversationHeader(const ConversationMessage &latestMessage, QObject *parent)
     : QObject{parent}
     , m_latestMessage(latestMessage)
     , m_participants(computeParticipants(latestMessage))
     , m_shortFriendlyDate(::shortFriendlyDate(QDateTime::fromMSecsSinceEpoch(latestMessage.date())))
-    , m_drafts(drafts)
 {
     m_avatarData = AvatarModel::getAvatarData(latestMessage);
 
-    connect(&m_drafts, &DraftMessages::draftTextChanged, this, &ConversationHeader::onDraftStatusChanged);
-    connect(&m_drafts, &DraftMessages::draftAttachmentsChanged, this, &ConversationHeader::onDraftStatusChanged);
+    connect(&drafts(), &DraftMessages::draftTextChanged, this, &ConversationHeader::onDraftStatusChanged);
+    connect(&drafts(), &DraftMessages::draftAttachmentsChanged, this, &ConversationHeader::onDraftStatusChanged);
     updateState();
+}
+
+DraftMessages &ConversationHeader::drafts() const {
+    return DraftMessages::instance();
 }
 
 QString ConversationHeader::computeParticipants(const ConversationMessage &latestMessage)
@@ -129,11 +132,11 @@ void ConversationHeader::updateState()
 {
     QString body;
 
-    if (m_drafts.containsDraft(conversationID())) {
+    if (drafts().containsDraft(conversationID())) {
         setIsLatestDraft(true);
         setIsLatestOutgoing(true);
 
-        body = m_drafts.getDraftText(conversationID()).trimmed();
+        body = drafts().getDraftText(conversationID()).trimmed();
         if (body.isEmpty()) {
 
             // We don't /really/ know it's an image, but it's some kind of attachment and it seems

@@ -1,14 +1,12 @@
 #include "devicestatus.h"
+#include "main.h"
 #include "messageshandler.h"
 #include "dbus.h"
 #include "instancemanager.h"
 
-DeviceStatus::DeviceStatus(const QString &specifiedDeviceId, QObject *parent)
-    : QObject(parent), m_specifiedDeviceId(specifiedDeviceId)
+DeviceStatus::DeviceStatus(QObject *parent)
+    : QObject(parent)
 {
-    Q_ASSERT(s_instance == nullptr);
-    s_instance = this;
-
     // Timer for polling
     auto timer = new QTimer(this);
 
@@ -33,7 +31,10 @@ DeviceStatus::DeviceStatus(const QString &specifiedDeviceId, QObject *parent)
     QTimer::singleShot(0, this, &DeviceStatus::poll);
 }
 
-DeviceStatus *DeviceStatus::s_instance = nullptr;
+DeviceStatus &DeviceStatus::instance() {
+    static auto *inst = new DeviceStatus();
+    return *inst;
+}
 
 void DeviceStatus::poll()
 {
@@ -61,16 +62,17 @@ void DeviceStatus::poll()
     bool otherDevicesListChanged = false;
     QString previousSessionDeviceId = settings().previousSessionDeviceId();
     QString deviceIdToUse = m_handler ? m_handler->deviceID() : "";
+    QString specifiedDeviceId = main().specifiedDeviceId();
 
     if (deviceIdToUse.isEmpty()
-     && !m_specifiedDeviceId.isEmpty()
-     && knownDeviceIds.contains(m_specifiedDeviceId)) {
+     && !specifiedDeviceId.isEmpty()
+     && knownDeviceIds.contains(specifiedDeviceId)) {
         // If we've been told what device to connect to, and the device is still paired, use it regardless of its state.
-        deviceIdToUse = m_specifiedDeviceId;
+        deviceIdToUse = specifiedDeviceId;
     }
 
     if (deviceIdToUse.isEmpty()
-     && m_specifiedDeviceId.isEmpty()
+     && specifiedDeviceId.isEmpty()
      && !previousSessionDeviceId.isEmpty()
      && knownDeviceIds.contains(previousSessionDeviceId)
      && dbus::device(previousSessionDeviceId).isReachable()) {
@@ -113,7 +115,7 @@ void DeviceStatus::poll()
         if (!hasSms) continue;
         settings().setDeviceKnownToHaveSms(id);
 
-        if (deviceIdToUse.isEmpty() && m_specifiedDeviceId.isEmpty()) {
+        if (deviceIdToUse.isEmpty() && specifiedDeviceId.isEmpty()) {
             // If we weren't specifically directed to a device, and the last device we used isn't reachable,
             //  go ahead and use the first reachable sms-capable device.
             deviceIdToUse = id;
@@ -147,21 +149,21 @@ void DeviceStatus::poll()
 
     // If we couldn't find any reachable devices, but the last device we used is valid, keep trying to use it.
     if (deviceIdToUse.isEmpty()
-     && m_specifiedDeviceId.isEmpty()
+     && specifiedDeviceId.isEmpty()
      && !previousSessionDeviceId.isEmpty()
      && knownDeviceIds.contains(previousSessionDeviceId)) {
         deviceIdToUse = previousSessionDeviceId;
     }
 
     if (deviceIdToUse.isEmpty()) {
-        if (m_specifiedDeviceId.isEmpty()) {
+        if (specifiedDeviceId.isEmpty()) {
             setStatus(Status::NoSmsDevice);
         }
         else {
             qInfo() << "The specified device doesn't exist and we are (almost certainly) being launched from startup; exiting now";
             setStatus(Status::DeviceMissing);
             // There's no need for ceremony - if we get here, the user unpaired the device; the intent is clear.
-            startupManager().removeAutoStart(m_specifiedDeviceId);
+            startupManager().removeAutoStart(specifiedDeviceId);
             // TODO: Call the cache manager and tell it to clear out the cache for this phone.
             QCoreApplication::exit(0);
             return;
@@ -287,3 +289,6 @@ QString DeviceStatus::makeButtonImageUrl(const QString &id) const
     return "data:image/png;base64," + bytes.toBase64();
 }
 
+Main &DeviceStatus::main() const {
+    return Main::instance();
+}

@@ -2,6 +2,9 @@
 #include "backend/devicestatus.h"
 #include <QtSvg/QSvgRenderer>
 #include "backend/nameresolver.h"
+#include <QHBoxLayout>
+#include <QLabel>
+#include <canberra.h>
 
 TrayIconController::TrayIconController(QGuiApplication &app, DeviceStatus &deviceStatus, QObject *parent)
     : QObject(parent), m_deviceStatus(deviceStatus), m_app(app)
@@ -245,3 +248,58 @@ void TrayIconController::onTrayActivated(QSystemTrayIcon::ActivationReason reaso
     }
 }
 
+void TrayIconController::showToast(const QString &message, int durationInMs)
+{
+    // ephemeral toast window
+    QWidget *toast = new QWidget(nullptr);
+    toast->setWindowFlags(Qt::Tool |
+                          Qt::FramelessWindowHint |
+                          Qt::WindowStaysOnTopHint |
+                          Qt::BypassWindowManagerHint);
+    toast->setAttribute(Qt::WA_TranslucentBackground);
+    toast->setAttribute(Qt::WA_ShowWithoutActivating);
+
+    // simple visual container
+    auto layout = new QHBoxLayout(toast);
+    layout->setContentsMargins(12, 8, 12, 8);
+
+    auto label = new QLabel(message, toast);
+    label->setStyleSheet("color: white; font-size: 12px;");
+    layout->addWidget(label);
+
+    toast->setStyleSheet("background-color: rgba(0,0,0,180); "
+                         "border-radius: 6px;");
+
+    toast->adjustSize();
+
+    //
+    // Position relative to tray icon
+    //
+    QRect trayRect = m_tray.geometry();
+    QPoint pos = trayRect.topLeft() - QPoint(toast->width() - trayRect.width(),
+                                             toast->height());
+    toast->move(pos);
+
+    //
+    // Fade in
+    //
+    auto *fadeIn = new QPropertyAnimation(toast, "windowOpacity");
+    fadeIn->setDuration(150);
+    fadeIn->setStartValue(0.0);
+    fadeIn->setEndValue(1.0);
+    fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
+
+    toast->show();
+
+    //
+    // Auto‑dismiss with fade‑out
+    //
+    QTimer::singleShot(durationInMs, toast, [toast]() {
+        auto *fadeOut = new QPropertyAnimation(toast, "windowOpacity");
+        fadeOut->setDuration(150);
+        fadeOut->setStartValue(1.0);
+        fadeOut->setEndValue(0.0);
+        QObject::connect(fadeOut, &QPropertyAnimation::finished, toast, &QObject::deleteLater);
+        fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
+    });
+}
