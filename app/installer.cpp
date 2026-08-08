@@ -25,10 +25,10 @@ static void ensureStartMenuIcon()
     std::string appLocal = appLocalPath();
     std::filesystem::create_directories(appLocal);
 
-    qDebug() << "Root:" << QDir(":/").entryList();
-    qDebug() << "Icons:" << QDir(":/icons").entryList();
+    // qDebug() << "Root:" << QDir(":/").entryList();
+    // qDebug() << "Resources:" << QDir(":/resources").entryList();
 
-    QFile in(":/icons/start-menu-icon.png");
+    QFile in(":/resources/start-menu-icon.png");
     if (!in.open(QIODevice::ReadOnly)) {
         Q_ASSERT(false);
         return;

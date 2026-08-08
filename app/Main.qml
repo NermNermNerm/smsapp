@@ -159,7 +159,7 @@ ApplicationWindow {
                     id: pinToStart
                     contentItem: Image {
                         anchors.centerIn: parent
-                        source: startupMenuManager.isPinned ? "qrc:/icons/pinned.svg" : "qrc:/icons/unpinned.svg"
+                        source: startupMenuManager.isPinned ? "qrc:/resources/pinned.svg" : "qrc:/resources/unpinned.svg"
                     }
 
                     font.pixelSize: 11
@@ -313,7 +313,7 @@ ApplicationWindow {
             Image {
                 height: 48
                 width: 48
-                source: "qrc:/icons/error.svg"
+                source: "qrc:/resources/error.svg"
             }
             Text {
                 visible: deviceStatus.status === DeviceStatus.DaemonNotRunning

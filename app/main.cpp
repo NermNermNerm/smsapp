@@ -11,6 +11,7 @@
 #include "backend/outgoingattachmentListmodel.h"
 #include "backend/draftmessages.h"
 #include "backend/startupmenumanager.h"
+#include "backend/soundcontroller.h"
 #include "installer.h"
 
 Main &Main::instance()
@@ -60,7 +61,11 @@ int Main::run(int argc, char *argv[])
     global_engine.rootContext()->setContextProperty("main", &Main::instance());
     global_engine.rootContext()->setContextProperty("conversationListModel", &ConversationListModel::instance());
     global_engine.rootContext()->setContextProperty("messageListModel", &MessageListModel::instance());
-    global_engine.rootContext()->setContextProperty("cliStartMinimized", parser.isSet(startMinimizedOpt));
+
+    // This isn't actually useful to QML, but who knows, maybe someday, and we need to force it to create an instance.
+    global_engine.rootContext()->setContextProperty("trayIconController", &TrayIconController::instance());
+    global_engine.rootContext()->setContextProperty("soundController", &SoundController::instance());
+
     QObject::connect(
         &global_engine,
         &QQmlApplicationEngine::objectCreationFailed,

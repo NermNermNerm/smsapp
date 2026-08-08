@@ -2,33 +2,31 @@
 #include "backend/devicestatus.h"
 #include <QtSvg/QSvgRenderer>
 #include "backend/nameresolver.h"
+#include "backend/otpscanner.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <canberra.h>
 
-TrayIconController::TrayIconController(QGuiApplication &app, DeviceStatus &deviceStatus, QObject *parent)
-    : QObject(parent), m_deviceStatus(deviceStatus), m_app(app)
+TrayIconController::TrayIconController(QObject *parent)
+    : QObject(parent)
 {
-    connect(&m_deviceStatus, &DeviceStatus::statusChanged,
-                     this, &TrayIconController::onDeviceStatusChanged);
-    connect(&m_deviceStatus, &DeviceStatus::handlerChanged,
-                     this, &TrayIconController::onMessagesHandlerChanged);
-    connect(&m_tray, &QSystemTrayIcon::activated,
-            this, &TrayIconController::onTrayActivated);
-    connect(qApp, &QGuiApplication::applicationStateChanged,
-            this, &TrayIconController::onAppStateChanged);
+    connect(&deviceStatus(), &DeviceStatus::statusChanged, this, &TrayIconController::onDeviceStatusChanged);
+    connect(&deviceStatus(), &DeviceStatus::handlerChanged, this, &TrayIconController::onMessagesHandlerChanged);
+    connect(&m_tray, &QSystemTrayIcon::activated, this, &TrayIconController::onTrayActivated);
+    connect(qApp, &QGuiApplication::applicationStateChanged, this, &TrayIconController::onAppStateChanged);
+    connect(&otpScanner(), &OtpScanner::otpReceived, this, &TrayIconController::onOtpReceived);
     m_lastActiveTime = QDateTime::currentDateTime(); // not utc, incoming messages are local time.
     m_numNewMessages = 0;
     m_lastReachableTime = {};
     refreshIcon();
     m_tray.show();
-    m_lastStatus = m_deviceStatus.status();
+    m_lastStatus = deviceStatus().status();
     Q_ASSERT(m_lastStatus != DeviceStatus::Status::DeviceReady);
 }
 
 void TrayIconController::onDeviceStatusChanged()
 {
-    auto newStatus = m_deviceStatus.status();
+    auto newStatus = deviceStatus().status();
     Q_ASSERT(newStatus != m_lastStatus);
     if (m_lastStatus == DeviceStatus::Status::DeviceReady) {
         m_lastReachableTime = QDateTime::currentDateTime();
@@ -55,13 +53,14 @@ void TrayIconController::onMessagesHandlerChanged()
     Q_ASSERT(!m_handlerIsAttached);
     m_handlerIsAttached = true;
 
-    connect(m_deviceStatus.handler(), &MessagesHandler::conversationMessageChanged,
-                     this, &TrayIconController::onConversationMessageChanged);
+    connect(deviceStatus().handler(), &MessagesHandler::conversationMessageChanged,
+            this, &TrayIconController::onConversationMessageChanged);
 }
 
 void TrayIconController::onConversationMessageChanged(const ConversationMessage &updatedMessage)
 {
-    if (m_app.applicationState() != Qt::ApplicationActive
+    auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
+    if (app->applicationState() != Qt::ApplicationActive
      && updatedMessage.date() > m_lastActiveTime.toMSecsSinceEpoch()) {
         auto messages = updatedMessage.addresses();
         m_lastMessageFrom = NameResolver::phoneNumberToName(messages.first().address());
@@ -180,16 +179,16 @@ static QString formatTime(const QDateTime &dt)
 void TrayIconController::refreshIcon()
 {
     QColor phoneColor = QColor("blue");
-    if (m_deviceStatus.handler()) {
-        phoneColor = Settings::instance().getColorForDevice(m_deviceStatus.handler()->deviceID());
+    if (deviceStatus().handler()) {
+        phoneColor = Settings::instance().getColorForDevice(deviceStatus().handler()->deviceID());
     }
 
     QIcon icon = makeTrayIcon(phoneColor,
-                              (m_deviceStatus.deviceName().isEmpty()),
-                              (m_deviceStatus.status() == DeviceStatus::Status::DeviceReady),
+                              (deviceStatus().deviceName().isEmpty()),
+                              (deviceStatus().status() == DeviceStatus::Status::DeviceReady),
                               m_numNewMessages > 0);
 
-    QString deviceName = m_deviceStatus.deviceName();
+    QString deviceName = deviceStatus().deviceName();
 
     QString toolTipText;
     if (deviceName.isEmpty()) {
@@ -200,13 +199,13 @@ void TrayIconController::refreshIcon()
         //
         // Connection + battery
         //
-        if (m_deviceStatus.status() == DeviceStatus::Status::DeviceReady) {
-            if (m_deviceStatus.isCharging()) {
+        if (deviceStatus().status() == DeviceStatus::Status::DeviceReady) {
+            if (deviceStatus().isCharging()) {
                 toolTipText += QObject::tr("Connected — %1% and charging\n")
-                                   .arg(m_deviceStatus.batteryCharge());
+                                   .arg(deviceStatus().batteryCharge());
             } else {
                 toolTipText += QObject::tr("Connected — %1%\n")
-                                   .arg(m_deviceStatus.batteryCharge());
+                                   .arg(deviceStatus().batteryCharge());
             }
         } else if (m_lastReachableTime.isValid()){
             toolTipText += QObject::tr("Phone unreachable since %1\n").arg(formatTime(m_lastReachableTime));
@@ -218,7 +217,8 @@ void TrayIconController::refreshIcon()
         //
         // New‑message summary
         //
-        if (m_app.applicationState() != Qt::ApplicationActive) {
+        auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
+        if (app->applicationState() != Qt::ApplicationActive) {
             auto sinceTime = formatTime(m_lastActiveTime);
             if (m_numNewMessages == 0) {
                 toolTipText += QObject::tr("No new messages since %1").arg(sinceTime);
@@ -239,7 +239,8 @@ void TrayIconController::refreshIcon()
 void TrayIconController::onTrayActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
-        const auto windows = m_app.allWindows();
+        auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
+        const auto windows = app->allWindows();
         if (!windows.isEmpty()) {
             QWindow *w = windows.first();
             w->raise();
@@ -302,4 +303,19 @@ void TrayIconController::showToast(const QString &message, int durationInMs)
         QObject::connect(fadeOut, &QPropertyAnimation::finished, toast, &QObject::deleteLater);
         fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
     });
+}
+
+void TrayIconController::onOtpReceived(const QString &code, const QString &actualSender, const QString &body, const QString &parsedSender)
+{
+    const QString sender = parsedSender.isEmpty() ? actualSender : parsedSender;
+    showToast(tr("2FA authorization code %1 from %2 copied to clipboard.").arg(code, sender), 3000);
+}
+
+DeviceStatus &TrayIconController::deviceStatus() const { return DeviceStatus::instance(); }
+OtpScanner &TrayIconController::otpScanner() const { return OtpScanner::instance(); }
+
+TrayIconController &TrayIconController::instance()
+{
+    static auto *inst = new TrayIconController();
+    return *inst;
 }

@@ -247,7 +247,7 @@ ColumnLayout {
             Button { // download
                 visible: !isImage(model) && !model.isLoading && model.fileUri === ""
                 implicitWidth: implicitContentWidth+2
-                icon.source: "qrc:/icons/download.svg"
+                icon.source: "qrc:/resources/download.svg"
                 display: AbstractButton.IconOnly
                 icon.width: 20
                 icon.height: 20
@@ -273,7 +273,7 @@ ColumnLayout {
             Button { // open file
                 visible: !isImage(model) && !model.isLoading && model.fileUri !== ""
                 implicitWidth: implicitContentWidth+2
-                icon.source: "qrc:/icons/open-file.svg"
+                icon.source: "qrc:/resources/open-file.svg"
                 display: AbstractButton.IconOnly
                 icon.width: 20
                 icon.height: 20
@@ -289,7 +289,7 @@ ColumnLayout {
             Button {
                 visible: !isImage(model) && !model.isLoading && model.fileUri !== ""
                 implicitWidth: implicitContentWidth+2
-                icon.source: "qrc:/icons/open-folder.svg"
+                icon.source: "qrc:/resources/open-folder.svg"
                 display: AbstractButton.IconOnly
                 icon.width: 20
                 icon.height: 20

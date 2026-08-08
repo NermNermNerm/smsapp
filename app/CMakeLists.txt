@@ -5,7 +5,7 @@ project(smsapp VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets Svg)
+find_package(Qt6 REQUIRED COMPONENTS Quick DBus Gui Widgets Svg Multimedia)
 find_library(PHONENUMBER_LIB phonenumber)
 message(STATUS "PHONENUMBER_LIB = ${PHONENUMBER_LIB}")
 
@@ -58,26 +58,28 @@ qt_add_qml_module(appsmsapp
     SOURCES instancemanager.h instancemanager.cpp
     SOURCES installer.h installer.cpp
     SOURCES backend/otpscanner.h backend/otpscanner.cpp
+    SOURCES backend/soundcontroller.h backend/soundcontroller.cpp
 )
 
 # Add general Qt resources *after* the QML module
 qt_add_resources(appsmsapp "app_resources"
     PREFIX "/"
     FILES
-        icons/tray_connected_msgs.svg
-        icons/tray_disconnected_msgs.svg
-        icons/tray_error_msgs.svg
-        icons/tray_connected_nomsgs.svg
-        icons/tray_disconnected_nomsgs.svg
-        icons/tray_error_nomsgs.svg
-        icons/download.svg
-        icons/open-file.svg
-        icons/open-folder.svg
-        icons/error.svg
-        icons/unpinned.svg
-        icons/pinned.svg
-        icons/start-menu-icon.png
-        sounds/otp-copied.mp3
+        resources/tray_connected_msgs.svg
+        resources/tray_disconnected_msgs.svg
+        resources/tray_error_msgs.svg
+        resources/tray_connected_nomsgs.svg
+        resources/tray_disconnected_nomsgs.svg
+        resources/tray_error_nomsgs.svg
+        resources/download.svg
+        resources/open-file.svg
+        resources/open-folder.svg
+        resources/error.svg
+        resources/unpinned.svg
+        resources/pinned.svg
+        resources/start-menu-icon.png
+        resources/otp-copied.mp3
+        resources/two-factor-rules.ini
 )
 
 # Just to make it visible in the ide
@@ -105,6 +107,7 @@ target_link_libraries(appsmsapp
         Qt6::Widgets
         Qt6::Gui
         Qt6::Svg
+        Qt6::Multimedia
         ${PHONENUMBER_LIB}
 )
 
