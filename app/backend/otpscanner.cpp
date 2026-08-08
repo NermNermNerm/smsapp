@@ -331,6 +331,16 @@ OtpScanner &OtpScanner::instance()
     return *inst;
 }
 
+static void copyToClipboard(const QString text)
+{
+    QGuiApplication::clipboard()->setText(text);
+}
+
+static void playOtpReceivedSound()
+{
+
+}
+
 void OtpScanner::onMessageChanged(const ConversationMessage &message)
 {
     if (message.date() < QDateTime::currentMSecsSinceEpoch() - 120'000)
@@ -344,8 +354,12 @@ void OtpScanner::onMessageChanged(const ConversationMessage &message)
             auto addresses = message.addresses();
             QString actualSender = NameResolver::phoneNumberToName(addresses[0].address());
 
+            // Mayyybeee there should be a clipboard controller?
+            copyToClipboard(code);
+
             QGuiApplication::clipboard()->setText(code);
             emit otpReceived(code, actualSender, message.body(), parsedSender);
+            // Toast.qml and SoundController watch for that.
             return;
         }
     }

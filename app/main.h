@@ -5,8 +5,12 @@ class Main : public QObject {
 
     Q_PROPERTY(QString specifiedDeviceId READ specifiedDeviceId CONSTANT)
     Q_PROPERTY(bool startMinimized READ startMinimized CONSTANT)
+
 public:
     static Main &instance();
+
+    Q_INVOKABLE QWindow *getWindow() const;
+    Q_INVOKABLE QScreen *getScreen() const;
 
     int run(int argc, char *argv[]);
 

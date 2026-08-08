@@ -12,6 +12,7 @@
 #include "backend/draftmessages.h"
 #include "backend/startupmenumanager.h"
 #include "backend/soundcontroller.h"
+#include "backend/otpscanner.h"
 #include "installer.h"
 
 Main &Main::instance()
@@ -61,6 +62,7 @@ int Main::run(int argc, char *argv[])
     global_engine.rootContext()->setContextProperty("main", &Main::instance());
     global_engine.rootContext()->setContextProperty("conversationListModel", &ConversationListModel::instance());
     global_engine.rootContext()->setContextProperty("messageListModel", &MessageListModel::instance());
+    global_engine.rootContext()->setContextProperty("otpScanner", &OtpScanner::instance());
 
     // This isn't actually useful to QML, but who knows, maybe someday, and we need to force it to create an instance.
     global_engine.rootContext()->setContextProperty("trayIconController", &TrayIconController::instance());
@@ -76,6 +78,23 @@ int Main::run(int argc, char *argv[])
     global_engine.loadFromModule("smsapp", "Main");
 
     return QGuiApplication::exec();
+}
+
+QWindow *Main::getWindow() const
+{
+    const auto windows = QGuiApplication::topLevelWindows();
+    for (QWindow *w : windows) {
+        auto n = w->objectName();
+        if (w->objectName() == "mainWindow")
+            return w;
+    }
+    Q_ASSERT(false); // probably means somebody deleted or changed the 'id: ' line in main.qml if it fails.
+    return nullptr;
+}
+
+QScreen *Main::getScreen() const
+{
+    return getWindow()->screen();
 }
 
 int main(int argc, char *argv[])

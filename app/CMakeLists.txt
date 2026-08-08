@@ -59,6 +59,7 @@ qt_add_qml_module(appsmsapp
     SOURCES installer.h installer.cpp
     SOURCES backend/otpscanner.h backend/otpscanner.cpp
     SOURCES backend/soundcontroller.h backend/soundcontroller.cpp
+    QML_FILES Toast.qml
 )
 
 # Add general Qt resources *after* the QML module
@@ -78,7 +79,7 @@ qt_add_resources(appsmsapp "app_resources"
         resources/unpinned.svg
         resources/pinned.svg
         resources/start-menu-icon.png
-        resources/otp-copied.mp3
+        resources/otp-copied.wav
         resources/two-factor-rules.ini
 )
 

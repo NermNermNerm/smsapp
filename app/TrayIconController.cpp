@@ -5,7 +5,7 @@
 #include "backend/otpscanner.h"
 #include <QHBoxLayout>
 #include <QLabel>
-#include <canberra.h>
+#include "main.h"
 
 TrayIconController::TrayIconController(QObject *parent)
     : QObject(parent)
@@ -14,7 +14,6 @@ TrayIconController::TrayIconController(QObject *parent)
     connect(&deviceStatus(), &DeviceStatus::handlerChanged, this, &TrayIconController::onMessagesHandlerChanged);
     connect(&m_tray, &QSystemTrayIcon::activated, this, &TrayIconController::onTrayActivated);
     connect(qApp, &QGuiApplication::applicationStateChanged, this, &TrayIconController::onAppStateChanged);
-    connect(&otpScanner(), &OtpScanner::otpReceived, this, &TrayIconController::onOtpReceived);
     m_lastActiveTime = QDateTime::currentDateTime(); // not utc, incoming messages are local time.
     m_numNewMessages = 0;
     m_lastReachableTime = {};
@@ -239,80 +238,22 @@ void TrayIconController::refreshIcon()
 void TrayIconController::onTrayActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
-        auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance());
-        const auto windows = app->allWindows();
-        if (!windows.isEmpty()) {
-            QWindow *w = windows.first();
-            w->raise();
-            w->requestActivate();
-        }
+        m_lastTrayScreen = QGuiApplication::screenAt(QCursor::pos());
+
+        auto *w = Main::instance().getWindow();
+        w->raise();
+        w->requestActivate();
     }
 }
 
-void TrayIconController::showToast(const QString &message, int durationInMs)
+QScreen *TrayIconController::getScreen() const
 {
-    // ephemeral toast window
-    QWidget *toast = new QWidget(nullptr);
-    toast->setWindowFlags(Qt::Tool |
-                          Qt::FramelessWindowHint |
-                          Qt::WindowStaysOnTopHint |
-                          Qt::BypassWindowManagerHint);
-    toast->setAttribute(Qt::WA_TranslucentBackground);
-    toast->setAttribute(Qt::WA_ShowWithoutActivating);
-
-    // simple visual container
-    auto layout = new QHBoxLayout(toast);
-    layout->setContentsMargins(12, 8, 12, 8);
-
-    auto label = new QLabel(message, toast);
-    label->setStyleSheet("color: white; font-size: 12px;");
-    layout->addWidget(label);
-
-    toast->setStyleSheet("background-color: rgba(0,0,0,180); "
-                         "border-radius: 6px;");
-
-    toast->adjustSize();
-
-    //
-    // Position relative to tray icon
-    //
-    QRect trayRect = m_tray.geometry();
-    QPoint pos = trayRect.topLeft() - QPoint(toast->width() - trayRect.width(),
-                                             toast->height());
-    toast->move(pos);
-
-    //
-    // Fade in
-    //
-    auto *fadeIn = new QPropertyAnimation(toast, "windowOpacity");
-    fadeIn->setDuration(150);
-    fadeIn->setStartValue(0.0);
-    fadeIn->setEndValue(1.0);
-    fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
-
-    toast->show();
-
-    //
-    // Auto‑dismiss with fade‑out
-    //
-    QTimer::singleShot(durationInMs, toast, [toast]() {
-        auto *fadeOut = new QPropertyAnimation(toast, "windowOpacity");
-        fadeOut->setDuration(150);
-        fadeOut->setStartValue(1.0);
-        fadeOut->setEndValue(0.0);
-        QObject::connect(fadeOut, &QPropertyAnimation::finished, toast, &QObject::deleteLater);
-        fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
-    });
-}
-
-void TrayIconController::onOtpReceived(const QString &code, const QString &actualSender, const QString &body, const QString &parsedSender)
-{
-    const QString sender = parsedSender.isEmpty() ? actualSender : parsedSender;
-    showToast(tr("2FA authorization code %1 from %2 copied to clipboard.").arg(code, sender), 3000);
+    if (m_lastTrayScreen && !QGuiApplication::screens().contains(m_lastTrayScreen))
+        m_lastTrayScreen = nullptr; // Stale pointer
+    return m_lastTrayScreen;
 }
 
 DeviceStatus &TrayIconController::deviceStatus() const { return DeviceStatus::instance(); }
-OtpScanner &TrayIconController::otpScanner() const { return OtpScanner::instance(); }
 
 TrayIconController &TrayIconController::instance()
 {

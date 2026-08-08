@@ -7,6 +7,7 @@ import "."
 
 ApplicationWindow {
     id: mainWindow
+    objectName: "mainWindow"
     width: 940
     height: 480
     visible: true
@@ -16,7 +17,7 @@ ApplicationWindow {
 
     Settings {
         id: windowSettings
-        category: "Window-" + specifiedDeviceId
+        category: "Window-" + main.specifiedDeviceId
         property alias x: mainWindow.x
         property alias y: mainWindow.y
         property alias width: mainWindow.width
@@ -36,6 +37,8 @@ ApplicationWindow {
     AppTheme {
         id: theme
     }
+
+    Toast { id: toast }
 
     // -------------------------------------------------------------------------
     // Custom Title Bar
@@ -108,7 +111,6 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.rightMargin: 6
             }
-
 
             // Flexible Spacer (pushes other devices to the middle)
             Item {

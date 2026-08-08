@@ -12,7 +12,7 @@ class TrayIconController : public QObject
 public:
     static TrayIconController &instance();
 
-    void showToast(const QString &message, int durationInMs);
+    Q_INVOKABLE QScreen *getScreen() const;
 
 private:
     explicit TrayIconController(QObject *parent = nullptr);
@@ -23,9 +23,7 @@ private:
     void onAppStateChanged(Qt::ApplicationState state);
     void onConversationMessageChanged(const ConversationMessage &updatedMessage);
     void onTrayActivated(QSystemTrayIcon::ActivationReason reason);
-    void onOtpReceived(const QString &code, const QString &actualSender, const QString &body, const QString &parsedSender);
     DeviceStatus &deviceStatus() const;
-    OtpScanner &otpScanner() const;
 
     QSystemTrayIcon m_tray;
     bool m_handlerIsAttached = false;
@@ -34,4 +32,5 @@ private:
     int m_numNewMessages = 0;
     QString m_lastMessageFrom;
     DeviceStatus::Status m_lastStatus;
+    mutable QScreen *m_lastTrayScreen;
 };

@@ -14,6 +14,7 @@ QtObject {
     property color titleBarBackground: appLightGray
     property color titleBarBorder: appMediumGray
     property color titleBarButtonTextColor: appDarkGray
+    property color windowBorderColor: appDarkGray
 
     // Text colors
     property color text: "#000000"

@@ -8,12 +8,14 @@ class SoundController : public QObject
 public:
     static SoundController &instance();
 
+public slots:
+    void playOtpSound();
+
 signals:
 
 private:
     explicit SoundController(QObject *parent = nullptr);
 
-    void playOtpSound();
 
     QSoundEffect *m_otpSound = nullptr;
 };
