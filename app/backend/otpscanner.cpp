@@ -273,48 +273,60 @@ QString OtpScanner::doesRuleMatch(const QString &cookedMessageBody,
         return QString();   // no code found
 
     // Check required phrases
+    // Check required phrases
     for (const RequiredPhrases &rp : rule.requiredPhrases) {
+
         bool matched = false;
+
         for (const QString &phrase : rp.phrases) {
-            int phrasePos = cookedMessageBody.indexOf(phrase); // , Qt::CaseInsensitive <- should be, but doesn't work ><
-            if (phrasePos < 0)
-                continue;
 
-            if (rp.nearnessRequirement < 0) {
-                // anywhere
-                matched = true;
+            int from = 0;
+            while (true) {
+                int phrasePos = cookedMessageBody.indexOf(phrase, from);
+                if (phrasePos < 0)
+                    break;
+
+                int phraseStart = phrasePos;
+                int phraseEnd   = phrasePos + phrase.size();   // one past last char
+
+                if (rp.nearnessRequirement < 0) {
+                    matched = true;
+                    break;
+                }
+
+                int rangeStart;
+                int rangeEnd;
+
+                if (phraseEnd < codePos) {
+                    // phrase entirely left of code
+                    rangeStart = phraseEnd;
+                    rangeEnd   = codePos;
+                } else if (codePos + rule.codeLength < phraseStart) {
+                    // phrase entirely right of code
+                    rangeStart = codePos + rule.codeLength + 1; // skip trailing space
+                    rangeEnd   = phraseStart;
+                } else {
+                    // overlapping or touching
+                    matched = true;
+                    break;
+                }
+
+                int spaces = 0;
+                for (int i = rangeStart; i < rangeEnd; ++i) {
+                    if (cookedMessageBody[i] == ' ')
+                        ++spaces;
+                }
+
+                if (spaces <= rp.nearnessRequirement) {
+                    matched = true;
+                    break;
+                }
+
+                from = phrasePos + 1;   // continue searching for next occurrence
+            }
+
+            if (matched)
                 break;
-            }
-
-            int phraseStart = phrasePos;
-            int phraseEnd   = phrasePos + phrase.size();   // one past last char
-
-            int rangeStart;
-            int rangeEnd;
-            if (phraseEnd < codePos) {
-                // phrase is entirely to the left of the code
-                rangeStart = phraseEnd;
-                rangeEnd   = codePos;
-            } else if (codePos + rule.codeLength < phraseStart) {
-                // phrase is entirely to the right of the code
-                rangeStart = codePos + rule.codeLength + 1; // +1 for the trailing space
-                rangeEnd   = phraseStart;
-            } else {
-                // overlapping or touching: treat as adjacent
-                matched = true;
-                break;
-            }
-
-            int spaces = 0;
-            for (int i = rangeStart; i < rangeEnd; ++i) {
-                if (cookedMessageBody[i] == ' ')
-                    ++spaces;
-            }
-
-            if (spaces <= rp.nearnessRequirement) {
-                matched = true;
-                break;
-            }
         }
 
         if (!matched)
