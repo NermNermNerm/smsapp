@@ -38,8 +38,7 @@ DeviceStatus &DeviceStatus::instance() {
 
 void DeviceStatus::poll()
 {
-    if (m_handler && m_handler->lastDaemonActivityUtc().msecsTo(QDateTime::currentDateTimeUtc()) < PollIntervalWhenActiveInMs) {
-        setStatus(Status::DeviceReady);
+    if (m_handler && m_status == Status::DeviceReady && m_handler->lastDaemonActivityUtc().msecsTo(QDateTime::currentDateTimeUtc()) < PollIntervalWhenActiveInMs) {
         return;
     }
 
