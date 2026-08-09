@@ -19,8 +19,9 @@ static QString autostartFileFor(const QString &deviceId)
     return dir + "/" + base + "-device-" + deviceId + ".desktop";
 }
 
-static void writeDesktopFile(const QString &path, const QString &deviceId)
+static void writeDesktopFile(const QString &deviceId)
 {
+    QString path = autostartFileFor(deviceId);
     QFile f(path);
     if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return;
@@ -39,6 +40,8 @@ static void writeDesktopFile(const QString &path, const QString &deviceId)
         out << " --device=" << deviceId;
 
     out << "\n";
+
+    qInfo() << "StartupMenuManager::ensureFileStateMatchesInMemoryState wrote " << path;
 }
 
 StartupMenuManager::StartupMenuManager(QObject *parent)
@@ -119,8 +122,7 @@ void StartupMenuManager::ensureFileStateMatchesInMemoryState() const
     }
 
     if (m_isPinned) {
-        writeDesktopFile(autostartFileFor(m_isMultiMode ? deviceId : ""), deviceId);
-        qInfo() << "StartupMenuManager::ensureFileStateMatchesInMemoryState wrote " << autostartFileFor(m_isMultiMode ? deviceId : "");
+        writeDesktopFile(m_isMultiMode ? deviceId : "");
     }
 }
 
