@@ -32,6 +32,11 @@ ApplicationWindow {
         if (mainWindow.y < screen.virtualY || mainWindow.y > (screen.virtualY + screen.height - 100)) {
             mainWindow.y = screen.virtualY + (screen.height - mainWindow.height) / 2
         }
+
+        console.log("main.startMinimized = " + main.startMinimized)
+        if (main.startMinimized) {
+            mainWindow.showMinimized()
+        }
     }
 
     AppTheme {

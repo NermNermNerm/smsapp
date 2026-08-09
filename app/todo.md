@@ -3,7 +3,7 @@
 ## General
 - [ ] Write a readme
 - [x] self-install, after done run:  execve(argv[0], argv, environ);
-- [ ] copy 2FA codes to the clipboard
+- [x] copy 2FA codes to the clipboard
 - [ ] Delete cache data from devices that are no longer there
 - [ ] The KDE Deamon doesn't update itself after coming back from sleep; we should force that
 - [ ] When you halt the fake kde daemon, the status goes red but it doesn't blank the screen...  Is that bad?

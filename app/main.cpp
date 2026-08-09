@@ -38,6 +38,7 @@ int Main::run(int argc, char *argv[])
 
     parser.process(app);
     m_specifiedDevice = parser.value(deviceOpt);
+    m_startMinimized = parser.isSet(startMinimizedOpt);
 
     // I'm really not sure what any of this is doing and it's probably not right.
     app.setApplicationName("appsmsapp");
