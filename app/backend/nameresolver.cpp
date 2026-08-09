@@ -91,9 +91,16 @@ static QString canonicalizeEmail(const QString &raw)
 // ---------------------------------------------------------------
 void NameResolver::load()
 {
-    QProcess proc;
-    proc.start(QCoreApplication::applicationDirPath() + "/../../../kpeople_lookup/build/kpeople-lookup");
+    QString path = QCoreApplication::applicationDirPath() + "/../../../kpeople_lookup/build/kpeople-lookup";
+    if (!QFile::exists(path)) {
+        path = QCoreApplication::applicationDirPath() + "/kpeople-lookup";
+        if (!QFile::exists(path)) {
+            qFatal("Could not find kpeople_lookup -- build that folder before running this app.");
+        }
+    }
 
+    QProcess proc;
+    proc.start(path);
     if (!proc.waitForFinished(5000)) {
         qFatal("kpeople-lookup failed to run");
     }
