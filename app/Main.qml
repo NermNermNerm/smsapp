@@ -33,7 +33,6 @@ ApplicationWindow {
             mainWindow.y = screen.virtualY + (screen.height - mainWindow.height) / 2
         }
 
-        console.log("main.startMinimized = " + main.startMinimized)
         if (main.startMinimized) {
             mainWindow.showMinimized()
         }
@@ -299,7 +298,7 @@ ApplicationWindow {
                 SplitView.minimumWidth: 100 * Screen.devicePixelRatio
 
                 onWidthChanged: {
-                    if (width > 0) {
+                    if (width > SplitView.minimumWidth) {
                         windowSettings.conversationListWidth = width
                     }
                 }

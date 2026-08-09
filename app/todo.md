@@ -22,7 +22,7 @@
 ## Pin to start
 - [ ] Make the test fixture able to do devices that don't support sms (And make list show id's while you're at it.)
 - [x] Add a pin-to-start button -- note that pin-to-start should specify --device iff # of sms devices > 1
-- [ ] Add an "--autostart" flag; If --autostart flag exists, start minimized.
+- [x] Add an "--autostart" flag; If --autostart flag exists, start minimized.
 - [x] If invoked with --autostart and KDE says the device doesn't exist and we're sure that KDE is booted, exit and delete the autostart entry
 - [x] If --device and there's only one sms-capable device, delete the --device from the autostart entry.
 - [x] If not --device and there's more than one sms-capable device, add the --device flag to the autostart.
