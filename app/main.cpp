@@ -14,6 +14,7 @@
 #include "backend/soundcontroller.h"
 #include "backend/otpscanner.h"
 #include "installer.h"
+#include <QApplication>
 
 Main &Main::instance()
 {
@@ -23,7 +24,7 @@ Main &Main::instance()
 
 int Main::run(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
     QCommandLineParser parser;
     parser.addHelpOption();
 
