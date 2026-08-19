@@ -1,7 +1,7 @@
 # First Level Heading
 
 ## General
-- [ ] Write a readme
+- [x] Write a readme
 - [x] self-install, after done run:  execve(argv[0], argv, environ);
 - [x] copy 2FA codes to the clipboard
 - [ ] Delete cache data from devices that are no longer there
@@ -128,25 +128,6 @@
 - [x] Multiphone
       - [x] Add commands to create a new device
 
-
-I'm thinking poll would test:
-
-* Am I invoked without a specific id?
-* Is there a startup-menu option to launch the app without a --deviceid?
-* Are there more than one sms-capable phones?
-
-If that happens, it raises a boolean flag, which triggers a yellow banner on the main menu that says "Hey, it looks like you're a multi-phone user, is that a permanent thing?"  If the user says "Yes", it recreates the start menu item to use the current device.
-
-We could also have the converse:
-
-* Am I invoked *with* a specific id?
-* Is there a startup-menu option to invoke this id?
-* Are all the devices other than myself known not to be sms-capable?
-
-Then it could raise a flag that says "Hey, it looks like you've only got one phone going on now, should I reconfigure for that?"
-
-
-
 ## KDE Plugin Asks
 
 - [ ] API to wake the phone.  (Current code in DeviceStatus::ping calls forceOnNetworkChange.
@@ -155,4 +136,25 @@ Then it could raise a flag that says "Hey, it looks like you've only got one pho
 - [ ] Replies to requestConversation should include the index of the message
 - [ ] requestAllConversations should return the number of threads it's going to send
   or otherwise indicate when it's reached the end of a request.
+
+
+## Compilation requirements
+
+### Kpeople_lookup
+- ECM -- sudo zypper install extra-cmake-modules
+- KF5Contacts
+  * WRONG: sudo zypper install libKF5Contacts-devel
+  * SKETCHY: sudo zypper install kf6-kcontacts-devel
+  - Qt5:
+    * maybe: sudo zypper install libqt5-qtbase-devel
+
+### Main app
+- sudo zypper install qt6-svg-devel
+- sudo zypper install qt6-multimedia-devel
+- sudo zypper in libphonenumber-devel
+
+
+
+
+
 
