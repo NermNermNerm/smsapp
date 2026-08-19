@@ -6,9 +6,12 @@
 
 static void layDownDefaultSettings()
 {
-    // should store in ~/.config/NermNermNerm
-    QString path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
-                   + "/" + QCoreApplication::organizationName() + "/two-factor-rules.ini";
+    // should be ~/.config/NermNermNerm
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+                   + "/" + QCoreApplication::organizationName();
+    QDir().mkpath(dir);
+
+    QString path = dir + "/two-factor-rules.ini";
     QFile f(path);
     if (f.exists())
         return;
