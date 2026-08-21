@@ -4,6 +4,10 @@
 - [x] Write a readme
 - [x] self-install, after done run:  execve(argv[0], argv, environ);
 - [x] copy 2FA codes to the clipboard
+- [ ] On initial startup, it doesn't show the conversations, only a red dot, but later recovers itself.
+      Repro: Delete ~/.config/NermNermNerm
+- [ ] Start-menu-icon.png is stored in ~/.local/share/appsmsapp/ and cache data is stored
+      in ~/.local/share/NermNermNerm/SmsApp.
 - [ ] Delete cache data from devices that are no longer there
 - [ ] The KDE Deamon doesn't update itself after coming back from sleep; we should force that
 - [ ] When you halt the fake kde daemon, the status goes red but it doesn't blank the screen...  Is that bad?

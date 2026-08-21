@@ -118,6 +118,7 @@ void DeviceStatus::poll()
             // If we weren't specifically directed to a device, and the last device we used isn't reachable,
             //  go ahead and use the first reachable sms-capable device.
             deviceIdToUse = id;
+            setDeviceName(name);
             settings().setPreviousSessionDeviceId(id);
 
             // Note - we could test and see if another instance is already managing this device here,
