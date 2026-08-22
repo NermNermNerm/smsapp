@@ -151,15 +151,6 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 spacing: 0
 
-                // TODO:  Settings Button ---
-                // ToolButton {
-                //     text: "⚙"
-                //     font.pixelSize: 14
-                //     implicitWidth: 34
-                //     implicitHeight: parent.height
-                //     onClicked: settingsDialog.open()
-                // }
-
                 // Pin to start
                 ToolButton {
                     id: pinToStart
@@ -168,7 +159,7 @@ ApplicationWindow {
                         source: startupMenuManager.isPinned ? "qrc:/resources/pinned.svg" : "qrc:/resources/unpinned.svg"
                     }
 
-                    font.pixelSize: 11
+                    padding: 8 // Makes the svg pushpin a little more in-scale with the rest of the font-based buttons.
                     implicitWidth: 34
                     implicitHeight: titleBar.height
                     onClicked: startupMenuManager.isPinned = !startupMenuManager.isPinned
